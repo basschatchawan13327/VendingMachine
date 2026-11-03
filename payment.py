@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from enum import Enum, auto
 from typing import List, Optional
 
+from bank import BankService
+
 
 class PaymentResult(Enum):
     """Possible outcomes returned by a PaymentMethod.processPayment() call."""
@@ -250,39 +252,6 @@ class CashReceiver(PaymentMethod):
         self.returnInsertedMoney()
         self._state = CashReceiverState.IDLE
 
-
-
-# ---------------------------------------------------------------------------
-# BankService (stub)
-# ---------------------------------------------------------------------------
-
-class BankService:
-    """
-    Stub representing an external bank/payment-gateway service.
-    Replace with a real implementation that communicates with the
-    card-payment hardware or network gateway.
-    """
-
-    def authorise(self, card_id: str, amount: int) -> bool:
-        """
-        Request authorisation for a card transaction.
-
-        :param card_id: The card identifier read from the physical card.
-        :param amount:  The amount to charge in pence.
-        :return: True if the bank authorises the transaction, False otherwise.
-        """
-        # TODO: Integrate with real banking / payment gateway API
-        print(f"[BankService] Authorising {amount}p for card '{card_id}'.")
-        return True   # stub — always approves
-
-    def void(self, card_id: str) -> None:
-        """
-        Void / reverse a previously authorised transaction.
-
-        :param card_id: The card identifier of the transaction to void.
-        """
-        # TODO: Send void request to banking / payment gateway API
-        print(f"[BankService] Voiding transaction for card '{card_id}'.")
 
 
 # ---------------------------------------------------------------------------
