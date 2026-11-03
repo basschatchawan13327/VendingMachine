@@ -1,7 +1,7 @@
 from enum import Enum, auto
 from typing import Optional
 
-from payment import PaymentMethod
+from payment import PaymentMethod, PaymentModule
 
 
 class MachineState(Enum):
@@ -29,12 +29,13 @@ class VendingController:
     # Discount percentage applied when a valid loyalty card is scanned
     LOYALTY_DISCOUNT_PERCENT = 10
 
-    def __init__(self):
+    def __init__(self, payment_module: Optional[PaymentModule] = None):
         self._state: MachineState = MachineState.IDLE
         self._selected_drink: Optional[Drink] = None
         self._list_price: int = 0
         self._amount_due: int = 0
         self._loyalty_applied: bool = False
+        self._payment_module: Optional[PaymentModule] = payment_module
 
     # ------------------------------------------------------------------
     # Public methods
@@ -187,13 +188,15 @@ class VendingController:
 
     def _abortSale(self, reason: str) -> None:
         """
-        Abort the current sale, issue a refund if necessary, and reset state.
+        Abort the current sale, cancel any active payment, and reset state.
 
         :param reason: The reason for aborting (shown in logs / displayed to user).
         """
         print(f"[_abortSale] Sale aborted — reason: {reason}")
-        # TODO: Trigger refund if payment was already taken
-        # TODO: Log the aborted transaction
+
+        # Cancel the active payment method (triggers cash return / card void)
+        if self._payment_module is not None:
+            self._payment_module.cancelPayment()
 
         self._state = MachineState.CANCELLED
         self._reset()
