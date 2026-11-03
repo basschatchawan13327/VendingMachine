@@ -1,6 +1,8 @@
 from enum import Enum, auto
 from typing import Optional
 
+from payment import PaymentMethod
+
 
 class MachineState(Enum):
     IDLE = auto()
@@ -9,12 +11,6 @@ class MachineState(Enum):
     PAYMENT_PROCESSING = auto()
     COMPLETED = auto()
     CANCELLED = auto()
-
-
-class PaymentMethod(Enum):
-    CASH = auto()
-    CARD = auto()
-    MOBILE = auto()
 
 
 class Drink:
@@ -110,7 +106,7 @@ class VendingController:
 
         self._state = MachineState.PAYMENT_PROCESSING
         print(
-            f"[startPayment] Payment started via {method.name} "
+            f"[startPayment] Payment started via {type(method).__name__} "
             f"for {self._amount_due}p"
         )
         # TODO: Integrate with payment gateway / hardware
