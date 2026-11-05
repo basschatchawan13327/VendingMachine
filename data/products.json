@@ -1,0 +1,26 @@
+[
+  {
+    "drink_id": "ESPRESSO",
+    "name": "Espresso",
+    "price": 150,
+    "stock": 7
+  },
+  {
+    "drink_id": "LATTE",
+    "name": "Latte",
+    "price": 220,
+    "stock": 7
+  },
+  {
+    "drink_id": "HOT_CHOCOLATE",
+    "name": "Hot Chocolate",
+    "price": 200,
+    "stock": 5
+  },
+  {
+    "drink_id": "WATER",
+    "name": "Bottled Water",
+    "price": 100,
+    "stock": 11
+  }
+]

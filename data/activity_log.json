@@ -1,0 +1,147 @@
+[
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "TEST_EVENT",
+    "details": "Testing activity log persistence"
+  },
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card 'LOYAL-001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Latte for 198p"
+  },
+  {
+    "timestamp": "2026-11-05 17:42:23",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:42:57",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Bottled Water (100p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:43:01",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card 'LOYAL-001' applied. New amount due: 90p"
+  },
+  {
+    "timestamp": "2026-11-05 17:43:06",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 90p"
+  },
+  {
+    "timestamp": "2026-11-05 17:43:09",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Bottled Water for 90p"
+  },
+  {
+    "timestamp": "2026-11-05 17:44:33",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:44:44",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:50:36",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:50:36",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:50:36",
+    "event": "LOYALTY_REJECTED",
+    "details": "Card ID 'LOYAL-001' rejected or inactive."
+  },
+  {
+    "timestamp": "2026-11-05 17:50:57",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:50:57",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:50:57",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card 'LOYAL-001' applied. New amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-05 17:50:57",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-05 17:50:57",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 135p"
+  },
+  {
+    "timestamp": "2026-11-05 17:51:02",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:51:02",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:51:02",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-05 17:52:18",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:52:34",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Hot Chocolate (200p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:52:37",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 180p"
+  },
+  {
+    "timestamp": "2026-11-05 17:52:42",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 180p"
+  },
+  {
+    "timestamp": "2026-11-05 17:52:42",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Hot Chocolate for 180p"
+  }
+]
