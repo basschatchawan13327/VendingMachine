@@ -13,12 +13,19 @@ from typing import Callable, Optional, Tuple
 from PIL import Image, ImageTk
 import cv2
 
-# Import zxing-cpp for Code 128 and linear barcode decoding
+# Import zxing-cpp for Code 128 and linear barcode decoding.
+# NOTE: Install via: pip install zxing-cpp (package name has a hyphen; Python import is 'zxingcpp')
 try:
-    import zxingcpp
+    import zxingcpp  # type: ignore
     HAS_ZXING = True
-except ImportError:
-    HAS_ZXING = False
+except (ImportError, ModuleNotFoundError):
+    try:
+        import importlib
+        zxingcpp = importlib.import_module("zxingcpp")  # type: ignore
+        HAS_ZXING = True
+    except Exception:
+        zxingcpp = None  # type: ignore
+        HAS_ZXING = False
 
 
 class BarcodeDetectorEngine:
@@ -32,6 +39,13 @@ class BarcodeDetectorEngine:
         self.has_zxing = HAS_ZXING
         if self.has_zxing:
             print("[BarcodeDetectorEngine] zxing-cpp engine loaded (Code 128 optimized).")
+        else:
+            print(
+                "[BarcodeDetectorEngine] ⚠️ Warning: 'zxingcpp' module not found in this Python environment.\n"
+                "  To enable high-accuracy Code 128 barcode reading, install via:\n"
+                "    pip install zxing-cpp\n"
+                "  Falling back to OpenCV native detectors."
+            )
 
         # 2. OpenCV fallback detectors
         self._qr_detector = cv2.QRCodeDetector()
@@ -186,6 +200,15 @@ class BarcodeCameraScanner:
             fg="#94a3b8",
             bg="#0f172a",
         ).pack(pady=(2, 0))
+
+        if not self.engine.has_zxing:
+            tk.Label(
+                header,
+                text="⚠️ zxing-cpp library not found — Code 128 detection limited. Run: pip install zxing-cpp",
+                font=("Helvetica", 8, "italic"),
+                fg="#f59e0b",
+                bg="#0f172a",
+            ).pack(pady=(3, 0))
 
         # Video stream label
         self._video_label = tk.Label(self._window, bg="#000000")

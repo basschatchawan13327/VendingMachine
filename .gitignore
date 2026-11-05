@@ -6,8 +6,7 @@ activity_log.json
 members.json
 products.json
 transactions.json
-# OS files
+# OS and IDE files
 .DS_Store
+.vscode/
 
-# OS files
-.DS_Store
