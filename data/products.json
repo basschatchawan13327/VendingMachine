@@ -1,0 +1,101 @@
+[
+  {
+    "drink_id": "ESPRESSO",
+    "name": "Espresso",
+    "price": 150,
+    "stock": 10,
+    "slot_num": "01",
+    "category": "Coffee",
+    "desc": "Rich & bold single-origin double shot",
+    "icon_type": "espresso",
+    "image": "Starbuck_Espresso.jpg"
+  },
+  {
+    "drink_id": "LATTE",
+    "name": "Caffe Latte",
+    "price": 220,
+    "stock": 9,
+    "slot_num": "02",
+    "category": "Coffee",
+    "desc": "Silky steamed fresh milk with espresso",
+    "icon_type": "latte",
+    "image": "Nescafe_Latte.avif"
+  },
+  {
+    "drink_id": "HOT_CHOCOLATE",
+    "name": "Hot Chocolate",
+    "price": 200,
+    "stock": 10,
+    "slot_num": "03",
+    "category": "Chocolate & Tea",
+    "desc": "Velvety Belgian dark chocolate & foam",
+    "icon_type": "chocolate",
+    "image": "milo_can.jpg"
+  },
+  {
+    "drink_id": "WATER",
+    "name": "Bottled Water",
+    "price": 100,
+    "stock": 10,
+    "slot_num": "04",
+    "category": "Cold Drinks",
+    "desc": "Chilled pure natural mountain spring water",
+    "icon_type": "water",
+    "image": "Aquafina_water.jpg"
+  },
+  {
+    "drink_id": "CAPPUCCINO",
+    "name": "Cappuccino",
+    "price": 230,
+    "stock": 10,
+    "slot_num": "05",
+    "category": "Coffee",
+    "desc": "Dark espresso layered with thick airy foam",
+    "icon_type": "latte",
+    "image": "nescafe_cappucino.avif"
+  },
+  {
+    "drink_id": "GREEN_TEA",
+    "name": "Green Tea Latte",
+    "price": 210,
+    "stock": 10,
+    "slot_num": "06",
+    "category": "Chocolate & Tea",
+    "desc": "Aromatic Kyoto matcha blended with milk",
+    "icon_type": "tea",
+    "image": "matcha_latte.png"
+  },
+  {
+    "drink_id": "ICED_COLA",
+    "name": "Sparkling Cola",
+    "price": 160,
+    "stock": 10,
+    "slot_num": "07",
+    "category": "Cold Drinks",
+    "desc": "Refreshing fizzy soda served ice-cold",
+    "icon_type": "can",
+    "image": "coca_cola.jpg"
+  },
+  {
+    "drink_id": "ORANGE_JUICE",
+    "name": "Fresh Orange",
+    "price": 180,
+    "stock": 10,
+    "slot_num": "08",
+    "category": "Cold Drinks",
+    "desc": "100% freshly pressed Valencia oranges",
+    "icon_type": "can",
+    "image": "tropicana_orange_juice.png"
+  },
+  {
+    "drink_id": "LEMON_TEA",
+    "name": "Lemon Iced Tea",
+    "price": 170,
+    "stock": 10,
+    "slot_num": "09",
+    "category": "Cold Drinks",
+    "desc": "Crisp iced black tea infused with real lemon",
+    "icon_type": "tea",
+    "image": "lemon_iced_tea.png"
+  }
+]

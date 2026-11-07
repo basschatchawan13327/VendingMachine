@@ -2,10 +2,7 @@
 __pycache__/
 *.pyc
 barcodes/
-activity_log.json
-members.json
-products.json
-transactions.json
+
 # OS and IDE files
 .DS_Store
 .vscode/

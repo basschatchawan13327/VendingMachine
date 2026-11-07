@@ -513,7 +513,7 @@ class VendingGUI:
 
         ttk.Button(
             loyalty_btn_row,
-            text="📷 Scan Barcode / QR",
+            text="📷 Scan Code 128 Barcode",
             command=open_camera_scanner,
         ).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
 
@@ -537,11 +537,12 @@ class VendingGUI:
 
         grid = ttk.Frame(cash_box)
         grid.pack(fill=tk.X, pady=4)
-        for i, val in enumerate([10, 20, 50, 100, 200]):
+        for i, val in enumerate([1, 2, 5, 10, 20, 50, 100, 200]):
             label = f"£{val//100}" if val >= 100 else f"{val}p"
             b = ttk.Button(grid, text=f"+{label}", command=lambda v=val: self.onInsertMoney(v))
-            b.grid(row=0, column=i, padx=2, pady=2, sticky="ew")
-            grid.columnconfigure(i, weight=1)
+            b.grid(row=i // 4, column=i % 4, padx=2, pady=2, sticky="ew")
+        for c in range(4):
+            grid.columnconfigure(c, weight=1)
 
         ttk.Button(
             cash_box,

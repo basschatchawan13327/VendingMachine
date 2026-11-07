@@ -12,11 +12,27 @@ class Drink:
         stock:    Number of cans/bottles currently available in the machine.
     """
 
-    def __init__(self, drink_id: str, name: str, price: int, stock: int = 10):
+    def __init__(
+        self,
+        drink_id: str,
+        name: str,
+        price: int,
+        stock: int = 10,
+        slot_num: Optional[str] = None,
+        desc: str = "",
+        icon_type: str = "can",
+        category: str = "Drinks",
+        image: Optional[str] = None,
+    ):
         self.drink_id = drink_id
         self._name: str = name
         self._price: int = price
         self._stock: int = stock
+        self.slot_num: Optional[str] = slot_num
+        self.desc: str = desc
+        self.icon_type: str = icon_type
+        self.category: str = category
+        self.image: Optional[str] = image
 
     # ------------------------------------------------------------------
     # Public methods
@@ -132,6 +148,15 @@ class DrinkDispenser:
             if drink.drink_id.upper() == drinkId.upper():
                 return drink
         return None
+
+    @property
+    def slots(self) -> List[Drink]:
+        """Return the current list of drink slots."""
+        return self._slots
+
+    def getAllDrinks(self) -> List[Drink]:
+        """Return a copy of all loaded Drink objects."""
+        return list(self._slots)
 
 
 class StockSensor:

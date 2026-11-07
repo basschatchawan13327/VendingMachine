@@ -1,19 +1,35 @@
 """
-Barcode & QR Code Camera Scanner (barcode_scanner.py)
+Code 128 Barcode Camera Scanner (barcode_scanner.py)
 ---------------------------------------------------
-Provides webcam-based live scanning of loyalty cards, with first-class
-support for Code 128 1D barcodes and 2D QR codes using zxing-cpp & OpenCV.
+Provides webcam-based live scanning of loyalty cards, with dedicated
+support for Code 128 1D linear barcodes using zxing-cpp & OpenCV.
 Integrates seamlessly with Tkinter as a modal scanning dialog.
 """
 
 import os
+import base64
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, messagebox
 from typing import Callable, Optional, Tuple
-from PIL import Image, ImageTk
-import cv2
 
-# Import zxing-cpp for Code 128 and linear barcode decoding.
+# Safe OpenCV (cv2) import with graceful error handling
+try:
+    import cv2  # type: ignore
+    HAS_CV2 = True
+except (ImportError, ModuleNotFoundError):
+    cv2 = None  # type: ignore
+    HAS_CV2 = False
+
+# Optional PIL (Pillow) support with pure OpenCV + Tkinter fallback
+try:
+    from PIL import Image, ImageTk  # type: ignore
+    HAS_PIL = True
+except (ImportError, ModuleNotFoundError):
+    Image = None  # type: ignore
+    ImageTk = None  # type: ignore
+    HAS_PIL = False
+
+# Import zxing-cpp for Code 128 linear barcode decoding.
 # NOTE: Install via: pip install zxing-cpp (package name has a hyphen; Python import is 'zxingcpp')
 try:
     import zxingcpp  # type: ignore
@@ -30,25 +46,28 @@ except (ImportError, ModuleNotFoundError):
 
 class BarcodeDetectorEngine:
     """
-    Decodes Code 128 1D barcodes and 2D QR codes from camera video frames
-    or image files on disk.
+    Decodes Code 128 1D linear barcodes from live camera video frames.
     """
 
     def __init__(self):
         # 1. zxing-cpp setup (fast and highly accurate for Code 128)
         self.has_zxing = HAS_ZXING
         if self.has_zxing:
-            print("[BarcodeDetectorEngine] zxing-cpp engine loaded (Code 128 optimized).")
+            print("[BarcodeDetectorEngine] zxing-cpp engine loaded (Code 128 dedicated).")
         else:
             print(
                 "[BarcodeDetectorEngine] ⚠️ Warning: 'zxingcpp' module not found in this Python environment.\n"
                 "  To enable high-accuracy Code 128 barcode reading, install via:\n"
                 "    pip install zxing-cpp\n"
-                "  Falling back to OpenCV native detectors."
+                "  Falling back to OpenCV native 1D barcode detector."
             )
 
-        # 2. OpenCV fallback detectors
-        self._qr_detector = cv2.QRCodeDetector()
+        # 2. OpenCV fallback detector (1D barcodes only)
+        if not HAS_CV2 or cv2 is None:
+            print("[BarcodeDetectorEngine] ⚠️ OpenCV (cv2) not available.")
+            self._cv_barcode_detector = None
+            return
+
         try:
             self._cv_barcode_detector = cv2.barcode.BarcodeDetector()
         except Exception:
@@ -56,40 +75,25 @@ class BarcodeDetectorEngine:
 
     def decode_frame(self, frame) -> Optional[Tuple[str, str]]:
         """
-        Attempt to detect and decode a Code 128 barcode or QR code from a video frame.
+        Attempt to detect and decode a Code 128 1D linear barcode from a video frame.
 
         :param frame: OpenCV image (BGR numpy array)
-        :return: Tuple of (decoded_text, format_name) if found, otherwise None.
+        :return: Tuple of (decoded_text, "Code 128") if found, otherwise None.
         """
         if frame is None:
             return None
 
-        # Primary engine: zxing-cpp (robust Code 128 & Linear barcodes)
-        if self.has_zxing:
+        # Primary engine: zxing-cpp (strictly Code 128 format)
+        if self.has_zxing and zxingcpp is not None:
             try:
-                # 1. Try specifically for Code 128 first
                 c128_results = zxingcpp.read_barcodes(frame, formats=zxingcpp.BarcodeFormat.Code128)
                 for res in c128_results:
                     if res.text and res.text.strip():
                         return res.text.strip(), "Code 128"
-
-                # 2. Try general barcode / QR detection
-                all_results = zxingcpp.read_barcodes(frame)
-                for res in all_results:
-                    if res.text and res.text.strip():
-                        return res.text.strip(), str(res.format)
-            except Exception as e:
+            except Exception:
                 pass
 
-        # Fallback 1: OpenCV QR Code detector
-        try:
-            text, points, _ = self._qr_detector.detectAndDecode(frame)
-            if text and text.strip():
-                return text.strip(), "QR Code"
-        except Exception:
-            pass
-
-        # Fallback 2: OpenCV 1D Barcode detector
+        # Fallback: OpenCV 1D Barcode detector
         if self._cv_barcode_detector is not None:
             try:
                 ret, decoded_info, decoded_type, points = self._cv_barcode_detector.detectAndDecode(frame)
@@ -97,9 +101,9 @@ class BarcodeDetectorEngine:
                     if isinstance(decoded_info, (list, tuple)):
                         for item in decoded_info:
                             if item and item.strip():
-                                return item.strip(), "1D Barcode"
+                                return item.strip(), "Code 128"
                     elif isinstance(decoded_info, str) and decoded_info.strip():
-                        return decoded_info.strip(), "1D Barcode"
+                        return decoded_info.strip(), "Code 128"
             except Exception:
                 pass
 
@@ -107,24 +111,13 @@ class BarcodeDetectorEngine:
 
     def decode_code128(self, frame) -> Optional[str]:
         """
-        Specifically decode only Code 128 barcodes from a frame.
+        Specifically decode only Code 128 barcodes from a video frame.
         """
         res = self.decode_frame(frame)
         if res:
-            text, fmt = res
+            text, _ = res
             return text
         return None
-
-    def decode_file(self, file_path: str) -> Optional[Tuple[str, str]]:
-        """
-        Read an image from disk and decode any Code 128 barcode or QR code.
-        """
-        if not os.path.exists(file_path):
-            return None
-        img = cv2.imread(file_path)
-        if img is None:
-            return None
-        return self.decode_frame(img)
 
 
 class BarcodeCameraScanner:
@@ -157,6 +150,17 @@ class BarcodeCameraScanner:
         if self._is_running:
             return
 
+        if not HAS_CV2 or cv2 is None:
+            messagebox.showerror(
+                "OpenCV Required",
+                "OpenCV ('cv2') is required for webcam scanning.\n"
+                "Please run in your terminal:\n\n"
+                "    pip3 install opencv-python\n\n"
+                "You can still enter card IDs directly in the main window.",
+                parent=parent,
+            )
+            return
+
         self._on_detected = on_detected
         self._is_running = True
 
@@ -166,14 +170,13 @@ class BarcodeCameraScanner:
             self._is_running = False
             messagebox.showerror(
                 "Camera Error",
-                "Could not open webcam.\nPlease check camera connections and macOS privacy permissions,\n"
-                "or use the 'Upload Barcode Image' feature to test with sample Code 128 barcodes.",
+                "Could not open webcam.\nPlease check camera connections and macOS privacy permissions.",
             )
             return
 
         # Create TopLevel Popup
         self._window = tk.Toplevel(parent)
-        self._window.title("📷 Code 128 Barcode & QR Scanner")
+        self._window.title("📷 Code 128 Barcode Scanner")
         self._window.geometry("660x580")
         self._window.resizable(False, False)
         self._window.transient(parent)
@@ -195,7 +198,7 @@ class BarcodeCameraScanner:
         ).pack()
         tk.Label(
             header,
-            text="Hold your Code 128 linear barcode or QR code inside the green frame",
+            text="Hold your Code 128 linear barcode inside the green frame",
             font=("Helvetica", 9),
             fg="#94a3b8",
             bg="#0f172a",
@@ -217,12 +220,6 @@ class BarcodeCameraScanner:
         # Control Bar
         control_frame = ttk.Frame(self._window, padding=8)
         control_frame.pack(fill=tk.X)
-
-        ttk.Button(
-            control_frame,
-            text="📁 Test with Sample Code 128 Image...",
-            command=self._upload_image,
-        ).pack(side=tk.LEFT, padx=6)
 
         ttk.Button(
             control_frame,
@@ -266,7 +263,7 @@ class BarcodeCameraScanner:
                 2,
             )
 
-            # 3. Detect Code 128 barcode or QR
+            # 3. Detect Code 128 barcode
             detection = self.engine.decode_frame(frame)
             if detection:
                 detected_text, fmt = detection
@@ -274,12 +271,24 @@ class BarcodeCameraScanner:
                 self._handle_successful_scan(detected_text)
                 return
 
-            # 4. Convert BGR to RGB for Tkinter display
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            img = Image.fromarray(rgb_frame)
-            img = img.resize((640, 430), Image.Resampling.LANCZOS)
-            self._photo_ref = ImageTk.PhotoImage(image=img)
-            self._video_label.config(image=self._photo_ref)
+            # 4. Render frame to Tkinter label
+            if HAS_PIL and Image is not None and ImageTk is not None:
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                img = Image.fromarray(rgb_frame)
+                img = img.resize((640, 430), Image.Resampling.LANCZOS)
+                self._photo_ref = ImageTk.PhotoImage(image=img)
+            else:
+                # Native Tkinter + OpenCV fallback (does not require PIL)
+                resized = cv2.resize(frame, (640, 430))
+                ret_enc, buf = cv2.imencode(".png", resized)
+                if ret_enc:
+                    b64_data = base64.b64encode(buf).decode("ascii")
+                    self._photo_ref = tk.PhotoImage(data=b64_data)
+                else:
+                    self._photo_ref = None
+
+            if self._photo_ref is not None:
+                self._video_label.config(image=self._photo_ref)
 
         if self._is_running and self._window is not None:
             self._window.after(30, self._update_frame)
@@ -290,35 +299,6 @@ class BarcodeCameraScanner:
         self.stop_scan()
         if cb:
             cb(detected_text)
-
-    def _upload_image(self) -> None:
-        """Allow testing via a Code 128 barcode image file."""
-        initial_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "data", "barcodes"
-        )
-        if not os.path.exists(initial_dir):
-            initial_dir = os.path.dirname(os.path.abspath(__file__))
-
-        file_path = filedialog.askopenfilename(
-            parent=self._window,
-            initialdir=initial_dir,
-            title="Select Code 128 Barcode Image",
-            filetypes=[("Image Files", "*.png *.jpg *.jpeg *.bmp *.webp"), ("All Files", "*.*")],
-        )
-        if not file_path:
-            return
-
-        result = self.engine.decode_file(file_path)
-        if result:
-            detected_text, fmt = result
-            print(f"[BarcodeScanner] Decoded {fmt} from file: '{detected_text}'")
-            self._handle_successful_scan(detected_text)
-        else:
-            messagebox.showwarning(
-                "Scan Result",
-                "No valid Code 128 barcode or QR code detected in the selected image.",
-                parent=self._window,
-            )
 
     def stop_scan(self) -> None:
         """Releases the camera and closes the popup dialog."""

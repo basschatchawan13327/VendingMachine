@@ -1,0 +1,4912 @@
+[
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "TEST_EVENT",
+    "details": "Testing activity log persistence"
+  },
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card 'LOYAL-001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-05 17:41:50",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Latte for 198p"
+  },
+  {
+    "timestamp": "2026-11-05 17:42:23",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:42:57",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Bottled Water (100p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:43:01",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card 'LOYAL-001' applied. New amount due: 90p"
+  },
+  {
+    "timestamp": "2026-11-05 17:43:06",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 90p"
+  },
+  {
+    "timestamp": "2026-11-05 17:43:09",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Bottled Water for 90p"
+  },
+  {
+    "timestamp": "2026-11-05 17:44:33",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:44:44",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:50:36",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:50:36",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:50:36",
+    "event": "LOYALTY_REJECTED",
+    "details": "Card ID 'LOYAL-001' rejected or inactive."
+  },
+  {
+    "timestamp": "2026-11-05 17:50:57",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:50:57",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:50:57",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card 'LOYAL-001' applied. New amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-05 17:50:57",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-05 17:50:57",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 135p"
+  },
+  {
+    "timestamp": "2026-11-05 17:51:02",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:51:02",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:51:02",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-05 17:52:18",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 17:52:34",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Hot Chocolate (200p)"
+  },
+  {
+    "timestamp": "2026-11-05 17:52:37",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 180p"
+  },
+  {
+    "timestamp": "2026-11-05 17:52:42",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 180p"
+  },
+  {
+    "timestamp": "2026-11-05 17:52:42",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Hot Chocolate for 180p"
+  },
+  {
+    "timestamp": "2026-11-05 20:47:20",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 20:49:37",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 20:50:21",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-05 20:50:51",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Bottled Water (100p)"
+  },
+  {
+    "timestamp": "2026-11-05 20:50:55",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 90p"
+  },
+  {
+    "timestamp": "2026-11-05 20:51:00",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 90p"
+  },
+  {
+    "timestamp": "2026-11-05 20:51:00",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Bottled Water for 90p"
+  },
+  {
+    "timestamp": "2026-11-05 21:01:27",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 09:04:42",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 09:04:59",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Bottled Water (100p)"
+  },
+  {
+    "timestamp": "2026-11-06 09:05:06",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 90p"
+  },
+  {
+    "timestamp": "2026-11-06 09:05:12",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 90p"
+  },
+  {
+    "timestamp": "2026-11-06 09:05:12",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Bottled Water for 90p"
+  },
+  {
+    "timestamp": "2026-11-06 11:37:05",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:37:51",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:41:31",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:41:51",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:42:07",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-06 11:46:31",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:46:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:47:07",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Hot Chocolate (200p)"
+  },
+  {
+    "timestamp": "2026-11-06 11:50:27",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:54:40",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:57:24",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:57:28",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:57:33",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 11:57:59",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 12:01:18",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 12:02:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 12:07:06",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 12:07:25",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 12:07:42",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Green Tea Latte (210p)"
+  },
+  {
+    "timestamp": "2026-11-06 12:13:43",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 12:15:10",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 12:59:35",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 12:59:50",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Hot Chocolate (200p)"
+  },
+  {
+    "timestamp": "2026-11-06 13:31:10",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 14:00:34",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 14:01:00",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-06 14:03:56",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 14:04:14",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 14:11:14",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 14:11:32",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 14:11:50",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 14:12:23",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 15:26:29",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-06 15:26:43",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Fresh Orange (180p)"
+  },
+  {
+    "timestamp": "2026-11-07 07:54:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 08:03:37",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 08:03:42",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 08:07:32",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 11:22:01",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 11:22:49",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 11:23:02",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Fresh Orange (180p)"
+  },
+  {
+    "timestamp": "2026-11-07 11:32:20",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 11:32:20",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 11:32:21",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 11:32:21",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 11:32:21",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 11:32:26",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 11:32:27",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:17:05",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:17:12",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:17:16",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 13:17:39",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 13:19:41",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:19:41",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:19:47",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:19:47",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:19:56",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:20:02",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:20:02",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:31",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:24:45",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:24:45",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:45",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:45",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:24:46",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:47",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:47",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:47",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:24:47",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:48",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:48",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:48",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:24:48",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:49",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:49",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:24:50",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:26:30",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:26:30",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:31",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:31",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:31",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:26:31",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:32",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:32",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:32",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:26:33",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:33",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:33",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:34",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:26:34",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:34",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:34",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:26:35",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:27:59",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:17",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:17",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:18",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:18",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:18",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:19",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:19",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:19",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:20",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:20",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:20",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:20",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:21",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:21",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:21",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:21",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:22",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:41",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:41",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:42",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:42",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:42",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:43",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:43",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:43",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:44",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:44",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:44",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:44",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:45",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:45",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:45",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:45",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:46",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:47",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:47",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:55",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:29:55",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:55",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:55",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:29:55",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 13:30:01",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:30:05",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:30:15",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:31:17",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:31:28",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:31:34",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:31:39",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:31:40",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 13:31:45",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state PAYMENT_PROCESSING"
+  },
+  {
+    "timestamp": "2026-11-07 13:31:45",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Espresso, Amount: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 13:31:53",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:32:20",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-07 13:32:22",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-07 13:32:25",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 135p"
+  },
+  {
+    "timestamp": "2026-11-07 13:34:32",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:35:20",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:36:07",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:37:49",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:37:49",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:37:49",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:37:49",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:37:58",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:37:58",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:37:58",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:37:58",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:37:59",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:37:59",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:00",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:00",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:00",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:38:00",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:01",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:01",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:02",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:38:02",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:02",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:02",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:03",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:38:03",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:03",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:03",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:08",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:38:08",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:09",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:09",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:09",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:13",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:38:35",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:38:39",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:38:54",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-07 13:39:11",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-07 13:39:16",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 135p"
+  },
+  {
+    "timestamp": "2026-11-07 13:39:28",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:45:50",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:45:51",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:45:51",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 13:45:58",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:45:58",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:45:59",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 13:45:59",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:45:59",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:04",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:46:04",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:05",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:05",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:06",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:46:06",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:06",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:06",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:07",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:46:07",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:07",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:07",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:08",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:46:08",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:09",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:09",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:09",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:46:09",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:10",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:10",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:34",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 13:46:45",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 13:46:56",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-07 13:47:09",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-07 13:47:11",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 135p"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:05",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:01:05",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:06",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:06",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:06",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:01:06",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:07",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:07",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:08",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:01:08",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:08",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:08",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:09",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:01:09",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:09",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:09",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:10",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:01:10",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:11",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:11",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:18",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:01:18",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:19",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:25",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:01:25",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:25",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:25",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:25",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:01:30",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:01:35",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:28:38",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:29:03",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:29:19",
+    "event": "LOYALTY_REJECTED",
+    "details": "Card ID '247480103b001' rejected or inactive."
+  },
+  {
+    "timestamp": "2026-11-07 14:29:30",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-07 14:29:43",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-07 14:29:47",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 135p"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:35",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:36:35",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:35",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:35",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:36",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:36:36",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:37",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:37",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:37",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:36:37",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:38",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:38",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:39",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:36:39",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:39",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:39",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:40",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:36:40",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:40",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:40",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:44",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:36:48",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:36:48",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:48",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:48",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:48",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:53",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:36:53",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:36:54",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:40:56",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:40:56",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:11",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:11",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:21",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:21",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:26",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:26",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:27",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:27",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:27",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:27",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:28",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:28",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:29",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:29",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:29",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:29",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:30",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:30",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:31",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:31",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:31",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:31",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:32",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:32",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:40",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:40",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:40",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:40",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:40",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:45",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:50",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:50",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:51",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:55",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:41:56",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:56",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:41:56",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Espresso, Amount: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 14:50:13",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:08",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:08",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:09",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:32",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:33",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:33",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:33",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:40",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:40",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:40",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:40",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:53:58",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:54:05",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:54:18",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:54:34",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:54:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:54:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:54:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:54:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:54:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:54:54",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:55:03",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:55:03",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:55:04",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:55:04",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:55:10",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:15",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:15",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:20",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:20",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:20",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:20",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:21",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:21",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:22",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:22",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:22",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:22",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:23",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:23",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:24",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:24",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:24",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:24",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:25",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:25",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:26",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:26",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:31",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:31",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:32",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:32",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:32",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:37",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:43",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:43",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:44",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:48",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 14:57:49",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:49",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 14:57:49",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Espresso, Amount: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 15:29:31",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:29:56",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Cappuccino (230p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:30:33",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:30:33",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Cappuccino, Amount: 230p"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:20",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:39:21",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:21",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:21",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:22",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:39:22",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:23",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:23",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:23",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:39:23",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:24",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:24",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:25",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:39:25",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:25",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:25",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:26",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:39:26",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:27",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:27",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:31",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:39:31",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:31",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:32",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:32",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:38",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:39:38",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:39:39",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 15:40:43",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:40:52",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:41:02",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:41:12",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:42:03",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:42:03",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:42:10",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:45:13",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:45:18",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:45:18",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:18",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:18",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:19",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:45:19",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:20",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:20",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:20",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:45:21",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:21",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:21",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:22",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:45:22",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:23",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:23",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:23",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:45:23",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:24",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:24",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:29",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:45:29",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:29",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:29",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:29",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:33",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:45:34",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:39",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:45:39",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:45:40",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 15:46:20",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:46:21",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:46:54",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:46:55",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:46:56",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:46:56",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:46:56",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:46:57",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:47:13",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:47:14",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:47:15",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:47:15",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:47:15",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:47:17",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:47:41",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:47:41",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:47:41",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:48:28",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:48:28",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:48:29",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:48:29",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:48:30",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:48:31",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:48:43",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:48:43",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:48:50",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:48:50",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:48:50",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:48:56",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:48:56",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:48:57",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:03",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:49:04",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:04",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:18",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:49:19",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:20",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:20",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:21",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:22",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:22",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:22",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:24",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:49:29",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:45",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:54:45",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:46",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:46",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:47",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:54:47",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:47",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:47",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:48",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:54:48",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:49",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:49",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:49",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:54:50",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:50",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:50",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:51",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:54:51",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:52",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:54:52",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:55:11",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:55:12",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:55:13",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 15:55:13",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:55:14",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:55:15",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:55:15",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:55:16",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:55:17",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:55:20",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 15:56:03",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 15:56:29",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Fresh Orange (180p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:56:43",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 180p"
+  },
+  {
+    "timestamp": "2026-11-07 15:56:46",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Fresh Orange for 180p"
+  },
+  {
+    "timestamp": "2026-11-07 15:57:02",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Fresh Orange (180p)"
+  },
+  {
+    "timestamp": "2026-11-07 15:57:20",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 162p"
+  },
+  {
+    "timestamp": "2026-11-07 15:57:28",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 162p"
+  },
+  {
+    "timestamp": "2026-11-07 15:57:32",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Fresh Orange for 162p"
+  },
+  {
+    "timestamp": "2026-11-07 16:00:47",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:01:04",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:01:05",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:01:06",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:01:06",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:01:07",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:01:08",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:01:08",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:01:08",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:01:10",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:03",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:02:04",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:05",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:05",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:06",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:07",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:07",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:07",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:09",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:10",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:21",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:02:21",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:22",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:22",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:22",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:02:23",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:23",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:23",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:24",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:02:24",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:24",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:24",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:25",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:02:25",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:26",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:26",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:26",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:02:27",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:27",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:27",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:32",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:02:32",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:33",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:33",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:33",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:37",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:02:37",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:42",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:02:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:02:46",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:02:47",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 16:03:26",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:06:42",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:10:43",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:10:44",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:45",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:45",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:46",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:47",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:48",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:48",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:49",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:50",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:54",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:10:54",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:54",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:54",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:55",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:10:55",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:56",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:56",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:56",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:10:57",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:57",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:57",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:58",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:10:58",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:59",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:59",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:10:59",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:10:59",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:11:00",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:11:00",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 16:11:03",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:11:04",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:11:07",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:11:07",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:11:08",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 16:11:08",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 16:11:08",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 16:11:12",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:11:12",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:11:13",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 16:11:16",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:50:02",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 16:50:31",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 16:50:43",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 16:50:46",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:00:15",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:00:15",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:00:31",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:00:32",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:00:33",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:00:33",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:12",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:01:13",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:14",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:14",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:17",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:18",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:18",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:28",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:01:38",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:01:38",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:40",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:40",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:41",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:42",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:42",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:42",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:44",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:45",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state PAYMENT_PROCESSING"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:45",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:49",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:01:50",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:50",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:51",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:54",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:55",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:01:55",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:03",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:02:03",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:03",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:03",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:04",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:02:04",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:05",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:05",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:05",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:02:06",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:06",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:06",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:07",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:02:07",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:08",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:08",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:08",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:02:08",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:09",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:09",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:13",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:02:13",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:14",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:14",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:14",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:20",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:02:20",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:20",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 17:02:25",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:02:29",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:02:29",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:35:07",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:35:15",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:35:17",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:35:19",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:35:28",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:35:29",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:35:31",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:42:06",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:42:06",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:42:07",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:42:08",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:42:40",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:42:40",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:42:41",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:42:42",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:43:02",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:43:02",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:43:03",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:43:03",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:43:37",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:43:37",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:43:38",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:43:39",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:43:42",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:43:43",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:43:43",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:13",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:44:13",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:15",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:44:15",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:17",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:44:17",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:19",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:44:19",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:21",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:44:21",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:32",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:44:32",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:33",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:33",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:33",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:39",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:44:40",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:41",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:41",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:42",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:43",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:43",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:43",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:45",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:46",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:50",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:44:50",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:51",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 17:44:56",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:44:57",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:45:01",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:45:29",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:45:37",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:45:47",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:45:50",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:46:09",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Bottled Water (100p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:46:11",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 100p"
+  },
+  {
+    "timestamp": "2026-11-07 17:46:15",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Bottled Water for 100p"
+  },
+  {
+    "timestamp": "2026-11-07 17:46:28",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Hot Chocolate (200p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:46:34",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 200p"
+  },
+  {
+    "timestamp": "2026-11-07 17:46:38",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Hot Chocolate for 200p"
+  },
+  {
+    "timestamp": "2026-11-07 17:47:00",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Green Tea Latte (210p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:47:03",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 210p"
+  },
+  {
+    "timestamp": "2026-11-07 17:47:09",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Green Tea Latte for 210p"
+  },
+  {
+    "timestamp": "2026-11-07 17:47:22",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:47:26",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 17:47:26",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Espresso, Amount: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:56:53",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:56:53",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:56:57",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:57:01",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:57:01",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:03",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:57:03",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:04",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:57:05",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:06",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:57:06",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:08",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:57:08",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:19",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:57:20",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:21",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:21",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:36",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:57:37",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:38",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:38",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:42",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:43",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:57:43",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 17:58:38",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 17:59:12",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Lemon Iced Tea (170p)"
+  },
+  {
+    "timestamp": "2026-11-07 17:59:19",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 153p"
+  },
+  {
+    "timestamp": "2026-11-07 17:59:25",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 153p"
+  },
+  {
+    "timestamp": "2026-11-07 17:59:27",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Lemon Iced Tea for 153p"
+  },
+  {
+    "timestamp": "2026-11-07 18:01:22",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:01:28",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-07 18:01:40",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 135p"
+  },
+  {
+    "timestamp": "2026-11-07 18:02:06",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 135p"
+  },
+  {
+    "timestamp": "2026-11-07 18:02:48",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:02:50",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:12:43",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:12:43",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:12:56",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:12:56",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:12:56",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:13:18",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:13:18",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:13:19",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:13:47",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:13:48",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:13:48",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:13:55",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:13:56",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:13:56",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:13:57",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:14:01",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:14:01",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:14:02",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:14:26",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:14:26",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:14:26",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:15:00",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:15:00",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:15:01",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:15:27",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:15:27",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:15:28",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:15:28",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:15:50",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:15:50",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:15:51",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:15:51",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:00",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:16:00",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:02",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:16:02",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:04",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:16:04",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:06",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:16:06",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:08",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:16:08",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:17",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:16:17",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:18",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:19",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:32",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:16:33",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:34",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:34",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:35",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:37",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:37",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:37",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:38",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:39",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:44",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:16:44",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:16:50",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:43:21",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:43:27",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:43:30",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:43:38",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:44:24",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:44:34",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 18:44:40",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 18:44:44",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 198p"
+  },
+  {
+    "timestamp": "2026-11-07 18:47:27",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:52:14",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:52:14",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Lemon Iced Tea (170p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:32",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:52:32",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:33",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:33",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:35",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:36",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:36",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:36",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:37",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:38",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:52:47",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:47",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:52:48",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:53:41",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:53:42",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:53:42",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:53:43",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:16",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:55:17",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:17",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:18",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:22",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:22",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:23",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:34",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:55:35",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Lemon Iced Tea (170p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:38",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:55:39",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:40",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:40",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Caffe Latte, Amount: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:41",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:42",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:42",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:42",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:44",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:44",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 220p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:48",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:55:48",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:49",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CashReceiver, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:50",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:55",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:55:55",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:56",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:55:57",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-07 18:56:09",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:56:09",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:56:11",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:56:11",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:56:13",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:56:13",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:56:15",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:56:15",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:56:16",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:56:17",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:57:46",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-07 18:58:08",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Caffe Latte (220p)"
+  },
+  {
+    "timestamp": "2026-11-07 18:58:30",
+    "event": "LOYALTY_APPLIED",
+    "details": "Card '247480103B001' applied. New amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 18:58:44",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 198p"
+  },
+  {
+    "timestamp": "2026-11-07 18:58:48",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Caffe Latte for 198p"
+  }
+]

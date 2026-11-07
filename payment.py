@@ -150,7 +150,7 @@ class CashValidator:
     """
 
     # Default UK coin/note denominations accepted (in pence)
-    DEFAULT_DENOMINATIONS: List[int] = [1, 2, 5, 10, 20, 50, 100, 200]
+    DEFAULT_DENOMINATIONS: List[int] = [1, 2, 5, 10, 20, 50, 100, 200, 500]
 
     def __init__(self, valid_denominations: Optional[List[int]] = None):
         """
@@ -201,7 +201,29 @@ class ChangeDispenser:
         if coin_stock is not None:
             self._coin_stock: Dict[int, int] = coin_stock
         else:
-            self._coin_stock = {200: 5, 100: 10, 50: 10, 20: 20, 10: 20, 5: 30, 2: 50, 1: 100}
+            self._coin_stock = {200: 20, 100: 30, 50: 40, 20: 50, 10: 50, 5: 50, 2: 50, 1: 100}
+
+        self._last_dispensed_coins: Dict[int, int] = {}
+        self._last_dispensed_summary: str = ""
+
+    # ------------------------------------------------------------------
+    # Properties
+    # ------------------------------------------------------------------
+
+    @property
+    def coinStock(self) -> Dict[int, int]:
+        """Returns a copy of the current coin stock mapping {denomination: quantity}."""
+        return dict(self._coin_stock)
+
+    @property
+    def lastDispensedCoins(self) -> Dict[int, int]:
+        """Returns the breakdown of coins dispensed in the most recent transaction."""
+        return dict(self._last_dispensed_coins)
+
+    @property
+    def lastDispensedSummary(self) -> str:
+        """Returns human-readable summary of coins dispensed (e.g. '1x50p, 1x20p, 1x10p')."""
+        return self._last_dispensed_summary
 
     # ------------------------------------------------------------------
     # Public methods
@@ -241,6 +263,8 @@ class ChangeDispenser:
             for denom, qty in sorted(coins_to_use.items(), reverse=True)
             if qty > 0
         )
+        self._last_dispensed_coins = coins_to_use
+        self._last_dispensed_summary = dispensed_summary
         print(f"[ChangeDispenser] Dispensed {amount}p change: {dispensed_summary}.")
         return True
 
@@ -422,6 +446,26 @@ class CashReceiver(PaymentMethod):
         self._state = CashReceiverState.REFUNDING
         self.returnInsertedMoney()
         self._state = CashReceiverState.IDLE
+
+    # ------------------------------------------------------------------
+    # Properties
+    # ------------------------------------------------------------------
+
+    @property
+    def validator(self) -> CashValidator:
+        return self._validator
+
+    @property
+    def dispenser(self) -> ChangeDispenser:
+        return self._dispenser
+
+    @property
+    def lastDispensedSummary(self) -> str:
+        return getattr(self._dispenser, "lastDispensedSummary", "")
+
+    @property
+    def lastDispensedCoins(self) -> Dict[int, int]:
+        return getattr(self._dispenser, "lastDispensedCoins", {})
 
 
 # ---------------------------------------------------------------------------

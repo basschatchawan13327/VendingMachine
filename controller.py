@@ -52,6 +52,11 @@ def load_products(file_path: str = PRODUCTS_FILE) -> List[Drink]:
                     name=item["name"],
                     price=item["price"],
                     stock=item.get("stock", 10),
+                    slot_num=item.get("slot_num"),
+                    desc=item.get("desc", ""),
+                    icon_type=item.get("icon_type", "can"),
+                    category=item.get("category", "Drinks"),
+                    image=item.get("image"),
                 )
                 for item in data
             ]
@@ -71,15 +76,25 @@ def save_products(drinks: List[Drink], file_path: str = PRODUCTS_FILE) -> None:
     """
     _ensure_data_dir()
     try:
-        data = [
-            {
+        data = []
+        for d in drinks:
+            item = {
                 "drink_id": d.drink_id,
                 "name": d.name,
                 "price": d.price,
                 "stock": d.stock,
             }
-            for d in drinks
-        ]
+            if getattr(d, "slot_num", None):
+                item["slot_num"] = d.slot_num
+            if getattr(d, "category", None):
+                item["category"] = d.category
+            if getattr(d, "desc", None):
+                item["desc"] = d.desc
+            if getattr(d, "icon_type", None):
+                item["icon_type"] = d.icon_type
+            if getattr(d, "image", None):
+                item["image"] = d.image
+            data.append(item)
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         print(f"[Database] Saved {len(drinks)} products to {os.path.basename(file_path)}.")
