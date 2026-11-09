@@ -14,7 +14,7 @@
     "drink_id": "LATTE",
     "name": "Caffe Latte",
     "price": 220,
-    "stock": 9,
+    "stock": 10,
     "slot_num": "02",
     "category": "Coffee",
     "desc": "Silky steamed fresh milk with espresso",

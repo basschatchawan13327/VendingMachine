@@ -28,11 +28,12 @@ except Exception:
 
 # Safe PIL (Pillow) support
 try:
-    from PIL import Image, ImageTk  # type: ignore
+    from PIL import Image, ImageTk, ImageChops  # type: ignore
     HAS_PIL = True
 except Exception:
     Image = None  # type: ignore
     ImageTk = None  # type: ignore
+    ImageChops = None  # type: ignore
     HAS_PIL = False
 
 # Safe zxing-cpp for Code 128 linear barcode decoding
@@ -260,6 +261,39 @@ def draw_drink_artwork(canvas: tk.Canvas, icon_type: str, width: int = 140, heig
 # ===========================================================================
 # Photographic Product Image Renderer (With Vector Fallback)
 # ===========================================================================
+_TRIMMED_IMAGE_CACHE: Dict[str, Any] = {}
+
+
+def _trim_artwork_margins(im: Any) -> Any:
+    """Trims surrounding uniform white/transparent padding so product bottle/can fills the showcase frame."""
+    if not HAS_PIL or im is None:
+        return im
+    try:
+        if im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in getattr(im, "info", {})):
+            comp = Image.new("RGBA", im.size, (255, 255, 255, 255))
+            comp.paste(im, (0, 0), im)
+            rgb_comp = comp.convert("RGB")
+        else:
+            rgb_comp = im.convert("RGB")
+
+        if ImageChops is not None:
+            bg_rgb = Image.new("RGB", rgb_comp.size, (255, 255, 255))
+            diff = ImageChops.difference(rgb_comp, bg_rgb)
+            diff = ImageChops.add(diff, diff, 2.0, -10)
+            bbox = diff.getbbox()
+            if bbox:
+                w, h = im.size
+                pad = 4
+                x1 = max(0, bbox[0] - pad)
+                y1 = max(0, bbox[1] - pad)
+                x2 = min(w, bbox[2] + pad)
+                y2 = min(h, bbox[3] + pad)
+                return im.crop((x1, y1, x2, y2))
+    except Exception:
+        pass
+    return im
+
+
 def render_product_artwork(
     canvas: tk.Canvas,
     prod: Dict,
@@ -305,20 +339,23 @@ def render_product_artwork(
                         break
             if os.path.exists(file_path):
                 try:
-                    with Image.open(file_path) as im:
-                        im_copy = im.copy()
-                        max_w = max(10, width - 8)
-                        max_h = max(10, height - 8)
-                        im_copy.thumbnail((max_w, max_h), Image.Resampling.LANCZOS)
-                        if im_copy.mode in ("RGBA", "LA") or (im_copy.mode == "P" and "transparency" in im_copy.info):
-                            comp = Image.new("RGBA", im_copy.size, (255, 255, 255, 255))
-                            comp.paste(im_copy, (0, 0), im_copy)
-                            final_im = comp.convert("RGB")
-                        else:
-                            final_im = im_copy.convert("RGB")
-                        photo = ImageTk.PhotoImage(final_im)
-                        if photo_cache is not None:
-                            photo_cache[cache_key] = photo
+                    if file_path not in _TRIMMED_IMAGE_CACHE:
+                        with Image.open(file_path) as raw_im:
+                            _TRIMMED_IMAGE_CACHE[file_path] = _trim_artwork_margins(raw_im.copy())
+                    base_im = _TRIMMED_IMAGE_CACHE[file_path]
+                    im_copy = base_im.copy()
+                    max_w = max(10, width - 4)
+                    max_h = max(10, height - 4)
+                    im_copy.thumbnail((max_w, max_h), Image.Resampling.LANCZOS)
+                    if im_copy.mode in ("RGBA", "LA") or (im_copy.mode == "P" and "transparency" in im_copy.info):
+                        comp = Image.new("RGBA", im_copy.size, (255, 255, 255, 255))
+                        comp.paste(im_copy, (0, 0), im_copy)
+                        final_im = comp.convert("RGB")
+                    else:
+                        final_im = im_copy.convert("RGB")
+                    photo = ImageTk.PhotoImage(final_im)
+                    if photo_cache is not None:
+                        photo_cache[cache_key] = photo
                 except Exception as e:
                     print(f"[render_product_artwork] Failed to load image '{image_name}': {e}")
                     photo = None
@@ -990,7 +1027,7 @@ class CustomerVendingApp:
 
         # Top row: Slot Number Badge + Stock Pill
         top_row = tk.Frame(card, bg=BG_CARD)
-        top_row.pack(fill=tk.X, pady=(0, 2))
+        top_row.pack(side=tk.TOP, fill=tk.X, pady=(2, 3))
 
         # Prominent Product Number Badge (Button color: #BAEF2D)
         slot_badge = tk.Label(
@@ -1016,7 +1053,29 @@ class CustomerVendingApp:
         )
         stock_pill.pack(side=tk.RIGHT)
 
-        # Center Product Showcase Canvas (Photograph from assets/ with vector fallback)
+        # Price Display (Anchored at card bottom)
+        price_pounds = f"£{prod['price'] / 100:.2f}"
+        price_lbl = tk.Label(
+            card,
+            text=f"{price_pounds}  ({prod['price']}p)",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LIME if in_stock else CLR_LILAC,
+            bg=BG_CARD,
+        )
+        price_lbl.pack(side=tk.BOTTOM, pady=(0, 4))
+
+        # Product Name (Anchored right above price)
+        name_lbl = tk.Label(
+            card,
+            text=prod["name"],
+            font=("Helvetica", 12, "bold"),
+            fg=CLR_WHITE if in_stock else CLR_LILAC,
+            bg=BG_CARD,
+            anchor="center",
+        )
+        name_lbl.pack(side=tk.BOTTOM, fill=tk.X, pady=(2, 0))
+
+        # Center Product Showcase Canvas (Photograph from assets/ with responsive fill)
         canvas = tk.Canvas(
             card,
             width=140,
@@ -1025,7 +1084,7 @@ class CustomerVendingApp:
             highlightthickness=1,
             highlightbackground=CLR_LILAC,
         )
-        canvas.pack(pady=2)
+        canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=6, pady=3)
         render_product_artwork(
             canvas=canvas,
             prod=prod,
@@ -1036,27 +1095,47 @@ class CustomerVendingApp:
             fallback_bg=BG_CARD,
         )
 
-        # Product Name
-        name_lbl = tk.Label(
-            card,
-            text=prod["name"],
-            font=("Helvetica", 12, "bold"),
-            fg=CLR_WHITE if in_stock else CLR_LILAC,
-            bg=BG_CARD,
-            anchor="center",
-        )
-        name_lbl.pack(fill=tk.X, pady=(2, 0))
+        canvas._last_render_dims = (0, 0)
+        canvas._resize_after_id = None
 
-        # Price Display
-        price_pounds = f"£{prod['price'] / 100:.2f}"
-        price_lbl = tk.Label(
-            card,
-            text=f"{price_pounds}  ({prod['price']}p)",
-            font=("Helvetica", 11, "bold"),
-            fg=CLR_LIME if in_stock else CLR_LILAC,
-            bg=BG_CARD,
-        )
-        price_lbl.pack(pady=(0, 2))
+        def on_canvas_configure(event):
+            cw = event.width
+            ch = event.height
+            if cw < 20 or ch < 20:
+                return
+            last_w, last_h = getattr(canvas, "_last_render_dims", (0, 0))
+            if abs(cw - last_w) < 6 and abs(ch - last_h) < 6:
+                return
+
+            def do_render():
+                if not canvas.winfo_exists():
+                    return
+                act_w = canvas.winfo_width()
+                act_h = canvas.winfo_height()
+                if act_w < 20 or act_h < 20:
+                    return
+                canvas._last_render_dims = (act_w, act_h)
+                render_product_artwork(
+                    canvas=canvas,
+                    prod=prod,
+                    width=act_w,
+                    height=act_h,
+                    photo_cache=self._product_images,
+                    default_bg=CLR_WHITE,
+                    fallback_bg=BG_CARD,
+                )
+
+            if last_w == 0 and last_h == 0:
+                do_render()
+            else:
+                if getattr(canvas, "_resize_after_id", None):
+                    try:
+                        self.root.after_cancel(canvas._resize_after_id)
+                    except Exception:
+                        pass
+                canvas._resize_after_id = self.root.after(35, do_render)
+
+        canvas.bind("<Configure>", on_canvas_configure)
 
         # Clicking on display card reminds user to use keypad (Keypad-only control)
         def on_card_click(event=None):
@@ -1196,15 +1275,15 @@ class CustomerVendingApp:
         # Clear Button (Button color: #BAEF2D)
         self.clear_btn = tk.Button(
             parent,
-            text="🗑️ Clear Selection (Esc / C)",
-            font=("Helvetica", 10, "bold"),
+            text="🗑️ CLEAR SELECTION (Esc)",
+            font=("Helvetica", 12, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             activebackground=CLR_WHITE,
             activeforeground=BTN_FG,
             relief=tk.FLAT,
             bd=0,
-            pady=5,
+            pady=7,
             cursor="hand2",
             command=self._handle_clear,
         )
@@ -1296,7 +1375,7 @@ class CustomerVendingApp:
             self._handle_digit_input(digit)
         elif key in ("BackSpace", "Delete"):
             self._handle_backspace()
-        elif key in ("Escape", "c", "C"):
+        elif key == "Escape":
             self._handle_clear()
         elif key in ("Return", "KP_Enter"):
             # Animate confirm button on Enter keypress
@@ -1341,7 +1420,7 @@ class CustomerVendingApp:
             self._handle_clear()
 
     def _handle_clear(self) -> None:
-        """Clears slot selection back to default on Esc / C with button animation."""
+        """Clears slot selection back to default on Esc key with button animation."""
         self._dispense_banner_active = False
         if hasattr(self, "clear_btn") and self.clear_btn.winfo_exists():
             self.clear_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
