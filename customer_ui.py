@@ -15,8 +15,8 @@ import time
 import json
 import base64
 import tkinter as tk
-from tkinter import ttk, messagebox
-from typing import Dict, List, Optional, Tuple
+from tkinter import ttk
+from typing import Any, Dict, List, Optional, Tuple
 
 # Safe OpenCV (cv2) import with graceful error handling
 try:
