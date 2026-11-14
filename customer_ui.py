@@ -450,6 +450,9 @@ class CustomerVendingApp:
         # Build Page 3: Order Success & Dispense Confirmation
         self._build_page3_success()
 
+        # Build Page 4: Order Cancelled & Refund Confirmation
+        self._build_page_cancelled()
+
         # Bind Physical Keyboard Events (No on-screen keyboard)
         self._bind_keyboard_events()
 
@@ -689,6 +692,8 @@ class CustomerVendingApp:
             self.root.focus_set()
         elif target_page == "success":
             self._refresh_success_page()
+        elif target_page == "cancelled":
+            self._refresh_cancelled_page()
 
         if direction == "left":
             start_cur = 0.0
@@ -726,6 +731,10 @@ class CustomerVendingApp:
                     self.root.focus_force()
                     self.root.focus_set()
                     self._start_success_countdown()
+                elif target_page == "cancelled":
+                    self.root.focus_force()
+                    self.root.focus_set()
+                    self._start_cancelled_countdown()
                 return
 
             t = (step + 1) / steps
@@ -1363,6 +1372,16 @@ class CustomerVendingApp:
                 digit = char if (char in "0123456789" and len(char) == 1) else key.replace("KP_", "")
                 self._return_to_catalogue()
                 self._handle_digit_input(digit)
+                return
+            return
+
+        # Keypad Control on Page 4 (Order Cancelled & Refund Page)
+        if active_page == "cancelled":
+            if key in ("Return", "KP_Enter", "Escape", "space") or char in ("c", "C"):
+                if hasattr(self, "cancelled_home_btn") and self.cancelled_home_btn.winfo_exists():
+                    self.cancelled_home_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    self.root.after(120, lambda: self._safe_config(self.cancelled_home_btn, bg=BTN_BG, relief=tk.FLAT))
+                self.root.after(130, self._return_to_catalogue_from_cancelled)
                 return
             return
 
@@ -2781,7 +2800,10 @@ class CustomerVendingApp:
         tap_btn.focus_set()
 
     def _on_cancel_cash_dialog(self, dialog: tk.Toplevel) -> None:
-        """Handles cancellation of active cash payment."""
+        """Handles cancellation of active cash payment — navigate to cancelled/refund page."""
+        # Capture refund amount before cancel clears state
+        refunded = getattr(self.cash_receiver, "_total", 0)
+        self.last_cancelled_order = {"refunded": refunded}
         self.controller.cancel()
         try:
             if dialog.winfo_exists():
@@ -2793,6 +2815,7 @@ class CustomerVendingApp:
         self.root.focus_force()
         self.root.focus_set()
         self.root.after(50, lambda: (self.root.focus_force(), self.root.focus_set()))
+        self.transition_to_page("cancelled", direction="left")
 
     def _on_cancel_card_dialog(self, dialog: tk.Toplevel) -> None:
         """Handles cancellation of active card payment."""
@@ -2936,15 +2959,15 @@ class CustomerVendingApp:
             bg=BG_CARD,
         ).pack(anchor="center", pady=(0, 14))
 
-        # Live Countdown Label
+        # Countdown label (hidden — logic still runs for auto-return)
         self.success_countdown_lbl = tk.Label(
             card,
-            text="\u23f1\ufe0f Auto-returning to catalogue in 10s...",
-            font=("Menlo", 11, "bold"),
-            fg=CLR_LILAC,
+            text="",
+            font=("Menlo", 1),
+            fg=BG_CARD,
             bg=BG_CARD,
         )
-        self.success_countdown_lbl.pack(anchor="center", pady=(2, 8))
+        self.success_countdown_lbl.pack_forget()
 
         # Return Button
         self.return_home_btn = tk.Button(
@@ -3105,6 +3128,233 @@ class CustomerVendingApp:
         self.transition_to_page("catalogue", direction="right")
 
         # Re-assert keyboard focus after slide finishes
+        self.root.after(300, lambda: (self.root.focus_force(), self.root.focus_set()))
+
+    # =======================================================================
+    # Page 4: Order Cancelled & Refund Confirmation Screen
+    # =======================================================================
+    def _build_page_cancelled(self) -> None:
+        """Page 4: Shown when user cancels a cash payment mid-insertion."""
+        page = tk.Frame(self.container, bg=BG_APP)
+        self.pages["cancelled"] = page
+
+        # 1. Header (same style as Page 3)
+        self._build_cancelled_header(page)
+
+        # 2. Middle Area (Color #D883FF)
+        middle_area = tk.Frame(page, bg=BG_MIDDLE)
+        middle_area.pack(fill=tk.BOTH, expand=True)
+
+        center_wrap = tk.Frame(middle_area, bg=BG_MIDDLE)
+        center_wrap.pack(expand=True, fill=tk.BOTH, padx=20, pady=8)
+
+        # Center card box (Border: red)
+        card = tk.Frame(
+            center_wrap,
+            bg=BG_CARD,
+            padx=28,
+            pady=20,
+            highlightthickness=3,
+            highlightbackground="#FF4444",
+        )
+        card.pack(expand=True, fill=tk.Y, pady=4)
+
+        # Large Red Cross
+        tk.Label(
+            card,
+            text="\u2716",
+            font=("Helvetica", 90, "bold"),
+            fg="#FF4444",
+            bg=BG_CARD,
+        ).pack(anchor="center", pady=(0, 6))
+
+        # Order Cancelled title
+        tk.Label(
+            card,
+            text="Order Cancelled",
+            font=("Helvetica", 22, "bold"),
+            fg="#FF4444",
+            bg=BG_CARD,
+        ).pack(anchor="center", pady=(0, 6))
+
+        # Refund info (dynamic)
+        self.cancelled_refund_lbl = tk.Label(
+            card,
+            text="Refund: \u00a30.00",
+            font=("Helvetica", 16, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        )
+        self.cancelled_refund_lbl.pack(anchor="center", pady=(0, 4))
+
+        # Sub-instruction
+        tk.Label(
+            card,
+            text="Please collect your refund from the coin return slot.",
+            font=("Helvetica", 13),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+        ).pack(anchor="center", pady=(0, 14))
+
+        # Countdown label (hidden — logic still runs for auto-return)
+        self.cancelled_countdown_lbl = tk.Label(
+            card,
+            text="",
+            font=("Menlo", 1),
+            fg=BG_CARD,
+            bg=BG_CARD,
+        )
+        self.cancelled_countdown_lbl.pack_forget()
+
+        # Return Button
+        self.cancelled_home_btn = tk.Button(
+            card,
+            text="[ Enter ] Return to Catalogue (10s)",
+            font=("Helvetica", 13, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            padx=16,
+            pady=10,
+            cursor="hand2",
+            command=self._return_to_catalogue_from_cancelled,
+        )
+        self.cancelled_home_btn.pack(anchor="center", fill=tk.X, pady=(2, 0))
+        self._attach_button_animation(self.cancelled_home_btn)
+
+        # 3. Footer (same style as Page 3)
+        self._build_cancelled_footer(page)
+
+        # Keyboard binding — Enter or Esc returns to catalogue
+        page.bind("<Return>", lambda e: self._return_to_catalogue_from_cancelled())
+        page.bind("<Escape>", lambda e: self._return_to_catalogue_from_cancelled())
+        page.bind("<KP_Enter>", lambda e: self._return_to_catalogue_from_cancelled())
+
+    def _build_cancelled_header(self, parent: tk.Frame) -> None:
+        """Top banner for Page 4 (same layout as Page 3 header)."""
+        header = tk.Frame(parent, bg=BG_APP, height=60, padx=20)
+        header.pack(fill=tk.X)
+        header.pack_propagate(False)
+
+        brand_frame = tk.Frame(header, bg=BG_APP)
+        brand_frame.pack(side=tk.LEFT, fill=tk.Y)
+
+        logo_path = os.path.join(os.path.dirname(__file__), "assets", "edge_hill_logo.png")
+        if os.path.exists(logo_path) and hasattr(self, "header_logo"):
+            tk.Label(brand_frame, image=self.header_logo, bg=BG_APP).pack(side=tk.LEFT, pady=8)
+        else:
+            tk.Label(
+                brand_frame,
+                text="Edge Hill University",
+                font=("Georgia", 15, "bold"),
+                fg=CLR_WHITE,
+                bg=BG_APP,
+            ).pack(side=tk.LEFT, pady=14)
+
+        tk.Label(
+            header,
+            text="Campus Vending Machine",
+            font=("Helvetica", 10),
+            fg=CLR_LILAC,
+            bg=BG_APP,
+        ).pack(side=tk.LEFT, padx=12, pady=18)
+
+        tk.Label(
+            header,
+            text="ORDER CANCELLED",
+            font=("Helvetica", 9, "bold"),
+            fg=BTN_FG,
+            bg="#FF4444",
+            padx=10,
+            pady=3,
+        ).pack(side=tk.RIGHT, pady=14)
+
+    def _build_cancelled_footer(self, parent: tk.Frame) -> None:
+        """Bottom status bar for Page 4."""
+        footer = tk.Frame(parent, bg=BG_APP, height=40, padx=20)
+        footer.pack(fill=tk.X, side=tk.BOTTOM)
+        footer.pack_propagate(False)
+
+        tk.Label(
+            footer,
+            text="Tip: Press [ Enter ] or [ Esc ] on keypad to return immediately.",
+            font=("Helvetica", 10),
+            fg=CLR_WHITE,
+            bg=BG_APP,
+        ).pack(side=tk.LEFT, pady=10)
+
+        time_lbl = tk.Label(
+            footer,
+            text=time.strftime("%H:%M:%S"),
+            font=("Menlo", 10, "bold"),
+            fg=CLR_LIME,
+            bg=BG_APP,
+        )
+        time_lbl.pack(side=tk.RIGHT, pady=10)
+
+    def _refresh_cancelled_page(self) -> None:
+        """Updates refund amount label with the amount the user had inserted."""
+        info = getattr(self, "last_cancelled_order", {}) or {}
+        refunded = info.get("refunded", 0)
+        if hasattr(self, "cancelled_refund_lbl") and self.cancelled_refund_lbl.winfo_exists():
+            if refunded > 0:
+                self.cancelled_refund_lbl.config(
+                    text=f"Refund: \u00a3{refunded / 100:.2f} ({refunded}p)"
+                )
+            else:
+                self.cancelled_refund_lbl.config(text="No money inserted — no refund needed.")
+
+    def _start_cancelled_countdown(self) -> None:
+        """Starts a 10-second countdown then auto-returns to catalogue."""
+        if getattr(self, "_cancelled_countdown_after_id", None):
+            try:
+                self.root.after_cancel(self._cancelled_countdown_after_id)
+            except Exception:
+                pass
+            self._cancelled_countdown_after_id = None
+
+        if hasattr(self, "cancelled_home_btn") and self.cancelled_home_btn.winfo_exists():
+            self.cancelled_home_btn.config(text="[ Enter ] Return to Catalogue (10s)")
+
+        def tick(sec: int = 9) -> None:
+            if self.current_page != "cancelled":
+                return
+            if sec <= 0:
+                self._return_to_catalogue_from_cancelled()
+                return
+            if hasattr(self, "cancelled_home_btn") and self.cancelled_home_btn.winfo_exists():
+                self.cancelled_home_btn.config(text=f"[ Enter ] Return to Catalogue ({sec}s)")
+            self._cancelled_countdown_after_id = self.root.after(1000, lambda: tick(sec - 1))
+
+        self._cancelled_countdown_after_id = self.root.after(1000, lambda: tick(9))
+
+    def _cancel_cancelled_countdown(self) -> None:
+        """Cancels the auto-return countdown on the cancelled page."""
+        if getattr(self, "_cancelled_countdown_after_id", None):
+            try:
+                self.root.after_cancel(self._cancelled_countdown_after_id)
+            except Exception:
+                pass
+            self._cancelled_countdown_after_id = None
+
+    def _return_to_catalogue_from_cancelled(self) -> None:
+        """Returns to catalogue from the cancelled/refund page."""
+        self._cancel_cancelled_countdown()
+
+        # Reset selection state
+        self.entered_slot.set("--")
+        self.selected_product = None
+        self.scanned_member = None
+        if hasattr(self, "loyalty_scanner"):
+            self.loyalty_scanner._last_scanned = None
+        self._highlight_active_card(None)
+        self._update_preview(None)
+
+        self.root.focus_force()
+        self.root.focus_set()
+        self.root.after(50, lambda: (self.root.focus_force(), self.root.focus_set()))
+
+        self.transition_to_page("catalogue", direction="right")
         self.root.after(300, lambda: (self.root.focus_force(), self.root.focus_set()))
 
 
