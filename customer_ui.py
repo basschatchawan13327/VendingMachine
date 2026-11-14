@@ -894,11 +894,11 @@ class CustomerVendingApp:
 
         tk.Label(
             brand_frame,
-            text="• Campus Vending Barista",
-            font=("Helvetica", 11),
+            text="• Campus Vending Machine",
+            font=("Helvetica", 14, "bold"),
             fg=CLR_LILAC,
             bg=BG_APP,
-        ).pack(side=tk.LEFT, padx=14, pady=20)
+        ).pack(side=tk.LEFT, padx=14, pady=16)
 
         # Step Indicator Badge (Button style: #BAEF2D)
         step_badge = tk.Label(
@@ -1033,11 +1033,11 @@ class CustomerVendingApp:
         slot_badge = tk.Label(
             top_row,
             text=f"No. {prod['slot_num']}",
-            font=("Menlo", 11, "bold"),
+            font=("Menlo", 13, "bold"),
             fg=BTN_FG,
             bg=BTN_BG,
-            padx=6,
-            pady=1,
+            padx=8,
+            pady=2,
         )
         slot_badge.pack(side=tk.LEFT)
 
@@ -1047,7 +1047,7 @@ class CustomerVendingApp:
         stock_pill = tk.Label(
             top_row,
             text=stock_text,
-            font=("Helvetica", 10, "bold"),
+            font=("Helvetica", 11, "bold"),
             fg=stock_color,
             bg=BG_CARD,
         )
@@ -1058,7 +1058,7 @@ class CustomerVendingApp:
         price_lbl = tk.Label(
             card,
             text=f"{price_pounds}  ({prod['price']}p)",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 13, "bold"),
             fg=CLR_LIME if in_stock else CLR_LILAC,
             bg=BG_CARD,
         )
@@ -1068,7 +1068,7 @@ class CustomerVendingApp:
         name_lbl = tk.Label(
             card,
             text=prod["name"],
-            font=("Helvetica", 12, "bold"),
+            font=("Helvetica", 15, "bold"),
             fg=CLR_WHITE if in_stock else CLR_LILAC,
             bg=BG_CARD,
             anchor="center",
@@ -1556,6 +1556,9 @@ class CustomerVendingApp:
 
         self.controller.selectDrink(drink_id)
         self.selected_product = prod
+        self.scanned_member = None
+        if hasattr(self, "loyalty_scanner"):
+            self.loyalty_scanner._last_scanned = None
 
         # Trigger smooth slide to left transition to Page 2 (old page slides left until out of screen)
         self.transition_to_page("payment", direction="left")
@@ -1613,8 +1616,8 @@ class CustomerVendingApp:
         content_split = tk.Frame(middle_area, bg=BG_MIDDLE)
         content_split.pack(fill=tk.BOTH, expand=True, padx=20, pady=12)
 
-        # Left Column: Order Summary Card (Width: ~340px)
-        left_summary = tk.Frame(content_split, bg=BG_CARD, width=340, padx=16, pady=12)
+        # Left Column: Order Summary Card (Width: ~350px)
+        left_summary = tk.Frame(content_split, bg=BG_CARD, width=350, padx=16, pady=12)
         left_summary.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=(0, 14))
         left_summary.pack_propagate(False)
         self._build_order_summary_panel(left_summary)
@@ -1648,37 +1651,37 @@ class CustomerVendingApp:
             tk.Label(
                 brand_frame,
                 text="Edge Hill University",
-                font=("Georgia", 15, "bold"),
+                font=("Georgia", 16, "bold"),
                 fg=CLR_WHITE,
                 bg=BG_APP,
             ).pack(side=tk.LEFT, pady=14)
 
         tk.Label(
-            header,
-            text="Official Smart Drink Dispenser",
-            font=("Helvetica", 10),
+            brand_frame,
+            text="• Campus Vending Machine",
+            font=("Helvetica", 14, "bold"),
             fg=CLR_LILAC,
             bg=BG_APP,
-        ).pack(side=tk.LEFT, padx=12, pady=18)
+        ).pack(side=tk.LEFT, padx=14, pady=16)
 
         # Step Indicator Badge
         step_badge = tk.Label(
             header,
             text="STEP 2: PAYMENT & LOYALTY",
-            font=("Helvetica", 9, "bold"),
+            font=("Helvetica", 11, "bold"),
             fg=BTN_FG,
             bg=BTN_BG,
-            padx=10,
-            pady=3,
+            padx=12,
+            pady=4,
         )
-        step_badge.pack(side=tk.RIGHT, pady=14)
+        step_badge.pack(side=tk.RIGHT, pady=13)
 
     def _build_order_summary_panel(self, parent: tk.Frame) -> None:
         """Left panel on Page 2 detailing the selected beverage, discount, and total due."""
         tk.Label(
             parent,
             text="🛒 ORDER SUMMARY",
-            font=("Helvetica", 14, "bold"),
+            font=("Helvetica", 16, "bold"),
             fg=CLR_LIME,
             bg=BG_CARD,
         ).pack(anchor="w", pady=(0, 4))
@@ -1698,20 +1701,20 @@ class CustomerVendingApp:
         self.summary_name_lbl = tk.Label(
             parent,
             text="Selected Drink",
-            font=("Helvetica", 14, "bold"),
+            font=("Helvetica", 16, "bold"),
             fg=CLR_WHITE,
             bg=BG_CARD,
         )
-        self.summary_name_lbl.pack(fill=tk.X, pady=(1, 1))
+        self.summary_name_lbl.pack(fill=tk.X, pady=(2, 1))
 
         # Drink Description
         self.summary_desc_lbl = tk.Label(
             parent,
             text="",
-            font=("Helvetica", 10),
+            font=("Helvetica", 12),
             fg=CLR_LILAC,
             bg=BG_CARD,
-            wraplength=310,
+            wraplength=320,
             justify=tk.CENTER,
         )
         self.summary_desc_lbl.pack(fill=tk.X, pady=(0, 4))
@@ -1724,15 +1727,15 @@ class CustomerVendingApp:
         prices_frame.pack(fill=tk.X, pady=(0, 4))
 
         row1 = tk.Frame(prices_frame, bg=BG_CARD)
-        row1.pack(fill=tk.X, pady=1)
-        tk.Label(row1, text="Drink Regular Price:", font=("Helvetica", 10), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT)
-        self.summary_base_price_lbl = tk.Label(row1, text="£0.00", font=("Menlo", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD)
+        row1.pack(fill=tk.X, pady=2)
+        tk.Label(row1, text="Drink Regular Price:", font=("Helvetica", 12, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT)
+        self.summary_base_price_lbl = tk.Label(row1, text="£0.00", font=("Menlo", 13, "bold"), fg=CLR_WHITE, bg=BG_CARD)
         self.summary_base_price_lbl.pack(side=tk.RIGHT)
 
         row2 = tk.Frame(prices_frame, bg=BG_CARD)
-        row2.pack(fill=tk.X, pady=1)
-        tk.Label(row2, text="Membership Discount:", font=("Helvetica", 10), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT)
-        self.summary_discount_lbl = tk.Label(row2, text="£0.00", font=("Menlo", 11, "bold"), fg=CLR_LILAC, bg=BG_CARD)
+        row2.pack(fill=tk.X, pady=2)
+        tk.Label(row2, text="Membership Discount:", font=("Helvetica", 12, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT)
+        self.summary_discount_lbl = tk.Label(row2, text="£0.00", font=("Menlo", 13, "bold"), fg=CLR_LILAC, bg=BG_CARD)
         self.summary_discount_lbl.pack(side=tk.RIGHT)
 
         # Total Amount Due Screen Box
@@ -1749,7 +1752,7 @@ class CustomerVendingApp:
         tk.Label(
             screen_frame,
             text="TOTAL AMOUNT DUE",
-            font=("Helvetica", 9, "bold"),
+            font=("Helvetica", 11, "bold"),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
         ).pack(anchor="w")
@@ -1757,17 +1760,17 @@ class CustomerVendingApp:
         self.summary_total_lbl = tk.Label(
             screen_frame,
             text="£0.00",
-            font=("Menlo", 22, "bold"),
+            font=("Menlo", 26, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
         )
         self.summary_total_lbl.pack(anchor="e", pady=(2, 0))
 
-        # Back to catalogue button
+        # Back to catalogue button (at the very bottom)
         self.back_btn = tk.Button(
             parent,
             text="[ 4 ] ← Change Drink / Back (Esc)",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 13, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             relief=tk.FLAT,
@@ -1777,6 +1780,81 @@ class CustomerVendingApp:
         )
         self.back_btn.pack(side=tk.BOTTOM, fill=tk.X)
         self._attach_button_animation(self.back_btn)
+
+        # Member Information Box (In bottom-left area, right above back button)
+        self.member_info_box = tk.Frame(
+            parent,
+            bg=BG_SCREEN,
+            padx=10,
+            pady=8,
+            highlightbackground=CLR_LILAC,
+            highlightthickness=1,
+        )
+        self.member_info_box.pack(side=tk.BOTTOM, fill=tk.X, pady=(0, 10))
+
+        mem_hdr = tk.Frame(self.member_info_box, bg=BG_SCREEN)
+        mem_hdr.pack(fill=tk.X, pady=(0, 4))
+
+        tk.Label(
+            mem_hdr,
+            text="👤 MEMBER PROFILE",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LIME,
+            bg=BG_SCREEN,
+        ).pack(side=tk.LEFT)
+
+        self.summary_member_badge = tk.Label(
+            mem_hdr,
+            text="NOT SCANNED",
+            font=("Helvetica", 9, "bold"),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+            padx=6,
+            pady=1,
+        )
+        self.summary_member_badge.pack(side=tk.RIGHT)
+
+        mem_name_row = tk.Frame(self.member_info_box, bg=BG_SCREEN)
+        mem_name_row.pack(fill=tk.X, pady=2)
+
+        tk.Label(
+            mem_name_row,
+            text="Name:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+        ).pack(side=tk.LEFT)
+
+        self.summary_member_name_lbl = tk.Label(
+            mem_name_row,
+            text="No Card Scanned",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LILAC,
+            bg=BG_SCREEN,
+            anchor="e",
+        )
+        self.summary_member_name_lbl.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+
+        mem_card_row = tk.Frame(self.member_info_box, bg=BG_SCREEN)
+        mem_card_row.pack(fill=tk.X, pady=2)
+
+        tk.Label(
+            mem_card_row,
+            text="Card ID:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+        ).pack(side=tk.LEFT)
+
+        self.summary_member_card_lbl = tk.Label(
+            mem_card_row,
+            text="------",
+            font=("Menlo", 11, "bold"),
+            fg=CLR_LILAC,
+            bg=BG_SCREEN,
+            anchor="e",
+        )
+        self.summary_member_card_lbl.pack(side=tk.RIGHT, fill=tk.X, expand=True)
 
     def _build_payment_options_panel(self, parent: tk.Frame) -> None:
         """Right panel on Page 2 with Loyalty Card scan and Cash / Card payment choices."""
@@ -1797,7 +1875,7 @@ class CustomerVendingApp:
         tk.Label(
             hdr_row,
             text="⭐ EDGE HILL LOYALTY CLUB",
-            font=("Helvetica", 14, "bold"),
+            font=("Helvetica", 16, "bold"),
             fg=CLR_LIME,
             bg=BG_CARD,
         ).pack(side=tk.LEFT)
@@ -1805,7 +1883,7 @@ class CustomerVendingApp:
         discount_badge = tk.Label(
             hdr_row,
             text="10% OFF DISCOUNT",
-            font=("Helvetica", 10, "bold"),
+            font=("Helvetica", 12, "bold"),
             fg=BTN_FG,
             bg=BTN_BG,
             padx=8,
@@ -1816,7 +1894,7 @@ class CustomerVendingApp:
         tk.Label(
             loyalty_card,
             text="Scan your Edge Hill University membership or student card to apply an instant 10% discount.",
-            font=("Helvetica", 11),
+            font=("Helvetica", 13),
             fg=CLR_WHITE,
             bg=BG_CARD,
             wraplength=480,
@@ -1830,7 +1908,7 @@ class CustomerVendingApp:
         self.loyalty_status_lbl = tk.Label(
             status_box,
             text="💳 Status: No Membership Card Scanned",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 13, "bold"),
             fg=CLR_LILAC,
             bg=BG_SCREEN,
         )
@@ -1840,7 +1918,7 @@ class CustomerVendingApp:
         self.scan_loyalty_btn = tk.Button(
             loyalty_card,
             text="[ 1 ] 📷 Scan Member Card",
-            font=("Helvetica", 12, "bold"),
+            font=("Helvetica", 14, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             relief=tk.FLAT,
@@ -1868,7 +1946,7 @@ class CustomerVendingApp:
         tk.Label(
             pay_hdr,
             text="💳 SELECT PAYMENT METHOD",
-            font=("Helvetica", 14, "bold"),
+            font=("Helvetica", 16, "bold"),
             fg=CLR_LIME,
             bg=BG_CARD,
         ).pack(side=tk.LEFT)
@@ -1876,7 +1954,7 @@ class CustomerVendingApp:
         tk.Label(
             pay_card,
             text="Choose your preferred payment method below to complete your purchase:",
-            font=("Helvetica", 11),
+            font=("Helvetica", 13),
             fg=CLR_WHITE,
             bg=BG_CARD,
         ).pack(anchor="w", pady=(0, 8))
@@ -1894,7 +1972,7 @@ class CustomerVendingApp:
         self.cash_btn = tk.Button(
             cash_box,
             text="[ 2 ] 💵 PAY WITH CASH",
-            font=("Helvetica", 14, "bold"),
+            font=("Helvetica", 16, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             relief=tk.FLAT,
@@ -1907,7 +1985,7 @@ class CustomerVendingApp:
         tk.Label(
             cash_box,
             text="Accepts £2, £1, 50p, 20p, 10p & notes\nAutomatic change return",
-            font=("Helvetica", 10),
+            font=("Helvetica", 12),
             fg=CLR_LILAC,
             bg=BG_CARD,
             justify=tk.CENTER,
@@ -1920,7 +1998,7 @@ class CustomerVendingApp:
         self.card_btn = tk.Button(
             card_box,
             text="[ 3 ] 💳 PAY WITH CARD",
-            font=("Helvetica", 14, "bold"),
+            font=("Helvetica", 16, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             relief=tk.FLAT,
@@ -1933,7 +2011,7 @@ class CustomerVendingApp:
         tk.Label(
             card_box,
             text="Contactless, Chip & PIN, Apple Pay\n& Google Wallet supported",
-            font=("Helvetica", 10),
+            font=("Helvetica", 12),
             fg=CLR_LILAC,
             bg=BG_CARD,
             justify=tk.CENTER,
@@ -1948,7 +2026,7 @@ class CustomerVendingApp:
         tk.Label(
             footer,
             text="🔒 256-Bit Bank Encrypted Payment Processing • Fast & Contactless",
-            font=("Helvetica", 11),
+            font=("Helvetica", 12, "bold"),
             fg=CLR_LILAC,
             bg=BG_APP,
         ).pack(side=tk.LEFT, pady=10)
@@ -1956,7 +2034,7 @@ class CustomerVendingApp:
         tk.Label(
             footer,
             text="Press keypad 1, 2, 3 or Esc / 4 to control payment terminal",
-            font=("Helvetica", 11),
+            font=("Helvetica", 12, "bold"),
             fg=CLR_WHITE,
             bg=BG_APP,
         ).pack(side=tk.RIGHT, pady=10)
@@ -1990,7 +2068,7 @@ class CustomerVendingApp:
         if hasattr(self, "summary_base_price_lbl"):
             self.summary_base_price_lbl.config(text=f"£{base_pence / 100:.2f} ({base_pence}p)")
 
-        # 4. Check Loyalty Discount
+        # 4. Check Loyalty Discount & Member Profile
         if self.controller.loyaltyApplied:
             amount_due = self.controller.amountDue
             discount_pence = base_pence - amount_due
@@ -1998,12 +2076,41 @@ class CustomerVendingApp:
             discount_color = CLR_LIME
             status_text = "🎉 Verified Member • 10% Discount Active"
             status_color = CLR_LIME
+
+            account = getattr(self.loyalty_scanner, "_last_scanned", None)
+            if account:
+                member_name = getattr(account, "member_name", "Verified Member")
+                card_id = getattr(account, "card_id", "------")
+            elif hasattr(self, "scanned_member") and self.scanned_member:
+                member_name = self.scanned_member.get("name", "Verified Member")
+                card_id = self.scanned_member.get("card_id", "------")
+            else:
+                member_name = "Verified Member"
+                card_id = "------"
+
+            if hasattr(self, "summary_member_name_lbl"):
+                self.summary_member_name_lbl.config(text=member_name, fg=CLR_LIME)
+            if hasattr(self, "summary_member_card_lbl"):
+                self.summary_member_card_lbl.config(text=card_id, fg=CLR_LIME)
+            if hasattr(self, "summary_member_badge"):
+                self.summary_member_badge.config(text="VERIFIED", fg=BTN_FG, bg=CLR_LIME)
+            if hasattr(self, "member_info_box"):
+                self.member_info_box.config(highlightbackground=CLR_LIME, highlightthickness=2)
         else:
             amount_due = base_pence
             discount_text = "£0.00 (No Card Scanned)"
             discount_color = CLR_LILAC
             status_text = "💳 Status: No Membership Card Scanned"
             status_color = CLR_LILAC
+
+            if hasattr(self, "summary_member_name_lbl"):
+                self.summary_member_name_lbl.config(text="No Card Scanned", fg=CLR_LILAC)
+            if hasattr(self, "summary_member_card_lbl"):
+                self.summary_member_card_lbl.config(text="------", fg=CLR_LILAC)
+            if hasattr(self, "summary_member_badge"):
+                self.summary_member_badge.config(text="NOT SCANNED", fg=CLR_LILAC, bg=BG_CARD)
+            if hasattr(self, "member_info_box"):
+                self.member_info_box.config(highlightbackground=CLR_LILAC, highlightthickness=1)
 
         if hasattr(self, "summary_discount_lbl"):
             self.summary_discount_lbl.config(text=discount_text, fg=discount_color)
@@ -2017,6 +2124,9 @@ class CustomerVendingApp:
     def _on_cancel_payment(self) -> None:
         """Cancels payment and slides back to catalogue with reverse motion."""
         self.controller.cancel()
+        if hasattr(self, "loyalty_scanner"):
+            self.loyalty_scanner._last_scanned = None
+        self.scanned_member = None
         self.entered_slot.set("--")
         self.selected_product = None
         self._highlight_active_card(None)
@@ -2030,7 +2140,7 @@ class CustomerVendingApp:
     def _open_loyalty_scan_dialog(self) -> None:
         """
         Opens a modal dialog to scan Code 128 linear barcodes using camera,
-        or allows typing member card ID manually (strictly no combobox / member list).
+        with a Cancel button to dismiss.
         """
         if self.controller.loyaltyApplied:
             if hasattr(self, "loyalty_status_lbl") and self.loyalty_status_lbl.winfo_exists():
@@ -2042,7 +2152,7 @@ class CustomerVendingApp:
         dialog.title("Scan Member Card (Code 128)")
         dw, dh = 580, 480
         dialog.geometry(f"{dw}x{dh}")
-        dialog.minsize(520, 440)
+        dialog.minsize(520, 460)
         dialog.configure(bg=BG_APP)
         dialog.transient(self.root)
         dialog.grab_set()
@@ -2066,7 +2176,7 @@ class CustomerVendingApp:
 
         sub_hdr_lbl = tk.Label(
             dlg_hdr,
-            text="Scan Code 128 Barcode with Camera or Enter Member ID Manually",
+            text="Scan Code 128 Barcode with Camera",
             font=("Helvetica", 10),
             fg=CLR_LILAC,
             bg=BG_APP,
@@ -2087,7 +2197,7 @@ class CustomerVendingApp:
         }
 
         camera_frame = tk.Frame(content_card, bg=BG_CARD)
-        manual_frame = tk.Frame(content_card, bg=BG_CARD)
+        camera_frame.pack(fill=tk.BOTH, expand=True)
 
         def cleanup_camera():
             scanner_state["running"] = False
@@ -2118,8 +2228,14 @@ class CustomerVendingApp:
 
         dialog.protocol("WM_DELETE_WINDOW", on_close_dialog)
 
+        def on_loyalty_dlg_key(event: tk.Event):
+            if event.keysym in ("Escape", "BackSpace") or event.char in ("4",):
+                on_close_dialog()
+
+        dialog.bind("<Key>", on_loyalty_dlg_key)
+
         # -------------------------------------------------------------
-        # 1. CAMERA SCANNER VIEW (Default)
+        # CAMERA SCANNER VIEW
         # -------------------------------------------------------------
         tk.Label(
             camera_frame,
@@ -2144,171 +2260,27 @@ class CustomerVendingApp:
         cam_btn_row = tk.Frame(camera_frame, bg=BG_CARD)
         cam_btn_row.pack(fill=tk.X, pady=(2, 0))
 
-        type_btn = tk.Button(
-            cam_btn_row,
-            text="[ 1 ] ⌨️ Type Member ID Manually",
-            font=("Helvetica", 11, "bold"),
-            bg=BTN_BG,
-            fg=BTN_FG,
-            relief=tk.FLAT,
-            padx=12,
-            pady=8,
-            cursor="hand2",
-            command=lambda: switch_to_manual(clear_msg=True),
-        )
-        type_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 6))
-        self._attach_button_animation(type_btn)
-
         cam_cancel_btn = tk.Button(
             cam_btn_row,
             text="[ Esc ] Cancel",
-            font=("Helvetica", 11),
-            bg=CLR_DARK_GREEN,
-            fg=CLR_WHITE,
-            relief=tk.FLAT,
-            padx=12,
-            pady=8,
-            cursor="hand2",
-            command=on_close_dialog,
-        )
-        cam_cancel_btn.pack(side=tk.RIGHT)
-        self._attach_button_animation(
-            cam_cancel_btn,
-            normal_bg=CLR_DARK_GREEN,
-            normal_fg=CLR_WHITE,
-            hover_bg=CLR_WHITE,
-            hover_fg=CLR_DEEP_PURPLE,
-        )
-
-        # -------------------------------------------------------------
-        # 2. MANUAL ENTRY VIEW (Alternative / Fallback)
-        # -------------------------------------------------------------
-        tk.Label(
-            manual_frame,
-            text="⌨️ ENTER MEMBER CARD ID MANUALLY",
-            font=("Helvetica", 13, "bold"),
-            fg=CLR_LIME,
-            bg=BG_CARD,
-        ).pack(anchor="w", pady=(0, 4))
-
-        tk.Label(
-            manual_frame,
-            text="Type your student or staff membership card ID:",
-            font=("Helvetica", 10),
-            fg=CLR_WHITE,
-            bg=BG_CARD,
-        ).pack(anchor="w", pady=(0, 10))
-
-        # Clean text entry — strictly no combobox and no member list!
-        entry_box = tk.Frame(manual_frame, bg=BG_SCREEN, padx=10, pady=8, relief=tk.SUNKEN, bd=2)
-        entry_box.pack(fill=tk.X, pady=(0, 10))
-
-        card_id_entry = tk.Entry(
-            entry_box,
-            font=("Menlo", 15, "bold"),
-            bg=BG_SCREEN,
-            fg=CLR_LIME,
-            insertbackground=CLR_LIME,
-            relief=tk.FLAT,
-            bd=0,
-        )
-        card_id_entry.pack(fill=tk.X)
-
-        manual_status_lbl = tk.Label(
-            manual_frame,
-            text="",
-            font=("Helvetica", 10, "bold"),
-            fg=CLR_LIME,
-            bg=BG_CARD,
-        )
-        manual_status_lbl.pack(pady=(0, 8))
-
-        manual_btn_row = tk.Frame(manual_frame, bg=BG_CARD)
-        manual_btn_row.pack(fill=tk.X, pady=(4, 0))
-
-        def apply_manual_card():
-            raw_id = card_id_entry.get().strip()
-            if not raw_id:
-                manual_status_lbl.config(text="⚠️ Please enter your Member Card ID", fg=CLR_LILAC)
-                return
-
-            success = self.controller.scanLoyalty(raw_id)
-            if success:
-                manual_status_lbl.config(text="✅ Card Verified! 10% Discount Applied!", fg=CLR_LIME)
-                self._refresh_payment_page()
-                dialog.after(700, on_close_dialog)
-            else:
-                manual_status_lbl.config(text=f"❌ Member Card '{raw_id}' is Invalid or Inactive", fg=CLR_LILAC)
-
-        apply_btn = tk.Button(
-            manual_btn_row,
-            text="[ Enter ] ✓ Apply Member Discount",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 12, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
+            activebackground=BTN_BG,
+            activeforeground=BTN_FG,
             relief=tk.FLAT,
-            padx=12,
-            pady=8,
-            cursor="hand2",
-            command=apply_manual_card,
-        )
-        apply_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 6))
-        self._attach_button_animation(apply_btn)
-
-        card_id_entry.bind("<Return>", lambda e: apply_manual_card())
-        card_id_entry.bind("<KP_Enter>", lambda e: apply_manual_card())
-
-        def on_loyalty_dlg_key(event: tk.Event):
-            k = event.keysym
-            ch = event.char
-            if k == "Escape":
-                on_close_dialog()
-            elif camera_frame.winfo_ismapped():
-                if ch == "1" or k in ("KP_1", "1", "Return", "KP_Enter"):
-                    switch_to_manual(clear_msg=True)
-
-        dialog.bind("<Key>", on_loyalty_dlg_key)
-
-        switch_cam_btn = tk.Button(
-            manual_btn_row,
-            text="[ 2 ] 📷 Camera Scanner",
-            font=("Helvetica", 11),
-            bg=CLR_DARK_GREEN,
-            fg=CLR_WHITE,
-            relief=tk.FLAT,
-            padx=10,
-            pady=8,
-            cursor="hand2",
-            command=lambda: switch_to_camera(),
-        )
-        switch_cam_btn.pack(side=tk.LEFT, padx=(0, 6))
-        self._attach_button_animation(
-            switch_cam_btn,
-            normal_bg=CLR_DARK_GREEN,
-            normal_fg=CLR_WHITE,
-            hover_bg=CLR_WHITE,
-            hover_fg=CLR_DEEP_PURPLE,
-        )
-
-        manual_cancel_btn = tk.Button(
-            manual_btn_row,
-            text="[ Esc ] Cancel",
-            font=("Helvetica", 11),
-            bg=CLR_DARK_GREEN,
-            fg=CLR_WHITE,
-            relief=tk.FLAT,
-            padx=12,
+            padx=16,
             pady=8,
             cursor="hand2",
             command=on_close_dialog,
         )
-        manual_cancel_btn.pack(side=tk.RIGHT)
+        cam_cancel_btn.pack(fill=tk.X)
         self._attach_button_animation(
-            manual_cancel_btn,
-            normal_bg=CLR_DARK_GREEN,
-            normal_fg=CLR_WHITE,
+            cam_cancel_btn,
+            normal_bg=BTN_BG,
+            normal_fg=BTN_FG,
             hover_bg=CLR_WHITE,
-            hover_fg=CLR_DEEP_PURPLE,
+            hover_fg=BTN_FG,
         )
 
         # -------------------------------------------------------------
@@ -2380,6 +2352,12 @@ class CustomerVendingApp:
                     )
                     success = self.controller.scanLoyalty(detected_card_id)
                     if success:
+                        account = getattr(self.loyalty_scanner, "_last_scanned", None)
+                        if account:
+                            self.scanned_member = {
+                                "name": getattr(account, "member_name", "Verified Member"),
+                                "card_id": getattr(account, "card_id", detected_card_id),
+                            }
                         cam_status_lbl.config(
                             text="🎉 Card Verified! 10% Discount Applied!",
                             fg=CLR_LIME,
@@ -2391,7 +2369,14 @@ class CustomerVendingApp:
                             text=f"❌ Card '{detected_card_id}' is invalid or inactive.",
                             fg=CLR_LILAC,
                         )
-                        dialog.after(1400, lambda: switch_to_manual(prefill=detected_card_id))
+                        def resume_camera_scan():
+                            if dialog.winfo_exists():
+                                cam_status_lbl.config(
+                                    text="🔍 Point your Code 128 card barcode towards the camera...",
+                                    fg=CLR_LILAC,
+                                )
+                                start_camera()
+                        dialog.after(2000, resume_camera_scan)
                     return
 
                 # 4. Render to UI
@@ -2417,9 +2402,7 @@ class CustomerVendingApp:
             if scanner_state["running"] and dialog.winfo_exists():
                 scanner_state["after_id"] = dialog.after(30, update_camera_stream)
 
-        def switch_to_camera():
-            manual_frame.pack_forget()
-            camera_frame.pack(fill=tk.BOTH, expand=True)
+        def start_camera():
             sub_hdr_lbl.config(text="Live Camera Active • Point Code 128 barcode at camera")
             cam_status_lbl.config(
                 text="🔍 Point your Code 128 card barcode towards the camera...",
@@ -2427,39 +2410,34 @@ class CustomerVendingApp:
             )
 
             if not HAS_CV2 or cv2 is None:
-                switch_to_manual(notice="⚠️ OpenCV unavailable. Please enter Member ID manually:")
+                cam_status_lbl.config(
+                    text="⚠️ OpenCV unavailable. Camera barcode scanning is disabled.",
+                    fg=CLR_LILAC,
+                )
                 return
 
             try:
                 scanner_state["cap"] = cv2.VideoCapture(0)
                 if not scanner_state["cap"].isOpened():
                     scanner_state["cap"] = None
-                    switch_to_manual(notice="📷 Camera device unavailable. Please enter Member ID manually:")
+                    cam_status_lbl.config(
+                        text="⚠️ Camera device unavailable or disconnected.",
+                        fg=CLR_LILAC,
+                    )
                     return
             except Exception:
                 scanner_state["cap"] = None
-                switch_to_manual(notice="📷 Camera device unavailable. Please enter Member ID manually:")
+                cam_status_lbl.config(
+                    text="⚠️ Camera device unavailable or disconnected.",
+                    fg=CLR_LILAC,
+                )
                 return
 
             scanner_state["running"] = True
             update_camera_stream()
 
-        def switch_to_manual(notice: Optional[str] = None, prefill: str = "", clear_msg: bool = False):
-            cleanup_camera()
-            camera_frame.pack_forget()
-            manual_frame.pack(fill=tk.BOTH, expand=True)
-            sub_hdr_lbl.config(text="Manual Member Card Entry • Type Card ID and Apply")
-            if prefill:
-                card_id_entry.delete(0, tk.END)
-                card_id_entry.insert(0, prefill)
-            if notice:
-                manual_status_lbl.config(text=notice, fg=CLR_LIME)
-            elif clear_msg:
-                manual_status_lbl.config(text="")
-            card_id_entry.focus_set()
-
-        # Start directly with camera scanner (falls back cleanly to manual if no webcam)
-        switch_to_camera()
+        # Start camera scanner directly
+        start_camera()
 
     def _on_choose_cash(self) -> None:
         """Handles Cash payment selection and opens cash insertion dialog."""
@@ -2629,16 +2607,19 @@ class CustomerVendingApp:
         cancel_btn = tk.Button(
             body,
             text="[ Esc ] Cancel Cash Payment",
-            font=("Helvetica", 10),
-            bg=CLR_DARK_GREEN,
-            fg=CLR_WHITE,
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            activebackground=BTN_BG,
+            activeforeground=BTN_FG,
             relief=tk.FLAT,
             padx=12,
-            pady=6,
+            pady=7,
+            cursor="hand2",
             command=lambda: self._on_cancel_cash_dialog(dialog),
         )
         cancel_btn.pack(side=tk.BOTTOM, fill=tk.X)
-        self._attach_button_animation(cancel_btn, normal_bg=CLR_DARK_GREEN, normal_fg=CLR_WHITE, hover_bg=CLR_WHITE, hover_fg=CLR_DEEP_PURPLE)
+        self._attach_button_animation(cancel_btn)
 
         def on_cash_key(event: tk.Event):
             k = event.keysym
@@ -2771,16 +2752,19 @@ class CustomerVendingApp:
         cancel_btn = tk.Button(
             body,
             text="[ Esc ] Cancel Card Transaction",
-            font=("Helvetica", 11),
-            bg=CLR_DARK_GREEN,
-            fg=CLR_WHITE,
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            activebackground=BTN_BG,
+            activeforeground=BTN_FG,
             relief=tk.FLAT,
             padx=12,
-            pady=6,
+            pady=7,
+            cursor="hand2",
             command=lambda: self._on_cancel_card_dialog(dialog),
         )
         cancel_btn.pack(side=tk.BOTTOM, fill=tk.X)
-        self._attach_button_animation(cancel_btn, normal_bg=CLR_DARK_GREEN, normal_fg=CLR_WHITE, hover_bg=CLR_WHITE, hover_fg=CLR_DEEP_PURPLE)
+        self._attach_button_animation(cancel_btn)
 
         def on_card_key(event: tk.Event):
             k = event.keysym
@@ -2907,105 +2891,71 @@ class CustomerVendingApp:
         # 1. Header (Color #3A0C51)
         self._build_success_header(page)
 
-        # 2. Middle Celebratory Area (Color #D883FF)
+        # 2. Middle Area (Color #D883FF)
         middle_area = tk.Frame(page, bg=BG_MIDDLE)
         middle_area.pack(fill=tk.BOTH, expand=True)
 
         center_wrap = tk.Frame(middle_area, bg=BG_MIDDLE)
         center_wrap.pack(expand=True, fill=tk.BOTH, padx=20, pady=8)
 
-        # Center celebratory card box (Background: #FFFFFF, Border: #BAEF2D)
+        # Center card box (Border: #BAEF2D)
         card = tk.Frame(
             center_wrap,
             bg=BG_CARD,
             padx=28,
-            pady=14,
+            pady=20,
             highlightthickness=3,
             highlightbackground=CLR_LIME,
         )
         card.pack(expand=True, fill=tk.Y, pady=4)
 
-        # Celebration Header
+        # Large Green Checkmark
         tk.Label(
             card,
-            text="🎉 ORDER DISPENSED SUCCESSFULLY!",
-            font=("Helvetica", 16, "bold"),
-            fg=CLR_DEEP_PURPLE,
-            bg=BG_CARD,
-        ).pack(anchor="center", pady=(0, 4))
-
-        # Product Artwork / Photo Canvas
-        self.success_canvas = tk.Canvas(
-            card,
-            width=180,
-            height=110,
-            bg=BG_SCREEN,
-            highlightthickness=2,
-            highlightbackground=CLR_LILAC,
-        )
-        self.success_canvas.pack(anchor="center", pady=4)
-
-        # Drink Name Label
-        self.success_drink_name_lbl = tk.Label(
-            card,
-            text="Your Beverage",
-            font=("Helvetica", 15, "bold"),
-            fg=CLR_DEEP_PURPLE,
-            bg=BG_CARD,
-        )
-        self.success_drink_name_lbl.pack(anchor="center", pady=(2, 3))
-
-        # Info Box (Paid & Method)
-        info_row = tk.Frame(card, bg=BG_SCREEN, padx=14, pady=5, highlightthickness=1, highlightbackground=CLR_LILAC)
-        info_row.pack(fill=tk.X, pady=(2, 6))
-
-        self.success_paid_lbl = tk.Label(
-            info_row,
-            text="Total Paid: £0.00",
-            font=("Helvetica", 11, "bold"),
+            text="\u2714",
+            font=("Helvetica", 90, "bold"),
             fg=CLR_LIME,
-            bg=BG_SCREEN,
-        )
-        self.success_paid_lbl.pack(side=tk.LEFT, padx=6)
+            bg=BG_CARD,
+        ).pack(anchor="center", pady=(0, 6))
 
-        self.success_method_lbl = tk.Label(
-            info_row,
-            text="Method: Cash Receiver",
-            font=("Helvetica", 11),
-            fg=CLR_WHITE,
-            bg=BG_SCREEN,
-        )
-        self.success_method_lbl.pack(side=tk.RIGHT, padx=6)
-
-        # Tray Collection Instruction
+        # Payment Successful title
         tk.Label(
             card,
-            text="⬇️ Please take your cup/can from the dispenser compartment below ⬇️",
-            font=("Helvetica", 11, "bold"),
-            fg=CLR_DARK_GREEN,
+            text="Payment Successful",
+            font=("Helvetica", 22, "bold"),
+            fg=CLR_LIME,
             bg=BG_CARD,
-        ).pack(anchor="center", pady=(3, 5))
+        ).pack(anchor="center", pady=(0, 6))
+
+        # Collection instruction
+        tk.Label(
+            card,
+            text="Please collect your item from the slot below.",
+            font=("Helvetica", 14),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+        ).pack(anchor="center", pady=(0, 14))
 
         # Live Countdown Label
         self.success_countdown_lbl = tk.Label(
             card,
-            text="⏱️ Auto-returning to catalogue in 10s...",
-            font=("Menlo", 12, "bold"),
-            fg=CLR_DEEP_PURPLE,
+            text="\u23f1\ufe0f Auto-returning to catalogue in 10s...",
+            font=("Menlo", 11, "bold"),
+            fg=CLR_LILAC,
             bg=BG_CARD,
         )
-        self.success_countdown_lbl.pack(anchor="center", pady=(2, 4))
+        self.success_countdown_lbl.pack(anchor="center", pady=(2, 8))
 
         # Return Button
         self.return_home_btn = tk.Button(
             card,
             text="[ Enter ] Return to Catalogue (10s)",
-            font=("Helvetica", 12, "bold"),
+            font=("Helvetica", 13, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             relief=tk.FLAT,
             padx=16,
-            pady=8,
+            pady=10,
             cursor="hand2",
             command=self._return_to_catalogue,
         )
@@ -3086,40 +3036,10 @@ class CustomerVendingApp:
         time_lbl.pack(side=tk.RIGHT, pady=10)
 
     def _refresh_success_page(self) -> None:
-        """Populates the success page widgets with details of the dispensed beverage."""
-        info = getattr(self, "last_completed_order", None) or {}
-        drink_name = info.get("name", "Your Beverage")
-        slot_num = info.get("slot_num", "--")
-        price = info.get("price", 0)
-        method = info.get("method", "Payment Terminal")
-        loyalty = info.get("loyalty_applied", False)
-        img_name = info.get("image", "")
-        icon_type = info.get("icon_type", "water")
-
-        if hasattr(self, "success_drink_name_lbl") and self.success_drink_name_lbl.winfo_exists():
-            self.success_drink_name_lbl.config(text=f"{drink_name} (Slot {slot_num})")
-
-        change_amount = info.get("change_amount", 0)
-        change_summary = info.get("change_summary", "")
-
-        if hasattr(self, "success_paid_lbl") and self.success_paid_lbl.winfo_exists():
-            discount_note = " (-10% Loyalty)" if loyalty else ""
-            change_note = f" • Change: £{change_amount / 100:.2f} ({change_summary})" if change_amount > 0 and change_summary else (f" • Change: £{change_amount / 100:.2f}" if change_amount > 0 else "")
-            self.success_paid_lbl.config(text=f"Total Paid: £{price / 100:.2f} ({price}p){discount_note}{change_note}")
-
-        if hasattr(self, "success_method_lbl") and self.success_method_lbl.winfo_exists():
-            self.success_method_lbl.config(text=f"Method: {method}")
-
-        if hasattr(self, "success_canvas") and self.success_canvas.winfo_exists():
-            render_product_artwork(
-                canvas=self.success_canvas,
-                prod=info,
-                width=180,
-                height=110,
-                photo_cache=self._product_images,
-                default_bg=CLR_WHITE,
-                fallback_bg=BG_CARD,
-            )
+        """Refreshes the success page (countdown label is handled by _start_success_countdown)."""
+        # No dynamic widgets to refresh on this simplified page.
+        # Countdown and return button are updated by _start_success_countdown.
+        pass
 
     def _start_success_countdown(self) -> None:
         """Starts a 10-second countdown before automatically sliding back to catalogue."""
@@ -3167,6 +3087,9 @@ class CustomerVendingApp:
         # Reset selection state
         self.entered_slot.set("--")
         self.selected_product = None
+        self.scanned_member = None
+        if hasattr(self, "loyalty_scanner"):
+            self.loyalty_scanner._last_scanned = None
         self._highlight_active_card(None)
         self._update_preview(None)
 
