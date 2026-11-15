@@ -11,7 +11,6 @@ The project adopts a clean **Model-View-Controller (MVC) / Layered Architecture*
 ```text
 VendingMachine/
 ├── main.py                     # Primary Application Entry Point
-├── customer_ui.py              # Legacy Entrypoint Compatibility Shim
 ├── requirements.txt            # Python Dependencies
 ├── README.md                   # System Documentation
 │
@@ -82,7 +81,6 @@ Run the primary entry point:
 ```bash
 python3 main.py
 ```
-*(Or use `python3 customer_ui.py` via the backward-compatible shim).*
 
 ### 3. Running Unit Tests
 Execute the full test suite with unittest:
