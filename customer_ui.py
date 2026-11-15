@@ -2044,14 +2044,6 @@ class CustomerVendingApp:
 
         tk.Label(
             footer,
-            text="🔒 256-Bit Bank Encrypted Payment Processing • Fast & Contactless",
-            font=("Helvetica", 12, "bold"),
-            fg=CLR_LILAC,
-            bg=BG_APP,
-        ).pack(side=tk.LEFT, pady=10)
-
-        tk.Label(
-            footer,
             text="Press keypad 1, 2, 3 or Esc / 4 to control payment terminal",
             font=("Helvetica", 12, "bold"),
             fg=CLR_WHITE,
@@ -2168,7 +2160,7 @@ class CustomerVendingApp:
 
         dialog = tk.Toplevel(self.root)
         self._active_modal = dialog
-        dialog.title("Scan Member Card (Code 128)")
+        dialog.title("Scan Loyalty Card")
         dw, dh = 580, 480
         dialog.geometry(f"{dw}x{dh}")
         dialog.minsize(520, 460)
@@ -2192,15 +2184,6 @@ class CustomerVendingApp:
             fg=CLR_LIME,
             bg=BG_APP,
         ).pack(anchor="w")
-
-        sub_hdr_lbl = tk.Label(
-            dlg_hdr,
-            text="Scan Code 128 Barcode with Camera",
-            font=("Helvetica", 10),
-            fg=CLR_LILAC,
-            bg=BG_APP,
-        )
-        sub_hdr_lbl.pack(anchor="w")
 
         body = tk.Frame(dialog, bg=BG_MIDDLE, padx=10, pady=10)
         body.pack(fill=tk.BOTH, expand=True)
@@ -2258,7 +2241,7 @@ class CustomerVendingApp:
         # -------------------------------------------------------------
         tk.Label(
             camera_frame,
-            text="📷 ALIGN CODE 128 BARCODE INSIDE RETICLE",
+            text="📷 SCAN MEMBER CARD BARCODE",
             font=("Helvetica", 11, "bold"),
             fg=CLR_LIME,
             bg=BG_CARD,
@@ -2269,7 +2252,7 @@ class CustomerVendingApp:
 
         cam_status_lbl = tk.Label(
             camera_frame,
-            text="🔍 Point your Code 128 card barcode towards the camera...",
+            text="",
             font=("Helvetica", 10, "bold"),
             fg=CLR_LILAC,
             bg=BG_CARD,
@@ -2330,7 +2313,7 @@ class CustomerVendingApp:
 
                 cv2.putText(
                     frame,
-                    "ALIGN CODE 128 BARCODE HERE",
+                    "SCAN MEMBER CARD BARCODE HERE",
                     (x1 + 10, max(20, y1 - 8)),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5,
@@ -2366,7 +2349,7 @@ class CustomerVendingApp:
                 if detected_card_id:
                     cleanup_camera()
                     cam_status_lbl.config(
-                        text=f"✅ Scanned Code 128: '{detected_card_id}' — Verifying...",
+                        text=f"✅ Scanned Barcode: '{detected_card_id}' — Verifying...",
                         fg=CLR_LIME,
                     )
                     success = self.controller.scanLoyalty(detected_card_id)
@@ -2391,7 +2374,7 @@ class CustomerVendingApp:
                         def resume_camera_scan():
                             if dialog.winfo_exists():
                                 cam_status_lbl.config(
-                                    text="🔍 Point your Code 128 card barcode towards the camera...",
+                                    text="",
                                     fg=CLR_LILAC,
                                 )
                                 start_camera()
@@ -2422,12 +2405,6 @@ class CustomerVendingApp:
                 scanner_state["after_id"] = dialog.after(30, update_camera_stream)
 
         def start_camera():
-            sub_hdr_lbl.config(text="Live Camera Active • Point Code 128 barcode at camera")
-            cam_status_lbl.config(
-                text="🔍 Point your Code 128 card barcode towards the camera...",
-                fg=CLR_LILAC,
-            )
-
             if not HAS_CV2 or cv2 is None:
                 cam_status_lbl.config(
                     text="⚠️ OpenCV unavailable. Camera barcode scanning is disabled.",
@@ -2803,7 +2780,7 @@ class CustomerVendingApp:
         """Handles cancellation of active cash payment — navigate to cancelled/refund page."""
         # Capture refund amount before cancel clears state
         refunded = getattr(self.cash_receiver, "_total", 0)
-        self.last_cancelled_order = {"refunded": refunded}
+        self.last_cancelled_order = {"refunded": refunded, "method": "cash"}
         self.controller.cancel()
         try:
             if dialog.winfo_exists():
@@ -2818,7 +2795,9 @@ class CustomerVendingApp:
         self.transition_to_page("cancelled", direction="left")
 
     def _on_cancel_card_dialog(self, dialog: tk.Toplevel) -> None:
-        """Handles cancellation of active card payment."""
+        """Handles cancellation of active card payment — navigate to cancelled page."""
+        # No money was inserted for card, refund = 0
+        self.last_cancelled_order = {"refunded": 0, "method": "card"}
         self.controller.cancel()
         try:
             if dialog.winfo_exists():
@@ -2830,6 +2809,7 @@ class CustomerVendingApp:
         self.root.focus_force()
         self.root.focus_set()
         self.root.after(50, lambda: (self.root.focus_force(), self.root.focus_set()))
+        self.transition_to_page("cancelled", direction="left")
 
     def _show_dispense_banner(self, drink_name: str) -> None:
         """Shows non-blocking dispense celebration and guidance for the next order."""
@@ -3016,8 +2996,8 @@ class CustomerVendingApp:
 
         tk.Label(
             header,
-            text="Official Smart Drink Dispenser",
-            font=("Helvetica", 10),
+            text="• Campus Vending Machine",
+            font=("Helvetica", 14, "bold"),
             fg=CLR_LILAC,
             bg=BG_APP,
         ).pack(side=tk.LEFT, padx=12, pady=18)
@@ -3025,7 +3005,7 @@ class CustomerVendingApp:
         # Step Indicator Badge
         step_badge = tk.Label(
             header,
-            text="STEP 3: ORDER SUCCESSFUL",
+            text="ORDER SUCCESSFUL",
             font=("Helvetica", 9, "bold"),
             fg=BTN_FG,
             bg=BTN_BG,
@@ -3039,14 +3019,6 @@ class CustomerVendingApp:
         footer = tk.Frame(parent, bg=BG_APP, height=40, padx=20)
         footer.pack(fill=tk.X, side=tk.BOTTOM)
         footer.pack_propagate(False)
-
-        tk.Label(
-            footer,
-            text="💡 Tip: Press [ Enter ] or [ Esc ] on keypad to return immediately.",
-            font=("Helvetica", 10),
-            fg=CLR_WHITE,
-            bg=BG_APP,
-        ).pack(side=tk.LEFT, pady=10)
 
         # Current Time label
         time_lbl = tk.Label(
@@ -3187,14 +3159,15 @@ class CustomerVendingApp:
         )
         self.cancelled_refund_lbl.pack(anchor="center", pady=(0, 4))
 
-        # Sub-instruction
-        tk.Label(
+        # Sub-instruction (dynamic)
+        self.cancelled_sub_lbl = tk.Label(
             card,
             text="Please collect your refund from the coin return slot.",
             font=("Helvetica", 13),
             fg=CLR_WHITE,
             bg=BG_CARD,
-        ).pack(anchor="center", pady=(0, 14))
+        )
+        self.cancelled_sub_lbl.pack(anchor="center", pady=(0, 14))
 
         # Countdown label (hidden — logic still runs for auto-return)
         self.cancelled_countdown_lbl = tk.Label(
@@ -3253,8 +3226,8 @@ class CustomerVendingApp:
 
         tk.Label(
             header,
-            text="Campus Vending Machine",
-            font=("Helvetica", 10),
+            text="• Campus Vending Machine",
+            font=("Helvetica", 14, "bold"),
             fg=CLR_LILAC,
             bg=BG_APP,
         ).pack(side=tk.LEFT, padx=12, pady=18)
@@ -3275,14 +3248,6 @@ class CustomerVendingApp:
         footer.pack(fill=tk.X, side=tk.BOTTOM)
         footer.pack_propagate(False)
 
-        tk.Label(
-            footer,
-            text="Tip: Press [ Enter ] or [ Esc ] on keypad to return immediately.",
-            font=("Helvetica", 10),
-            fg=CLR_WHITE,
-            bg=BG_APP,
-        ).pack(side=tk.LEFT, pady=10)
-
         time_lbl = tk.Label(
             footer,
             text=time.strftime("%H:%M:%S"),
@@ -3293,16 +3258,39 @@ class CustomerVendingApp:
         time_lbl.pack(side=tk.RIGHT, pady=10)
 
     def _refresh_cancelled_page(self) -> None:
-        """Updates refund amount label with the amount the user had inserted."""
+        """Updates labels based on the payment method that was cancelled."""
         info = getattr(self, "last_cancelled_order", {}) or {}
         refunded = info.get("refunded", 0)
+        method = info.get("method", "cash")
+
         if hasattr(self, "cancelled_refund_lbl") and self.cancelled_refund_lbl.winfo_exists():
-            if refunded > 0:
+            if method == "card":
                 self.cancelled_refund_lbl.config(
-                    text=f"Refund: \u00a3{refunded / 100:.2f} ({refunded}p)"
+                    text="Credit Card Payment Cancelled",
+                    fg="#FF4444",
+                )
+            elif refunded > 0:
+                self.cancelled_refund_lbl.config(
+                    text=f"Refund: \u00a3{refunded / 100:.2f} ({refunded}p)",
+                    fg=CLR_LIME,
                 )
             else:
-                self.cancelled_refund_lbl.config(text="No money inserted — no refund needed.")
+                self.cancelled_refund_lbl.config(
+                    text="No money inserted — no refund needed.",
+                    fg=CLR_WHITE,
+                )
+
+        if hasattr(self, "cancelled_sub_lbl") and self.cancelled_sub_lbl.winfo_exists():
+            if method == "card":
+                self.cancelled_sub_lbl.config(
+                    text="No charge has been applied to your card."
+                )
+            else:
+                self.cancelled_sub_lbl.config(
+                    text="Please collect your refund from the coin return slot."
+                    if refunded > 0
+                    else "No money was inserted."
+                )
 
     def _start_cancelled_countdown(self) -> None:
         """Starts a 10-second countdown then auto-returns to catalogue."""
