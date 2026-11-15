@@ -44,7 +44,69 @@ except Exception:
     zxingcpp = None  # type: ignore
     HAS_ZXING = False
 
+# Safe numpy support for OpenCV matrices
+try:
+    import numpy as np  # type: ignore
+    HAS_NUMPY = True
+except Exception:
+    np = None  # type: ignore
+    HAS_NUMPY = False
+
+
+def generate_stripe_qr_image(url: str, size: int = 300) -> Optional[Any]:
+    """
+    Generates a large, crisp, high-contrast QR code PIL Image for the checkout URL.
+    Preserves the full unmodified Stripe Checkout URL (including client-side token fragments)
+    so Stripe's web interface opens seamlessly without 'incomplete link' errors.
+    Uses cv2.QRCodeEncoder or qrcode module if available.
+    """
+    if not url:
+        return None
+    # Keep the full unmodified URL (including #fid... fragment) required by Stripe Checkout security
+    unmodified_url = url.strip()
+
+    try:
+        # 1. Try qrcode package if installed
+        try:
+            import qrcode  # type: ignore
+            qr = qrcode.QRCode(
+                version=None,
+                error_correction=qrcode.constants.ERROR_CORRECT_M,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(unmodified_url)
+            qr.make(fit=True)
+            pil_img = qr.make_image(fill_color="black", back_color="white")
+            if hasattr(pil_img, "resize") and HAS_PIL and Image is not None:
+                resample = getattr(Image, "Resampling", Image).NEAREST
+                return pil_img.resize((size, size), resample)
+            return pil_img
+        except ImportError:
+            pass
+
+        # 2. Use cv2.QRCodeEncoder (standard in OpenCV 4.x+)
+        if HAS_CV2 and cv2 is not None and hasattr(cv2, "QRCodeEncoder") and HAS_PIL and Image is not None and HAS_NUMPY and np is not None:
+            encoder = cv2.QRCodeEncoder.create()
+            qr_mat = encoder.encode(unmodified_url)
+            if qr_mat is not None and qr_mat.size > 0:
+                # Add quiet zone border (4 modules of white 255)
+                pad_qr = np.pad(qr_mat, pad_width=4, mode="constant", constant_values=255)
+                # Resize using crisp integer module scaling so phone cameras decode reliably
+                mod_count = pad_qr.shape[0]
+                scale = max(2, round(size / mod_count))
+                out_w = int(pad_qr.shape[1] * scale)
+                out_h = int(pad_qr.shape[0] * scale)
+                resized = cv2.resize(pad_qr, (out_w, out_h), interpolation=cv2.INTER_NEAREST)
+                pil_img = Image.fromarray(resized).convert("RGB")
+                return pil_img
+    except Exception as e:
+        print(f"[QR] Error generating QR code: {e}")
+    return None
+
 # System Model Imports
+import threading
+import webbrowser
 from controller import (
     VendingController,
     MachineState,
@@ -55,7 +117,14 @@ from controller import (
     PRODUCTS_FILE,
 )
 from inventory import Drink, DrinkDispenser, LoyaltyScanner, StockSensor
-from payment import PaymentModule, CashReceiver, CardReader, PaymentResult, CashReceiverState
+from payment import (
+    PaymentModule,
+    CashReceiver,
+    CardReader,
+    PaymentResult,
+    CashReceiverState,
+    StripeBankService,
+)
 from bank import MockBankService
 from logger import Logger
 from timer import TransactionTimer
@@ -518,7 +587,8 @@ class CustomerVendingApp:
         # 4. Payments
         self.cash_receiver = CashReceiver()
         self.mock_bank = MockBankService()
-        self.card_reader = CardReader(self.mock_bank)
+        self.stripe_bank = StripeBankService()
+        self.card_reader = CardReader(self.stripe_bank)
         self.payment_module = PaymentModule([self.cash_receiver, self.card_reader])
 
         # 5. Logger & Timer
@@ -2016,7 +2086,7 @@ class CustomerVendingApp:
 
         self.card_btn = tk.Button(
             card_box,
-            text="[ 3 ] 💳 PAY WITH CARD",
+            text="[ 3 ] 💳 PAY WITH CARD / QR",
             font=("Helvetica", 16, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -2029,7 +2099,7 @@ class CustomerVendingApp:
 
         tk.Label(
             card_box,
-            text="Contactless, Chip & PIN, Apple Pay\n& Google Wallet supported",
+            text="Scan QR Code with phone to checkout\nApple Pay, Google Pay & Cards supported",
             font=("Helvetica", 12),
             fg=CLR_LILAC,
             bg=BG_CARD,
@@ -2442,20 +2512,43 @@ class CustomerVendingApp:
         self.controller.startPayment(self.cash_receiver)
         self.cash_receiver.processPayment(amount_due)
 
+        # Start 60-second TransactionTimer for cash payment
+        self.timer.start()
+
         dialog = tk.Toplevel(self.root)
         self._active_modal = dialog
         dialog.title("Cash Payment Terminal")
-        dialog.geometry("500x520")
+        dialog.geometry("500x530")
         dialog.resizable(False, False)
         dialog.configure(bg=BG_APP)
         dialog.transient(self.root)
         dialog.grab_set()
-        dialog.protocol("WM_DELETE_WINDOW", lambda: self._on_cancel_cash_dialog(dialog))
+
+        cash_state = {
+            "after_id": None,
+            "completed": False,
+        }
+
+        def cleanup_cash():
+            if cash_state["after_id"]:
+                try:
+                    dialog.after_cancel(cash_state["after_id"])
+                except Exception:
+                    pass
+                cash_state["after_id"] = None
+
+        def on_cancel():
+            cash_state["completed"] = True
+            cleanup_cash()
+            self.timer.stop()
+            self._on_cancel_cash_dialog(dialog)
+
+        dialog.protocol("WM_DELETE_WINDOW", on_cancel)
 
         # Center on parent
         dialog.update_idletasks()
         x = self.root.winfo_x() + (self.root.winfo_width() - 500) // 2
-        y = self.root.winfo_y() + (self.root.winfo_height() - 520) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - 530) // 2
         dialog.geometry(f"+{x}+{y}")
 
         top_bar = tk.Frame(dialog, bg=BG_APP, padx=16, pady=12)
@@ -2466,7 +2559,41 @@ class CustomerVendingApp:
             font=("Helvetica", 14, "bold"),
             fg=CLR_LIME,
             bg=BG_APP,
-        ).pack(anchor="w")
+        ).pack(side=tk.LEFT)
+
+        cash_timer_badge = tk.Label(
+            top_bar,
+            text="⏱️ 60s",
+            font=("Menlo", 12, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+            padx=8,
+            pady=3,
+        )
+        cash_timer_badge.pack(side=tk.RIGHT)
+
+        def tick_cash_timer():
+            if not dialog.winfo_exists() or cash_state["completed"]:
+                return
+            if self.timer.hasExpired():
+                print("[Cash Payment] 60s TransactionTimer expired without full payment. Refunding all inserted cash.")
+                cash_state["completed"] = True
+                cleanup_cash()
+                self.timer.stop()
+                self._on_timeout_cash_dialog(dialog)
+                return
+
+            rem_sec = self.timer.getRemainingTime()
+            if cash_timer_badge.winfo_exists():
+                if rem_sec <= 10:
+                    cash_timer_badge.config(text=f"⏱️ {rem_sec}s", fg="#FF4444")
+                elif rem_sec <= 20:
+                    cash_timer_badge.config(text=f"⏱️ {rem_sec}s", fg=CLR_LILAC)
+                else:
+                    cash_timer_badge.config(text=f"⏱️ {rem_sec}s", fg=CLR_WHITE)
+            cash_state["after_id"] = dialog.after(1000, tick_cash_timer)
+
+        cash_state["after_id"] = dialog.after(1000, tick_cash_timer)
 
         body = tk.Frame(dialog, bg=BG_MIDDLE, padx=16, pady=14)
         body.pack(fill=tk.BOTH, expand=True)
@@ -2547,6 +2674,9 @@ class CustomerVendingApp:
             lbl_inserted.config(text=f"Total Inserted: £{inserted / 100:.2f} ({inserted}p)")
 
             if self.cash_receiver._state == CashReceiverState.PAYMENT_COMPLETE:
+                cash_state["completed"] = True
+                cleanup_cash()
+                self.timer.stop()
                 overpaid = max(0, inserted - amount_due)
                 change_summary = getattr(self.cash_receiver, "lastDispensedSummary", "")
                 if overpaid > 0:
@@ -2612,7 +2742,7 @@ class CustomerVendingApp:
             padx=12,
             pady=7,
             cursor="hand2",
-            command=lambda: self._on_cancel_cash_dialog(dialog),
+            command=on_cancel,
         )
         cancel_btn.pack(side=tk.BOTTOM, fill=tk.X)
         self._attach_button_animation(cancel_btn)
@@ -2621,7 +2751,7 @@ class CustomerVendingApp:
             k = event.keysym
             ch = event.char
             if k == "Escape" or ch in ("c", "C"):
-                self._on_cancel_cash_dialog(dialog)
+                on_cancel()
                 return "break"
             key_map = {
                 "1": (0, 1), "KP_1": (0, 1),
@@ -2649,105 +2779,155 @@ class CustomerVendingApp:
         cancel_btn.focus_set()
 
     def _on_choose_card(self) -> None:
-        """Handles Card payment selection and opens card reader terminal dialog."""
+        """Handles Card payment selection and opens QR Code payment terminal dialog."""
         self._last_payment_method = "Contactless Card"
         amount_due = self.controller.amountDue
         self.controller.startPayment(self.card_reader)
         self.card_reader.readCard("DEBIT-4021")
 
+        # Start 60-second TransactionTimer for card payment
+        self.timer.start()
+
         dialog = tk.Toplevel(self.root)
         self._active_modal = dialog
-        dialog.title("Card Payment Terminal")
-        dialog.geometry("480x380")
+        dialog.title("Scan QR Code to Pay (Stripe)")
+        dw, dh = 560, 690
+        dialog.geometry(f"{dw}x{dh}")
+        dialog.minsize(540, 670)
         dialog.resizable(False, False)
         dialog.configure(bg=BG_APP)
         dialog.transient(self.root)
         dialog.grab_set()
-        dialog.protocol("WM_DELETE_WINDOW", lambda: self._on_cancel_card_dialog(dialog))
 
-        # Center on parent
+        # Checkout state tracking
+        checkout_state = {
+            "session_id": None,
+            "session_url": None,
+            "poll_id": None,
+            "timer_id": None,
+            "completed": False,
+            "is_connecting": False,
+            "qr_photo": None,
+        }
+
+        def cleanup_dialog():
+            if checkout_state["poll_id"]:
+                try:
+                    dialog.after_cancel(checkout_state["poll_id"])
+                except Exception:
+                    pass
+                checkout_state["poll_id"] = None
+            if checkout_state.get("timer_id"):
+                try:
+                    dialog.after_cancel(checkout_state["timer_id"])
+                except Exception:
+                    pass
+                checkout_state["timer_id"] = None
+
+        def on_cancel():
+            checkout_state["completed"] = True
+            cleanup_dialog()
+            self.timer.stop()
+
+            # Expire Stripe Checkout Session asynchronously so it cannot be used
+            sid = checkout_state.get("session_id")
+            if sid:
+                threading.Thread(
+                    target=lambda s=sid: self.stripe_bank.expireCheckoutSession(s),
+                    daemon=True,
+                ).start()
+
+            self._on_cancel_card_dialog(dialog)
+
+        dialog.protocol("WM_DELETE_WINDOW", on_cancel)
+
+        # Center on parent safely
         dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() - 480) // 2
-        y = self.root.winfo_y() + (self.root.winfo_height() - 380) // 2
+        x = max(20, self.root.winfo_x() + max(0, (self.root.winfo_width() - dw) // 2))
+        y = max(20, self.root.winfo_y() + max(0, (self.root.winfo_height() - dh) // 2))
         dialog.geometry(f"+{x}+{y}")
 
-        top_bar = tk.Frame(dialog, bg=BG_APP, padx=16, pady=12)
+        top_bar = tk.Frame(dialog, bg=BG_APP, padx=16, pady=10)
         top_bar.pack(fill=tk.X)
         tk.Label(
             top_bar,
-            text="💳 CARD PAYMENT TERMINAL",
+            text="📱 STRIPE QR PAYMENT",
             font=("Helvetica", 14, "bold"),
             fg=CLR_LIME,
             bg=BG_APP,
-        ).pack(anchor="w")
+        ).pack(side=tk.LEFT)
 
-        body = tk.Frame(dialog, bg=BG_MIDDLE, padx=16, pady=16)
+        card_timer_badge = tk.Label(
+            top_bar,
+            text="⏱️ 60s",
+            font=("Menlo", 12, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+            padx=8,
+            pady=3,
+        )
+        card_timer_badge.pack(side=tk.RIGHT)
+
+        def tick_card_timer():
+            if not dialog.winfo_exists() or checkout_state["completed"]:
+                return
+            if self.timer.hasExpired():
+                print("[Card Payment] 60s TransactionTimer expired without payment. Cancelling order.")
+                checkout_state["completed"] = True
+                cleanup_dialog()
+                self.timer.stop()
+
+                # Expire Stripe Checkout Session on Stripe's server in background
+                sid = checkout_state.get("session_id")
+                if sid:
+                    threading.Thread(
+                        target=lambda s=sid: self.stripe_bank.expireCheckoutSession(s),
+                        daemon=True,
+                    ).start()
+
+                self.controller.onTimeout()
+                self._on_timeout_card_dialog(dialog)
+                return
+
+            rem_sec = self.timer.getRemainingTime()
+            if card_timer_badge.winfo_exists():
+                if rem_sec <= 10:
+                    card_timer_badge.config(text=f"⏱️ {rem_sec}s", fg="#FF4444")
+                elif rem_sec <= 20:
+                    card_timer_badge.config(text=f"⏱️ {rem_sec}s", fg=CLR_LILAC)
+                else:
+                    card_timer_badge.config(text=f"⏱️ {rem_sec}s", fg=CLR_WHITE)
+            checkout_state["timer_id"] = dialog.after(1000, tick_card_timer)
+
+        checkout_state["timer_id"] = dialog.after(1000, tick_card_timer)
+
+        body = tk.Frame(dialog, bg=BG_MIDDLE, padx=14, pady=10)
         body.pack(fill=tk.BOTH, expand=True)
 
-        screen = tk.Frame(body, bg=BG_SCREEN, padx=16, pady=16, highlightthickness=2, highlightbackground=CLR_LIME)
-        screen.pack(fill=tk.X, pady=(0, 16))
+        screen = tk.Frame(body, bg=BG_SCREEN, padx=14, pady=8, highlightthickness=2, highlightbackground=CLR_LIME)
+        screen.pack(fill=tk.X, pady=(0, 8))
 
         tk.Label(
             screen,
             text=f"Total Charge: £{amount_due / 100:.2f} ({amount_due}p)",
-            font=("Helvetica", 13, "bold"),
+            font=("Helvetica", 14, "bold"),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
         ).pack(anchor="w")
 
         status_lbl = tk.Label(
             screen,
-            text="📶 Terminal Ready • Please tap contactless card or phone",
-            font=("Helvetica", 11),
+            text="⏳ Generating Stripe QR Code...",
+            font=("Helvetica", 11, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
         )
-        status_lbl.pack(anchor="w", pady=(8, 0))
+        status_lbl.pack(anchor="w", pady=(4, 0))
 
-        action_box = tk.Frame(body, bg=BG_CARD, padx=16, pady=16)
-        action_box.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-
-        def tap_card():
-            tap_btn.config(state=tk.DISABLED)
-            status_lbl.config(text="⏳ Communicating with bank server...", fg=CLR_WHITE)
-            dialog.update_idletasks()
-
-            def process_bank():
-                result = self.card_reader.processPayment(amount_due)
-                if result == PaymentResult.SUCCESS:
-                    status_lbl.config(text="✅ Approved by Bank! Dispensing drink...", fg=CLR_LIME)
-                    self.controller.onPaymentComplete()
-                    self.root.after(1200, lambda: self._on_sale_completed_dismiss(dialog))
-                else:
-                    status_lbl.config(text="❌ Declined by bank server", fg=CLR_LILAC)
-                    tap_btn.config(state=tk.NORMAL)
-
-            self.root.after(450, process_bank)
-
-        tap_btn = tk.Button(
-            action_box,
-            text="[ 1 ] 📶 TAP CONTACTLESS CARD / PHONE (Enter)",
-            font=("Helvetica", 13, "bold"),
-            bg=BTN_BG,
-            fg=BTN_FG,
-            relief=tk.FLAT,
-            pady=12,
-            command=tap_card,
-        )
-        tap_btn.pack(fill=tk.X, pady=(4, 0))
-        self._attach_button_animation(tap_btn)
-
-        tk.Label(
-            action_box,
-            text="Keypad: Press [ 1 ] or [ Enter ] to tap card, [ Esc ] to cancel",
-            font=("Helvetica", 10),
-            fg=CLR_WHITE,
-            bg=BG_CARD,
-        ).pack(pady=(8, 0))
-
+        # Pack Cancel button at bottom FIRST to guarantee it is never squeezed
         cancel_btn = tk.Button(
             body,
-            text="[ Esc ] Cancel Card Transaction",
+            text="[ Esc ] Cancel Transaction",
             font=("Helvetica", 11, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -2755,33 +2935,281 @@ class CustomerVendingApp:
             activeforeground=BTN_FG,
             relief=tk.FLAT,
             padx=12,
-            pady=7,
+            pady=9,
             cursor="hand2",
-            command=lambda: self._on_cancel_card_dialog(dialog),
+            command=on_cancel,
         )
-        cancel_btn.pack(side=tk.BOTTOM, fill=tk.X)
+        cancel_btn.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 0))
         self._attach_button_animation(cancel_btn)
+
+        action_box = tk.Frame(body, bg=BG_CARD, padx=12, pady=10)
+        action_box.pack(fill=tk.BOTH, expand=True)
+
+        guide_lbl = tk.Label(
+            action_box,
+            text="📱 Point phone camera at the QR code to open Stripe payment.",
+            font=("Helvetica", 11),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+            wraplength=480,
+            justify="center",
+        )
+        guide_lbl.pack(pady=(0, 6))
+
+        # QR Code Display Frame (White background container)
+        qr_container = tk.Frame(
+            action_box,
+            bg=CLR_WHITE,
+            padx=10,
+            pady=10,
+            highlightthickness=2,
+            highlightbackground=CLR_LIME,
+        )
+        qr_container.pack(pady=(0, 6))
+
+        qr_img_lbl = tk.Label(
+            qr_container,
+            text="⏳\nGenerating Stripe QR Code...",
+            font=("Helvetica", 13, "bold"),
+            fg=BG_APP,
+            bg=CLR_WHITE,
+            padx=20,
+            pady=40,
+        )
+        qr_img_lbl.pack()
+
+        def simulate_card_payment():
+            if checkout_state["completed"]:
+                return
+            checkout_state["completed"] = True
+            cleanup_dialog()
+            self.timer.stop()
+            self.controller.onPaymentComplete()
+            self._on_sale_completed_dismiss(dialog)
+
+        retry_btn = tk.Button(
+            action_box,
+            text="[ 1 ] 🔄 Retry Connecting to Stripe (Enter)",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            pady=8,
+            cursor="hand2",
+            command=lambda: start_checkout_connection(),
+        )
+        self._attach_button_animation(retry_btn)
+
+        simulate_btn = tk.Button(
+            action_box,
+            text="[ 1 ] 💳 Simulate Card Payment (1 / Enter)",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            pady=8,
+            cursor="hand2",
+            command=simulate_card_payment,
+        )
+        simulate_btn.pack(fill=tk.X, pady=(6, 0))
+        self._attach_button_animation(simulate_btn)
+
+        def poll_checkout_status():
+            if not dialog.winfo_exists() or checkout_state["completed"]:
+                return
+
+            sid = checkout_state["session_id"]
+            if not sid:
+                return
+
+            def check_worker():
+                info = self.stripe_bank.checkCheckoutSessionStatus(sid)
+
+                def on_polled():
+                    if not dialog.winfo_exists() or checkout_state["completed"]:
+                        return
+
+                    if info:
+                        pstatus = info.get("payment_status")
+                        sstatus = info.get("status")
+
+                        if pstatus == "paid":
+                            checkout_state["completed"] = True
+                            cleanup_dialog()
+                            self.timer.stop()
+                            self.controller.onPaymentComplete()
+                            self._on_sale_completed_dismiss(dialog)
+                            return
+
+                        elif sstatus == "expired":
+                            checkout_state["completed"] = True
+                            cleanup_dialog()
+                            self.timer.stop()
+                            status_lbl.config(text="❌ Stripe Checkout Expired. Transaction cancelled.", fg=CLR_LILAC)
+                            self.controller.onPaymentFailed("expired")
+                            dialog.after(2000, on_cancel)
+                            return
+
+                    if dialog.winfo_exists() and not checkout_state["completed"]:
+                        checkout_state["poll_id"] = dialog.after(1500, poll_checkout_status)
+
+                dialog.after(0, on_polled)
+
+            threading.Thread(target=check_worker, daemon=True).start()
+
+        def start_checkout_connection():
+            if checkout_state["is_connecting"] or checkout_state["completed"]:
+                return
+            checkout_state["is_connecting"] = True
+            if dialog.winfo_exists():
+                retry_btn.pack_forget()
+                status_lbl.config(text="⏳ Generating Stripe QR Code...", fg=CLR_LIME)
+                guide_lbl.config(text="Contacting Stripe server to generate secure QR checkout session...")
+                qr_img_lbl.config(
+                    image="",
+                    text="⏳\nGenerating Stripe QR Code...",
+                    font=("Helvetica", 13, "bold"),
+                    fg=BG_APP,
+                    bg=CLR_WHITE,
+                    width=0,
+                    height=0,
+                    padx=20,
+                    pady=40,
+                )
+
+            def worker():
+                if isinstance(self.selected_product, dict):
+                    drink_name = self.selected_product.get("name", "Beverage")
+                    slot_num = self.selected_product.get("slot_num", "")
+                elif self.selected_product is not None:
+                    drink_name = getattr(self.selected_product, "name", "Beverage")
+                    slot_num = getattr(self.selected_product, "drink_id", "")
+                else:
+                    drink_name = "Beverage"
+                    slot_num = ""
+                session = self.stripe_bank.createCheckoutSession(
+                    amount=amount_due,
+                    drink_name=drink_name,
+                    slot_num=slot_num,
+                )
+                qr_pil = None
+                if session and session.get("url"):
+                    qr_pil = generate_stripe_qr_image(session.get("url"), size=300)
+
+                def on_done():
+                    checkout_state["is_connecting"] = False
+                    if not dialog.winfo_exists() or checkout_state["completed"]:
+                        return
+
+                    if session and session.get("url"):
+                        checkout_state["session_id"] = session.get("id")
+                        checkout_state["session_url"] = session.get("url")
+                        if qr_pil is not None and HAS_PIL and ImageTk is not None:
+                            try:
+                                photo = ImageTk.PhotoImage(qr_pil)
+                                checkout_state["qr_photo"] = photo
+                                qr_img_lbl.config(
+                                    image=photo,
+                                    text="",
+                                    width=0,
+                                    height=0,
+                                    padx=0,
+                                    pady=0,
+                                )
+                            except Exception as e:
+                                print(f"[QR] Failed to render photo: {e}")
+                        retry_btn.pack_forget()
+                        status_lbl.config(text="📱 Scan QR with phone • Waiting for confirmation...", fg=CLR_LIME)
+                        guide_lbl.config(text="Point phone camera at QR code to open Stripe. Result updates here automatically.")
+                        simulate_btn.config(text="[ 1 ] 💳 Simulate Card Payment (1 / Enter)", state=tk.NORMAL)
+                        simulate_btn.pack(fill=tk.X, pady=(4, 0))
+                        checkout_state["poll_id"] = dialog.after(1500, poll_checkout_status)
+                    else:
+                        status_lbl.config(text="⚠️ Could not connect to Stripe (Offline/Network)", fg=CLR_LILAC)
+                        guide_lbl.config(
+                            text="Unable to reach Stripe server.\n"
+                                 "Click Retry [ 1 ] or use Simulate Test Card [ 2 ] below."
+                        )
+                        qr_img_lbl.config(
+                            image="",
+                            text="⚠️\nOffline / Error\nCould not reach Stripe",
+                            font=("Helvetica", 12, "bold"),
+                            fg=CLR_LILAC,
+                            bg=CLR_WHITE,
+                            width=0,
+                            height=0,
+                            padx=15,
+                            pady=30,
+                        )
+                        retry_btn.pack(fill=tk.X, pady=(4, 4))
+                        simulate_btn.config(text="[ 2 ] 💳 Simulate Card Payment (Keypad 2)", state=tk.NORMAL)
+                        simulate_btn.pack(fill=tk.X, pady=(0, 0))
+
+                try:
+                    if dialog.winfo_exists() and not checkout_state["completed"]:
+                        dialog.after(0, on_done)
+                except Exception:
+                    pass
+
+            threading.Thread(target=worker, daemon=True).start()
 
         def on_card_key(event: tk.Event):
             k = event.keysym
             ch = event.char
             if k in ("Escape", "KP_4") or ch in ("c", "C", "4"):
-                self._on_cancel_card_dialog(dialog)
+                on_cancel()
             elif k in ("Return", "KP_Enter", "KP_1", "1") or ch == "1":
-                if tap_btn.cget("state") != tk.DISABLED:
-                    tap_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
-                    dialog.after(120, lambda: self._safe_config(tap_btn, bg=BTN_BG, relief=tk.FLAT))
-                    tap_card()
+                if retry_btn.winfo_ismapped() and retry_btn.cget("state") != tk.DISABLED:
+                    retry_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    dialog.after(120, lambda: self._safe_config(retry_btn, bg=BTN_BG, relief=tk.FLAT))
+                    start_checkout_connection()
+                elif simulate_btn.cget("state") != tk.DISABLED:
+                    simulate_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    dialog.after(120, lambda: self._safe_config(simulate_btn, bg=BTN_BG, relief=tk.FLAT))
+                    simulate_card_payment()
+            elif k in ("KP_2", "2") or ch == "2":
+                if simulate_btn.cget("state") != tk.DISABLED:
+                    simulate_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    dialog.after(120, lambda: self._safe_config(simulate_btn, bg=BTN_BG, relief=tk.FLAT))
+                    simulate_card_payment()
 
         dialog.bind("<Key>", on_card_key)
-        tap_btn.focus_set()
+        simulate_btn.focus_set()
+        dialog.after(100, start_checkout_connection)
 
     def _on_cancel_cash_dialog(self, dialog: tk.Toplevel) -> None:
         """Handles cancellation of active cash payment — navigate to cancelled/refund page."""
-        # Capture refund amount before cancel clears state
         refunded = getattr(self.cash_receiver, "_total", 0)
-        self.last_cancelled_order = {"refunded": refunded, "method": "cash"}
+        self.last_cancelled_order = {"refunded": refunded, "method": "cash", "reason": "user_cancelled"}
         self.controller.cancel()
+        if hasattr(self, "cash_receiver") and getattr(self.cash_receiver, "_total", 0) > 0:
+            self.cash_receiver.cancel()
+        try:
+            if dialog.winfo_exists():
+                dialog.grab_release()
+                dialog.destroy()
+        except Exception:
+            pass
+        self._active_modal = None
+        self.root.focus_force()
+        self.root.focus_set()
+        self.root.after(50, lambda: (self.root.focus_force(), self.root.focus_set()))
+        self.transition_to_page("cancelled", direction="left")
+
+    def _on_timeout_cash_dialog(self, dialog: tk.Toplevel) -> None:
+        """Handles timeout of active cash payment — refund all inserted coins and navigate to cancelled page."""
+        # Capture inserted cash BEFORE controller aborts sale and clears receiver state
+        refunded = getattr(self.cash_receiver, "_total", 0)
+        items = list(getattr(self.cash_receiver, "_inserted_items", []))
+        self.last_cancelled_order = {
+            "refunded": refunded,
+            "method": "cash",
+            "reason": "timeout",
+            "items": items,
+        }
+        self.controller.onTimeout()
+        if hasattr(self, "cash_receiver") and getattr(self.cash_receiver, "_total", 0) > 0:
+            self.cash_receiver.cancel()
         try:
             if dialog.winfo_exists():
                 dialog.grab_release()
@@ -2795,10 +3223,24 @@ class CustomerVendingApp:
         self.transition_to_page("cancelled", direction="left")
 
     def _on_cancel_card_dialog(self, dialog: tk.Toplevel) -> None:
-        """Handles cancellation of active card payment — navigate to cancelled page."""
-        # No money was inserted for card, refund = 0
-        self.last_cancelled_order = {"refunded": 0, "method": "card"}
+        """Handles user cancellation of active card payment — navigate to cancelled page."""
+        self.last_cancelled_order = {"refunded": 0, "method": "card", "reason": "user_cancelled"}
         self.controller.cancel()
+        try:
+            if dialog.winfo_exists():
+                dialog.grab_release()
+                dialog.destroy()
+        except Exception:
+            pass
+        self._active_modal = None
+        self.root.focus_force()
+        self.root.focus_set()
+        self.root.after(50, lambda: (self.root.focus_force(), self.root.focus_set()))
+        self.transition_to_page("cancelled", direction="left")
+
+    def _on_timeout_card_dialog(self, dialog: tk.Toplevel) -> None:
+        """Handles timeout of active card payment — navigate to cancelled page with timeout notice."""
+        self.last_cancelled_order = {"refunded": 0, "method": "card", "reason": "timeout"}
         try:
             if dialog.winfo_exists():
                 dialog.grab_release()
@@ -3258,39 +3700,63 @@ class CustomerVendingApp:
         time_lbl.pack(side=tk.RIGHT, pady=10)
 
     def _refresh_cancelled_page(self) -> None:
-        """Updates labels based on the payment method that was cancelled."""
+        """Updates labels based on the payment method and reason for cancellation."""
         info = getattr(self, "last_cancelled_order", {}) or {}
         refunded = info.get("refunded", 0)
         method = info.get("method", "cash")
+        reason = info.get("reason", "cancelled")
 
         if hasattr(self, "cancelled_refund_lbl") and self.cancelled_refund_lbl.winfo_exists():
             if method == "card":
-                self.cancelled_refund_lbl.config(
-                    text="Credit Card Payment Cancelled",
-                    fg="#FF4444",
-                )
+                if reason == "timeout":
+                    self.cancelled_refund_lbl.config(
+                        text="Card Payment Timed Out (60s Expired)",
+                        fg="#FF4444",
+                    )
+                else:
+                    self.cancelled_refund_lbl.config(
+                        text="Credit Card Payment Cancelled",
+                        fg="#FF4444",
+                    )
             elif refunded > 0:
+                refund_txt = f"Full Refund: \u00a3{refunded / 100:.2f} ({refunded}p)"
+                if reason == "timeout":
+                    refund_txt += " (Timed Out)"
                 self.cancelled_refund_lbl.config(
-                    text=f"Refund: \u00a3{refunded / 100:.2f} ({refunded}p)",
+                    text=refund_txt,
                     fg=CLR_LIME,
                 )
             else:
                 self.cancelled_refund_lbl.config(
-                    text="No money inserted — no refund needed.",
+                    text="Cash Payment Timed Out — No money inserted."
+                    if reason == "timeout"
+                    else "No money inserted — no refund needed.",
                     fg=CLR_WHITE,
                 )
 
         if hasattr(self, "cancelled_sub_lbl") and self.cancelled_sub_lbl.winfo_exists():
             if method == "card":
-                self.cancelled_sub_lbl.config(
-                    text="No charge has been applied to your card."
-                )
+                if reason == "timeout":
+                    self.cancelled_sub_lbl.config(
+                        text="Payment session expired (60s). Order was cancelled and no charge was made."
+                    )
+                else:
+                    self.cancelled_sub_lbl.config(
+                        text="No charge has been applied to your card."
+                    )
             else:
-                self.cancelled_sub_lbl.config(
-                    text="Please collect your refund from the coin return slot."
-                    if refunded > 0
-                    else "No money was inserted."
-                )
+                if refunded > 0:
+                    self.cancelled_sub_lbl.config(
+                        text=f"Payment timed out. All \u00a3{refunded / 100:.2f} ({refunded}p) inserted has been returned to the coin slot."
+                        if reason == "timeout"
+                        else f"Transaction cancelled. All \u00a3{refunded / 100:.2f} ({refunded}p) inserted has been returned."
+                    )
+                else:
+                    self.cancelled_sub_lbl.config(
+                        text="Session expired without payment."
+                        if reason == "timeout"
+                        else "No money was inserted."
+                    )
 
     def _start_cancelled_countdown(self) -> None:
         """Starts a 10-second countdown then auto-returns to catalogue."""

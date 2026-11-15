@@ -15,10 +15,10 @@ class TransactionTimer:
         timer.stop()
     """
 
-    def __init__(self, timeout_seconds: int = 30):
+    def __init__(self, timeout_seconds: int = 60):
         """
         :param timeout_seconds: Number of seconds before the transaction
-                                is considered timed out. Defaults to 30 s.
+                                is considered timed out. Defaults to 60 s.
         """
         self._timeout_seconds: int = timeout_seconds
         self._running: bool = False
@@ -65,4 +65,22 @@ class TransactionTimer:
                 f"{elapsed:.1f}s elapsed (limit: {self._timeout_seconds}s)."
             )
         return expired
+
+    def getRemainingTime(self) -> int:
+        """
+        Returns the remaining seconds before the transaction times out.
+        Returns 0 if expired or not running.
+        """
+        if not self._running or self._start_time is None:
+            return 0
+        elapsed = time.monotonic() - self._start_time
+        return max(0, int(self._timeout_seconds - elapsed))
+
+    def getElapsedTime(self) -> float:
+        """
+        Returns the elapsed seconds since timer started, or 0.0 if not running.
+        """
+        if not self._running or self._start_time is None:
+            return 0.0
+        return time.monotonic() - self._start_time
 

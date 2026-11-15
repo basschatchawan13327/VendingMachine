@@ -30,7 +30,7 @@ def _ensure_data_dir() -> None:
 # Database Load & Save Functions
 # ===========================================================================
 
-# 1. Product Database Functions (ข้อมูลสินค้าที่ขาย)
+# 1. Product Database Functions (Product Catalog)
 def load_products(file_path: str = PRODUCTS_FILE) -> List[Drink]:
     """
     Load drink catalogue and stock levels from the products JSON database.
@@ -102,7 +102,7 @@ def save_products(drinks: List[Drink], file_path: str = PRODUCTS_FILE) -> None:
         print(f"[Database] Error saving products: {e}")
 
 
-# 2. Member Database Functions (ข้อมูลสมาชิก)
+# 2. Member Database Functions (Loyalty Member Data)
 def load_members(file_path: str = MEMBERS_FILE) -> List[LoyaltyAccount]:
     """
     Load loyalty membership accounts from the members JSON database.
@@ -157,7 +157,7 @@ def save_members(accounts: List[LoyaltyAccount], file_path: str = MEMBERS_FILE) 
         print(f"[Database] Error saving members: {e}")
 
 
-# 3. Transaction Database Functions (ข้อมูล Transaction)
+# 3. Transaction Database Functions (Transaction History)
 def load_transactions(file_path: str = TRANSACTIONS_FILE) -> List[TransactionRecord]:
     """
     Load transaction history records from the transactions JSON database.
@@ -216,7 +216,7 @@ def save_transactions(records: List[TransactionRecord], file_path: str = TRANSAC
         print(f"[Database] Error saving transactions: {e}")
 
 
-# 4. Activity Log Database Functions (ข้อมูล Activity Log)
+# 4. Activity Log Database Functions (Activity Log History)
 def load_activity_logs(file_path: str = ACTIVITY_LOG_FILE) -> List[Dict[str, Any]]:
     """
     Load system activity logs from the activity log JSON database.
