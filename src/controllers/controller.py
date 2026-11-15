@@ -1,25 +1,19 @@
 import os
+import sys
 import json
 from datetime import datetime
 from enum import Enum, auto
 from typing import Optional, List, Dict, Any
 
-try:
-    from src.models.payment import PaymentMethod, PaymentModule
-    from src.models.inventory import Drink, DrinkDispenser, LoyaltyAccount, LoyaltyScanner, StockSensor
-    from src.utils.logger import Logger, TransactionRecord
-    from src.utils.timer import TransactionTimer
-except ImportError:
-    try:
-        from ..models.payment import PaymentMethod, PaymentModule
-        from ..models.inventory import Drink, DrinkDispenser, LoyaltyAccount, LoyaltyScanner, StockSensor
-        from ..utils.logger import Logger, TransactionRecord
-        from ..utils.timer import TransactionTimer
-    except ImportError:
-        from payment import PaymentMethod, PaymentModule
-        from inventory import Drink, DrinkDispenser, LoyaltyAccount, LoyaltyScanner, StockSensor
-        from logger import Logger, TransactionRecord
-        from timer import TransactionTimer
+# Ensure project root is in sys.path
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from src.models.payment import PaymentMethod, PaymentModule
+from src.models.inventory import Drink, DrinkDispenser, LoyaltyAccount, LoyaltyScanner, StockSensor
+from src.utils.logger import Logger, TransactionRecord
+from src.utils.timer import TransactionTimer
 
 
 # ===========================================================================

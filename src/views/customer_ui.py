@@ -11,6 +11,7 @@ Styled STRICTLY using the official 5-color theme:
 """
 
 import os
+import sys
 import time
 import json
 import base64
@@ -110,124 +111,50 @@ def generate_stripe_qr_image(url: str, size: int = 300) -> Optional[Any]:
 # System Model Imports
 import threading
 import webbrowser
-try:
-    from src.controllers.controller import (
-        VendingController,
-        MachineState,
-        load_products,
-        save_products,
-        load_members,
-        save_members,
-        load_cash_inventory,
-        save_cash_inventory,
-        load_payment_config,
-        save_payment_config,
-        load_transactions,
-        save_transactions,
-        log_activity,
-        DATA_DIR,
-        PRODUCTS_FILE,
-        CASH_FILE,
-        PAYMENT_CONFIG_FILE,
-        TRANSACTIONS_FILE,
-        MEMBERS_FILE,
-    )
-    from src.models.inventory import Drink, DrinkDispenser, LoyaltyScanner, LoyaltyAccount, StockSensor
-    from src.models.payment import (
-        PaymentModule,
-        CashReceiver,
-        CardReader,
-        PaymentResult,
-        CashReceiverState,
-        StripeBankService,
-        PayPalBankService,
-        CustomRestBankService,
-        create_bank_service,
-        DEFAULT_STRIPE_PUBLISHABLE_KEY,
-    )
-    from src.models.bank import MockBankService
-    from src.utils.logger import Logger, TransactionRecord
-    from src.utils.timer import TransactionTimer
-    from src.views.barcode_scanner import BarcodeCameraScanner
-except ImportError:
-    try:
-        from ..controllers.controller import (
-            VendingController,
-            MachineState,
-            load_products,
-            save_products,
-            load_members,
-            save_members,
-            load_cash_inventory,
-            save_cash_inventory,
-            load_payment_config,
-            save_payment_config,
-            load_transactions,
-            save_transactions,
-            log_activity,
-            DATA_DIR,
-            PRODUCTS_FILE,
-            CASH_FILE,
-            PAYMENT_CONFIG_FILE,
-            TRANSACTIONS_FILE,
-            MEMBERS_FILE,
-        )
-        from ..models.inventory import Drink, DrinkDispenser, LoyaltyScanner, LoyaltyAccount, StockSensor
-        from ..models.payment import (
-            PaymentModule,
-            CashReceiver,
-            CardReader,
-            PaymentResult,
-            CashReceiverState,
-            StripeBankService,
-            PayPalBankService,
-            CustomRestBankService,
-            create_bank_service,
-            DEFAULT_STRIPE_PUBLISHABLE_KEY,
-        )
-        from ..models.bank import MockBankService
-        from ..utils.logger import Logger, TransactionRecord
-        from ..utils.timer import TransactionTimer
-        from .barcode_scanner import BarcodeCameraScanner
-    except ImportError:
-        from controller import (
-            VendingController,
-            MachineState,
-            load_products,
-            save_products,
-            load_members,
-            save_members,
-            load_cash_inventory,
-            save_cash_inventory,
-            load_payment_config,
-            save_payment_config,
-            load_transactions,
-            save_transactions,
-            log_activity,
-            DATA_DIR,
-            PRODUCTS_FILE,
-            CASH_FILE,
-            PAYMENT_CONFIG_FILE,
-            TRANSACTIONS_FILE,
-            MEMBERS_FILE,
-        )
-        from inventory import Drink, DrinkDispenser, LoyaltyScanner, LoyaltyAccount, StockSensor
-        from payment import (
-            PaymentModule,
-            CashReceiver,
-            CardReader,
-            PaymentResult,
-            CashReceiverState,
-            StripeBankService,
-            PayPalBankService,
-            CustomRestBankService,
-            create_bank_service,
-            DEFAULT_STRIPE_PUBLISHABLE_KEY,
-        )
-        from bank import MockBankService
-        from logger import Logger, TransactionRecord
-        from timer import TransactionTimer
-        from barcode_scanner import BarcodeCameraScanner
+
+# Ensure project root is in sys.path so 'src' package imports resolve anywhere
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from src.controllers.controller import (
+    VendingController,
+    MachineState,
+    load_products,
+    save_products,
+    load_members,
+    save_members,
+    load_cash_inventory,
+    save_cash_inventory,
+    load_payment_config,
+    save_payment_config,
+    load_transactions,
+    save_transactions,
+    log_activity,
+    DATA_DIR,
+    PRODUCTS_FILE,
+    CASH_FILE,
+    PAYMENT_CONFIG_FILE,
+    TRANSACTIONS_FILE,
+    MEMBERS_FILE,
+)
+from src.models.inventory import Drink, DrinkDispenser, LoyaltyScanner, LoyaltyAccount, StockSensor
+from src.models.payment import (
+    PaymentModule,
+    CashReceiver,
+    CardReader,
+    PaymentResult,
+    CashReceiverState,
+    StripeBankService,
+    PayPalBankService,
+    CustomRestBankService,
+    create_bank_service,
+    DEFAULT_STRIPE_PUBLISHABLE_KEY,
+)
+from src.models.bank import MockBankService
+from src.utils.logger import Logger, TransactionRecord
+from src.utils.timer import TransactionTimer
+from src.views.barcode_scanner import BarcodeCameraScanner
 
 
 # ===========================================================================
