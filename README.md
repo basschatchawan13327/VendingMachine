@@ -43,15 +43,9 @@ VendingMachine/
 │   ├── products.json           # Product Catalogue, Pricing, Weight & Dimensions
 │   └── transactions.json       # Order & Transaction Receipts
 │
-├── assets/                     # [Static Assets] High-Resolution Product Photos & Logos
-│   ├── edge_hill_logo.png
-│   └── *.jpg / *.png / *.avif
-│
-└── tests/                      # [Automated Test Suite] Unit & Integration Tests
-    ├── __init__.py
-    ├── test_inventory.py       # Inventory, Weight Sensing & Loyalty Tests
-    ├── test_payment.py         # Cash Validation (10p-£10), Change & Rejection Tests
-    └── test_controller.py      # Controller State Machine & Database Loader Tests
+└── assets/                     # [Static Assets] High-Resolution Product Photos & Logos
+    ├── edge_hill_logo.png
+    └── *.jpg / *.png / *.avif
 ```
 
 ---
@@ -80,12 +74,6 @@ pip install -r requirements.txt
 Run the primary entry point:
 ```bash
 python3 main.py
-```
-
-### 3. Running Unit Tests
-Execute the full test suite with unittest:
-```bash
-python3 -m unittest discover tests -v
 ```
 
 ---
