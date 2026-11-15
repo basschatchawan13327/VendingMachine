@@ -785,6 +785,13 @@ class CustomerVendingApp:
         if hasattr(self, "cards_inner_frame") and self.cards_inner_frame.winfo_exists():
             self._refresh_product_cards(animated=animate)
 
+        # Reactive update for options dialog live summary if open
+        if hasattr(self, "_refresh_system_summary") and callable(self._refresh_system_summary):
+            try:
+                self._refresh_system_summary()
+            except Exception:
+                pass
+
     def show_page(self, page_name: str) -> None:
         """Switch view to a specific page frame immediately without animation or screen flicker."""
         self.current_page = page_name
@@ -1832,6 +1839,7 @@ class CustomerVendingApp:
                 dialog.destroy()
             except Exception:
                 pass
+            self._refresh_system_summary = None
             self._active_modal = None
             self.root.focus_force()
             self.root.focus_set()
@@ -1922,7 +1930,7 @@ class CustomerVendingApp:
         main_split.pack(fill=tk.BOTH, expand=True)
 
         # Left Sidebar (Vertical Navigation Tabs) - Wider & Larger Text
-        sidebar = tk.Frame(main_split, bg=BG_APP, width=270, padx=12, pady=14)
+        sidebar = tk.Frame(main_split, bg=BG_APP, width=310, padx=12, pady=14)
         sidebar.pack(side=tk.LEFT, fill=tk.Y)
         sidebar.pack_propagate(False)
 
@@ -1981,6 +1989,8 @@ class CustomerVendingApp:
             elif name == "logs":
                 refresh_logs_view()
 
+            refresh_system_summary()
+
         nav_tabs = [
             ("products", "📦 Products & Stock"),
             ("cash", "💵 Cash & Coins"),
@@ -2010,27 +2020,120 @@ class CustomerVendingApp:
             btn.pack(fill=tk.X, pady=4)
             tab_buttons[tab_id] = btn
 
-        # Sidebar Bottom Info Card
-        side_info = tk.Frame(sidebar, bg=BG_SCREEN, padx=12, pady=12)
-        side_info.pack(side=tk.BOTTOM, fill=tk.X)
+        # Sidebar Bottom Info Card - Scaled Up Live Telemetry Dashboard
+        side_info = tk.Frame(
+            sidebar,
+            bg=BG_SCREEN,
+            padx=14,
+            pady=12,
+            highlightbackground=CLR_LIME,
+            highlightthickness=1,
+            relief=tk.FLAT,
+        )
+        side_info.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 0))
+
+        hdr_summary_frame = tk.Frame(side_info, bg=BG_SCREEN)
+        hdr_summary_frame.pack(fill=tk.X, pady=(0, 6))
 
         tk.Label(
-            side_info,
-            text="SYSTEM SUMMARY",
-            font=("Helvetica", 11, "bold"),
+            hdr_summary_frame,
+            text="📊 SYSTEM SUMMARY",
+            font=("Helvetica", 13, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
-        ).pack(anchor="w")
+        ).pack(side=tk.LEFT)
+
+        live_badge = tk.Label(
+            hdr_summary_frame,
+            text="● LIVE",
+            font=("Helvetica", 9, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+            padx=6,
+            pady=1,
+        )
+        live_badge.pack(side=tk.RIGHT)
+
+        sep_summary = tk.Frame(side_info, bg=CLR_LILAC, height=1)
+        sep_summary.pack(fill=tk.X, pady=(0, 8))
 
         side_summary_lbl = tk.Label(
             side_info,
-            text="• State: READY (IDLE)\n• Currency: GBP (£)\n• Timeout: 60s Policy\n• Stripe: Connected",
-            font=("Menlo", 10),
+            text="",
+            font=("Menlo", 11),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
             justify=tk.LEFT,
+            anchor="w",
         )
-        side_summary_lbl.pack(anchor="w", pady=(4, 0))
+        side_summary_lbl.pack(anchor="w", fill=tk.X)
+
+        def refresh_system_summary() -> None:
+            try:
+                if not side_summary_lbl.winfo_exists():
+                    return
+            except Exception:
+                return
+
+            # 1. Controller Machine State
+            st_name = getattr(self.controller, "state", None)
+            st_val = st_name.name if hasattr(st_name, "name") else str(st_name or "IDLE")
+            st_display = f"READY ({st_val})" if st_val == "IDLE" else st_val
+
+            # 2. Active Payment Gateway & Currency
+            gw_id = getattr(self, "active_gateway_name", "stripe")
+            gw_gateways = self.payment_config.get("gateways", {}) if hasattr(self, "payment_config") else {}
+            gw_info = gw_gateways.get(gw_id, {})
+            curr_code = str(gw_info.get("currency", "GBP")).upper()
+
+            # 3. Transaction Safety Timeout Setting
+            timeout_sec = getattr(self, "session_timeout_seconds", 60)
+
+            # 4. Customer-Facing Payment Channels Availability
+            cash_st = "✅ ENABLED" if getattr(self, "cash_enabled", True) else "⛔ DISABLED"
+            card_st = "✅ ENABLED" if getattr(self, "card_enabled", True) else "⛔ DISABLED"
+
+            # 5. Product Inventory & Stock Telemetry
+            total_stock = 0
+            sku_count = 0
+            if hasattr(self, "dispenser") and hasattr(self.dispenser, "getAllDrinks"):
+                all_drinks = self.dispenser.getAllDrinks()
+                total_stock = sum(getattr(d, "stock", 0) for d in all_drinks)
+                sku_count = len(all_drinks)
+            else:
+                cat_data = load_catalogue_data()
+                total_stock = sum(it.get("stock", 0) for it in cat_data)
+                sku_count = len(cat_data)
+
+            # 6. Physical Cash Vault Inventory
+            try:
+                cash_data = load_cash_inventory()
+                vault_total = cash_data.get("summary", {}).get("total_cash_formatted", "£0.00")
+            except Exception:
+                vault_total = "£0.00"
+
+            # 7. Loyalty Club Membership Telemetry
+            try:
+                members_list = load_members()
+                active_mem = sum(1 for m in members_list if getattr(m, "active", False))
+                total_mem = len(members_list)
+                loyalty_str = f"{active_mem} Active ({total_mem} Total)"
+            except Exception:
+                loyalty_str = "0 Active"
+
+            summary_text = (
+                f"• State:    {st_display}\n"
+                f"• Gateway:  {gw_id.upper()} ({curr_code})\n"
+                f"• Timeout:  {timeout_sec}s Policy\n"
+                f"• Cash Pay: {cash_st}\n"
+                f"• Card Pay: {card_st}\n"
+                f"• Stock:    {total_stock} cans ({sku_count} SKUs)\n"
+                f"• Vault:    {vault_total}\n"
+                f"• Loyalty:  {loyalty_str}"
+            )
+            side_summary_lbl.config(text=summary_text)
+
+        self._refresh_system_summary = refresh_system_summary
 
         # =================================================================
         # TAB 1: 📦 Product & Stock Management
@@ -2135,6 +2238,7 @@ class CustomerVendingApp:
             if sensor:
                 sensor.calibrateSensors()
             refresh_products_view()
+            refresh_system_summary()
             prod_msg_lbl.config(text="✅ Catalogue reloaded successfully from products.json", fg=CLR_LIME)
 
         def do_restock_all():
@@ -2151,6 +2255,7 @@ class CustomerVendingApp:
                 sensor.calibrateSensors()
             self.sync_products_from_json(animate=True)
             refresh_products_view()
+            refresh_system_summary()
             prod_msg_lbl.config(text="✅ All beverage slots replenished to 10 cans", fg=CLR_LIME)
 
         def do_scan_dual_sensors():
@@ -2265,6 +2370,7 @@ class CustomerVendingApp:
                     sensor.calibrateSensors()
                 self.sync_products_from_json(animate=True)
                 refresh_products_view()
+                refresh_system_summary()
                 prod_msg_lbl.config(text=f"✅ Slot {slot_target} updated: {new_p}p, {new_s} cans, {new_w}g", fg=CLR_LIME)
             else:
                 prod_msg_lbl.config(text=f"❌ Slot {slot_target} not found", fg="#FF6B6B")
@@ -2433,6 +2539,7 @@ class CustomerVendingApp:
             }
             save_cash_inventory(cash_data)
             refresh_cash_view()
+            refresh_system_summary()
             cash_val_res_lbl.config(text="✅ Refilled +20 coins & updated cash_inventory.json", fg=CLR_LIME)
 
         btn_refill_cash = tk.Button(
@@ -2613,6 +2720,7 @@ class CustomerVendingApp:
             st_text = "ENABLED" if self.cash_enabled else "DISABLED"
             log_activity("PAYMENT_METHOD_TOGGLE", f"Cash payment channel set to {st_text}")
             update_channels_ui()
+            refresh_system_summary()
             if hasattr(self, "current_page") and self.current_page == "payment":
                 self._refresh_payment_page()
 
@@ -2671,6 +2779,7 @@ class CustomerVendingApp:
             st_text = "ENABLED" if self.card_enabled else "DISABLED"
             log_activity("PAYMENT_METHOD_TOGGLE", f"Card payment channel set to {st_text}")
             update_channels_ui()
+            refresh_system_summary()
             if hasattr(self, "current_page") and self.current_page == "payment":
                 self._refresh_payment_page()
 
@@ -2911,6 +3020,7 @@ class CustomerVendingApp:
             active_badge_lbl.config(text=f"Active: {selected_gw.upper()}", fg=CLR_LIME)
             diag_status_lbl.config(text=f"🟢 Activated: {gw_entry.get('name', selected_gw)}", fg=CLR_LIME)
             log_activity("PAYMENT_GATEWAY_CONFIGURED", f"Switched active gateway to '{selected_gw}' ({gw_entry.get('name')})")
+            refresh_system_summary()
 
             if hasattr(self, "current_page") and self.current_page == "payment":
                 self._refresh_payment_page()
@@ -3104,6 +3214,7 @@ class CustomerVendingApp:
             log_activity("TIMEOUT_CONFIG_UPDATED", f"Payment session timeout set to {val}s")
             timeout_status_lbl.config(text=f"🟢 Saved: Session timeout set to {val} seconds", fg=CLR_LIME)
             update_policy_text()
+            refresh_system_summary()
 
         btn_save_timeout = tk.Button(
             timeout_save_row,
@@ -3169,6 +3280,7 @@ class CustomerVendingApp:
             ent_timeout.insert(0, str(self.session_timeout_seconds))
             timeout_status_lbl.config(text=f"Current Timeout: {self.session_timeout_seconds}s", fg=CLR_LILAC)
             update_policy_text()
+            refresh_system_summary()
 
         # =================================================================
         # TAB 4: 🧾 Transaction Records & Sales History
@@ -3706,6 +3818,7 @@ class CustomerVendingApp:
 
                 log_activity("MEMBER_REGISTERED", f"Registered new member '{m_name}' (Card: {m_cid}, Active: {is_act_var.get()})")
                 refresh_members_view()
+                refresh_system_summary()
                 add_win.destroy()
 
             btn_submit = tk.Button(
@@ -3783,6 +3896,7 @@ class CustomerVendingApp:
                 st_text = "ACTIVE" if new_st else "INACTIVE"
                 log_activity("MEMBER_STATUS_TOGGLED", f"Member {card_id} status changed to {st_text}")
                 refresh_members_view()
+                refresh_system_summary()
 
         btn_toggle_mem = tk.Button(
             members_ctrl,
@@ -3825,6 +3939,7 @@ class CustomerVendingApp:
                     self.loyalty_scanner._accounts = list(curr_members)
                 log_activity("MEMBER_DELETED", f"Member '{m_name}' ({card_id}) deleted by administrator")
                 refresh_members_view()
+                refresh_system_summary()
 
         btn_del_mem = tk.Button(
             members_ctrl,
@@ -4012,7 +4127,6 @@ class CustomerVendingApp:
             command=clear_logs,
         )
         btn_clear_logs.pack(side=tk.LEFT)
-        self._attach_button_animation(btn_clear_logs)
         self._attach_button_animation(btn_clear_logs)
 
         # Default select Tab 1: Products
