@@ -3,7 +3,7 @@
     "drink_id": "ESPRESSO",
     "name": "Espresso",
     "price": 150,
-    "stock": 11,
+    "stock": 9,
     "slot_num": "01",
     "category": "Coffee",
     "desc": "Rich & bold single-origin double shot",

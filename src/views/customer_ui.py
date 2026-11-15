@@ -1025,9 +1025,11 @@ class CustomerVendingApp:
         brand_frame = tk.Frame(header, bg=BG_APP)
         brand_frame.pack(side=tk.LEFT, fill=tk.Y)
 
-        logo_path = os.path.join(os.path.dirname(__file__), "assets", "edge_hill_logo.png")
-        if os.path.exists(logo_path):
-            self.header_logo = tk.PhotoImage(file=logo_path)
+        logo_path = os.path.join(ASSETS_DIR, "edge_hill_logo.png")
+        if not hasattr(self, "header_logo") or self.header_logo is None:
+            if os.path.exists(logo_path):
+                self.header_logo = tk.PhotoImage(file=logo_path)
+        if hasattr(self, "header_logo") and self.header_logo is not None:
             logo_lbl = tk.Label(
                 brand_frame,
                 image=self.header_logo,
@@ -4053,8 +4055,11 @@ class CustomerVendingApp:
         brand_frame = tk.Frame(header, bg=BG_APP)
         brand_frame.pack(side=tk.LEFT, fill=tk.Y)
 
-        logo_path = os.path.join(os.path.dirname(__file__), "assets", "edge_hill_logo.png")
-        if os.path.exists(logo_path) and hasattr(self, "header_logo"):
+        logo_path = os.path.join(ASSETS_DIR, "edge_hill_logo.png")
+        if not hasattr(self, "header_logo") or self.header_logo is None:
+            if os.path.exists(logo_path):
+                self.header_logo = tk.PhotoImage(file=logo_path)
+        if hasattr(self, "header_logo") and self.header_logo is not None:
             logo_lbl = tk.Label(
                 brand_frame,
                 image=self.header_logo,
@@ -5852,8 +5857,11 @@ class CustomerVendingApp:
         brand_frame = tk.Frame(header, bg=BG_APP)
         brand_frame.pack(side=tk.LEFT, fill=tk.Y)
 
-        logo_path = os.path.join(os.path.dirname(__file__), "assets", "edge_hill_logo.png")
-        if os.path.exists(logo_path) and hasattr(self, "header_logo"):
+        logo_path = os.path.join(ASSETS_DIR, "edge_hill_logo.png")
+        if not hasattr(self, "header_logo") or self.header_logo is None:
+            if os.path.exists(logo_path):
+                self.header_logo = tk.PhotoImage(file=logo_path)
+        if hasattr(self, "header_logo") and self.header_logo is not None:
             logo_lbl = tk.Label(
                 brand_frame,
                 image=self.header_logo,
@@ -6087,8 +6095,11 @@ class CustomerVendingApp:
         brand_frame = tk.Frame(header, bg=BG_APP)
         brand_frame.pack(side=tk.LEFT, fill=tk.Y)
 
-        logo_path = os.path.join(os.path.dirname(__file__), "assets", "edge_hill_logo.png")
-        if os.path.exists(logo_path) and hasattr(self, "header_logo"):
+        logo_path = os.path.join(ASSETS_DIR, "edge_hill_logo.png")
+        if not hasattr(self, "header_logo") or self.header_logo is None:
+            if os.path.exists(logo_path):
+                self.header_logo = tk.PhotoImage(file=logo_path)
+        if hasattr(self, "header_logo") and self.header_logo is not None:
             tk.Label(brand_frame, image=self.header_logo, bg=BG_APP).pack(side=tk.LEFT, pady=8)
         else:
             tk.Label(

@@ -2,7 +2,7 @@
   "cash_enabled": true,
   "card_enabled": true,
   "active_gateway": "stripe",
-  "timeout_seconds": 60,
+  "timeout_seconds": 120,
   "gateways": {
     "stripe": {
       "name": "Stripe Checkout (Dynamic QR)",
