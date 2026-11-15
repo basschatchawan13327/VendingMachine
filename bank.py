@@ -1,4 +1,6 @@
+import time
 from abc import ABC, abstractmethod
+from typing import Optional, Dict, Any, Tuple
 
 
 class BankService(ABC):
@@ -66,3 +68,43 @@ class MockBankService(BankService):
     def declineNext(self, value: bool) -> None:
         """Set to True to make the next validatePayment() call return False."""
         self._decline_next = value
+
+    def createCheckoutSession(
+        self,
+        amount: int,
+        drink_name: str = "Beverage",
+        slot_num: str = "",
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Simulate creating a hosted checkout session in offline / test mode.
+        """
+        sid = f"mock_cs_{int(time.time())}"
+        url = f"https://mockbank.internal/checkout?amount={amount}&slot={slot_num}"
+        return {
+            "id": sid,
+            "url": url,
+            "status": "open",
+            "payment_status": "unpaid",
+        }
+
+    def checkCheckoutSessionStatus(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Simulate checking checkout session status.
+        """
+        return {
+            "id": session_id,
+            "status": "complete",
+            "payment_status": "paid",
+        }
+
+    def expireCheckoutSession(self, session_id: str) -> bool:
+        """
+        Simulate expiring checkout session.
+        """
+        return True
+
+    def testConnection(self) -> Tuple[bool, str]:
+        """
+        Simulate connection test for mock bank service.
+        """
+        return True, "Mock Bank Local Simulator is Active (Ping: 0ms OK)"

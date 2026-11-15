@@ -1,0 +1,33 @@
+{
+  "cash_enabled": true,
+  "card_enabled": true,
+  "active_gateway": "stripe",
+  "timeout_seconds": 60,
+  "gateways": {
+    "stripe": {
+      "name": "Stripe Checkout (Dynamic QR)",
+      "publishable_key": "pk_test_51Uat0EAmBRfTB92ljvPqPkVTex633aK4lUAltmWfzsNQvF1LhZDlmHP7MAoTTZFqVZ39nQFuQmZ1cnB0Y8M3exjz00lbPksXW4",
+      "secret_key": "",
+      "api_url": "https://api.stripe.com/v1",
+      "currency": "gbp"
+    },
+    "paypal": {
+      "name": "PayPal REST Gateway",
+      "client_id": "sandbox_paypal_client_id_01",
+      "secret_key": "sandbox_paypal_secret_key_01",
+      "api_url": "https://api-m.sandbox.paypal.com/v2",
+      "currency": "GBP"
+    },
+    "custom_rest": {
+      "name": "Custom REST Payment Gateway",
+      "api_url": "https://api.example.com/v1/charge",
+      "api_key": "custom_api_key_token_12345",
+      "currency": "GBP"
+    },
+    "mock": {
+      "name": "Offline Mock Bank (Testing Simulation)",
+      "api_url": "local://mock-bank",
+      "currency": "GBP"
+    }
+  }
+}

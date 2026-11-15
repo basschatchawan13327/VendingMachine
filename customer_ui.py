@@ -14,8 +14,11 @@ import os
 import time
 import json
 import base64
+import urllib.request
+import urllib.parse
+import urllib.error
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from typing import Any, Dict, List, Optional, Tuple
 
 # Safe OpenCV (cv2) import with graceful error handling
@@ -113,10 +116,22 @@ from controller import (
     load_products,
     save_products,
     load_members,
+    save_members,
+    load_cash_inventory,
+    save_cash_inventory,
+    load_payment_config,
+    save_payment_config,
+    load_transactions,
+    save_transactions,
+    log_activity,
     DATA_DIR,
     PRODUCTS_FILE,
+    CASH_FILE,
+    PAYMENT_CONFIG_FILE,
+    TRANSACTIONS_FILE,
+    MEMBERS_FILE,
 )
-from inventory import Drink, DrinkDispenser, LoyaltyScanner, StockSensor
+from inventory import Drink, DrinkDispenser, LoyaltyScanner, LoyaltyAccount, StockSensor
 from payment import (
     PaymentModule,
     CashReceiver,
@@ -124,9 +139,13 @@ from payment import (
     PaymentResult,
     CashReceiverState,
     StripeBankService,
+    PayPalBankService,
+    CustomRestBankService,
+    create_bank_service,
+    DEFAULT_STRIPE_PUBLISHABLE_KEY,
 )
 from bank import MockBankService
-from logger import Logger
+from logger import Logger, TransactionRecord
 from timer import TransactionTimer
 from barcode_scanner import BarcodeCameraScanner
 
@@ -265,11 +284,26 @@ def load_catalogue_data(file_path: str = PRODUCTS_FILE) -> List[Dict]:
                     item["name"] = item.get("drink_id", "Drink")
                 if "category" not in item or not item["category"]:
                     item["category"] = "Drinks"
+                if "unit_weight" not in item or item["unit_weight"] is None:
+                    item["unit_weight"] = 250.0
+                if "tare_weight" not in item or item["tare_weight"] is None:
+                    item["tare_weight"] = 50.0
 
             return data
     except Exception as e:
         print(f"[customer_ui] Error reading products from {file_path}: {e}")
         return []
+
+
+def save_catalogue_data(catalogue: List[Dict], file_path: str = PRODUCTS_FILE) -> bool:
+    """Saves updated product catalogue data back to data/products.json."""
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(catalogue, f, indent=2)
+        return True
+    except Exception as e:
+        print(f"[customer_ui] Error saving products to {file_path}: {e}")
+        return False
 
 
 # ===========================================================================
@@ -573,6 +607,8 @@ class CustomerVendingApp:
                 icon_type=d.get("icon_type", "can"),
                 category=d.get("category", "Drinks"),
                 image=d.get("image"),
+                unit_weight=d.get("unit_weight", 250.0),
+                tare_weight=d.get("tare_weight", 50.0),
             )
             for d in self.catalogue
         ]
@@ -584,16 +620,26 @@ class CustomerVendingApp:
         loaded_accounts = load_members()
         self.loyalty_scanner = LoyaltyScanner(loaded_accounts)
 
-        # 4. Payments
-        self.cash_receiver = CashReceiver()
+        # 4. Payments & Dynamic Gateway Engine
+        self.payment_config = load_payment_config()
+        self.cash_enabled: bool = bool(self.payment_config.get("cash_enabled", True))
+        self.card_enabled: bool = bool(self.payment_config.get("card_enabled", True))
+        self.active_gateway_name: str = self.payment_config.get("active_gateway", "stripe")
+        self.session_timeout_seconds: int = int(self.payment_config.get("timeout_seconds", 60))
+
+        gw_config = self.payment_config.get("gateways", {}).get(self.active_gateway_name, {})
+        self.active_bank = create_bank_service(self.active_gateway_name, gw_config)
+        self.stripe_bank = self.active_bank
         self.mock_bank = MockBankService()
-        self.stripe_bank = StripeBankService()
-        self.card_reader = CardReader(self.stripe_bank)
+        self.cash_receiver = CashReceiver()
+        self.card_reader = CardReader(self.active_bank)
         self.payment_module = PaymentModule([self.cash_receiver, self.card_reader])
 
         # 5. Logger & Timer
         self.logger = Logger()
-        self.timer = TransactionTimer(timeout_seconds=60)
+        loaded_txs = load_transactions()
+        self.logger._records = list(loaded_txs)
+        self.timer = TransactionTimer(timeout_seconds=self.session_timeout_seconds)
 
         # 6. Core Vending Controller
         self.controller = VendingController(
@@ -672,6 +718,8 @@ class CustomerVendingApp:
                     d.icon_type = item.get("icon_type", "can")
                     d.category = item.get("category", "Drinks")
                     d.image = item.get("image")
+                    d.unit_weight = item.get("unit_weight", getattr(d, "unit_weight", 250.0))
+                    d.tare_weight = item.get("tare_weight", getattr(d, "tare_weight", 50.0))
                     new_slots.append(d)
                 else:
                     new_slots.append(
@@ -685,9 +733,13 @@ class CustomerVendingApp:
                             icon_type=item.get("icon_type", "can"),
                             category=item.get("category", "Drinks"),
                             image=item.get("image"),
+                            unit_weight=item.get("unit_weight", 250.0),
+                            tare_weight=item.get("tare_weight", 50.0),
                         )
                     )
             self.dispenser._slots = new_slots
+            if hasattr(self, "stock_sensor") and self.stock_sensor is not None:
+                self.stock_sensor.calibrateSensors()
 
         # Validate currently entered slot
         curr = self.entered_slot.get().replace("-", "").strip()
@@ -1415,12 +1467,16 @@ class CustomerVendingApp:
                 self.root.after(130, self._open_loyalty_scan_dialog)
                 return
             elif char == "2" or key in ("KP_2", "2"):
+                if not getattr(self, "cash_enabled", True):
+                    return
                 if hasattr(self, "cash_btn") and self.cash_btn.winfo_exists():
                     self.cash_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.cash_btn, bg=BTN_BG, relief=tk.FLAT))
                 self.root.after(130, self._on_choose_cash)
                 return
             elif char == "3" or key in ("KP_3", "3"):
+                if not getattr(self, "card_enabled", True):
+                    return
                 if hasattr(self, "card_btn") and self.card_btn.winfo_exists():
                     self.card_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.card_btn, bg=BTN_BG, relief=tk.FLAT))
@@ -1472,6 +1528,11 @@ class CustomerVendingApp:
                 self.confirm_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
                 self.root.after(120, lambda: self._safe_config(self.confirm_btn, bg=BTN_BG, relief=tk.FLAT))
             self.root.after(130, self._on_confirm_selection)
+        elif char in ("o", "O"):
+            if hasattr(self, "option_btn") and self.option_btn.winfo_exists():
+                self.option_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                self.root.after(120, lambda: self._safe_config(self.option_btn, bg=BTN_BG, relief=tk.FLAT))
+            self.root.after(130, self._open_options_dialog)
 
     def _handle_digit_input(self, digit: str) -> None:
         """Processes digit typed from physical keyboard with tactile visual feedback."""
@@ -1654,9 +1715,28 @@ class CustomerVendingApp:
 
     def _build_footer(self, parent: tk.Frame) -> None:
         """Bottom status and instruction bar (Background: #3A0C51)."""
-        footer = tk.Frame(parent, bg=BG_APP, height=40, padx=20)
+        footer = tk.Frame(parent, bg=BG_APP, height=40, padx=16)
         footer.pack(fill=tk.X, side=tk.BOTTOM)
         footer.pack_propagate(False)
+
+        # Option button at bottom-left, on the same bar as the tip text
+        self.option_btn = tk.Button(
+            footer,
+            text="⚙️ Option",
+            font=("Helvetica", 10, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            activebackground=CLR_WHITE,
+            activeforeground=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=12,
+            pady=2,
+            cursor="hand2",
+            command=self._open_options_dialog,
+        )
+        self.option_btn.pack(side=tk.LEFT, pady=6)
+        self._attach_button_animation(self.option_btn)
 
         self.footer_tip_lbl = tk.Label(
             footer,
@@ -1665,7 +1745,7 @@ class CustomerVendingApp:
             fg=CLR_WHITE,
             bg=BG_APP,
         )
-        self.footer_tip_lbl.pack(side=tk.LEFT, pady=10)
+        self.footer_tip_lbl.pack(side=tk.LEFT, padx=(12, 0), pady=10)
 
         # Current Time label
         self.time_lbl = tk.Label(
@@ -1686,6 +1766,2230 @@ class CustomerVendingApp:
                 pass
 
         update_clock()
+
+    def _open_options_dialog(self) -> None:
+        """Opens the full Management & Options Dashboard with 4 vertical tabs."""
+        if getattr(self, "_active_modal", None) is not None:
+            try:
+                if self._active_modal.winfo_exists():
+                    self._active_modal.lift()
+                    self._active_modal.focus_force()
+                    return
+            except Exception:
+                pass
+
+        dialog = tk.Toplevel(self.root)
+        self._active_modal = dialog
+        dialog.title("Vending Machine Management & Options")
+
+        # Responsive window dimensions - enlarged for optimal readability & dashboard layout
+        sw = max(1100, self.root.winfo_screenwidth())
+        sh = max(750, self.root.winfo_screenheight())
+        dw = min(1220, max(1040, sw - 40))
+        dh = min(820, max(720, sh - 60))
+        dialog.geometry(f"{dw}x{dh}")
+        dialog.minsize(1000, 680)
+        dialog.configure(bg=BG_APP)
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        # Center on parent window
+        dialog.update_idletasks()
+        x = max(10, self.root.winfo_x() + (self.root.winfo_width() - dw) // 2)
+        y = max(10, self.root.winfo_y() + (self.root.winfo_height() - dh) // 2)
+        dialog.geometry(f"+{x}+{y}")
+
+        def on_close():
+            try:
+                dialog.grab_release()
+                dialog.destroy()
+            except Exception:
+                pass
+            self._active_modal = None
+            self.root.focus_force()
+            self.root.focus_set()
+            self.root.after(50, lambda: (self.root.focus_force(), self.root.focus_set()))
+
+        dialog.protocol("WM_DELETE_WINDOW", on_close)
+        def on_options_key(event: tk.Event):
+            if event.keysym in ("Escape",):
+                on_close()
+
+        dialog.bind("<Escape>", lambda e: on_close())
+        dialog.bind("<Key>", on_options_key)
+
+        # -----------------------------------------------------------------
+        # Treeview Theme Configuration - Scaled Up for Readability
+        # -----------------------------------------------------------------
+        style = ttk.Style(dialog)
+        if "clam" in style.theme_names():
+            style.theme_use("clam")
+        style.configure(
+            "Opt.Treeview",
+            background=BG_SCREEN,
+            foreground=CLR_WHITE,
+            fieldbackground=BG_SCREEN,
+            rowheight=34,
+            font=("Helvetica", 12),
+        )
+        style.configure(
+            "Opt.Treeview.Heading",
+            background=BG_APP,
+            foreground=CLR_LIME,
+            font=("Helvetica", 12, "bold"),
+        )
+        style.map(
+            "Opt.Treeview",
+            background=[("selected", CLR_LIME)],
+            foreground=[("selected", CLR_DEEP_PURPLE)],
+        )
+
+        # -----------------------------------------------------------------
+        # Header (Top Banner) - Scaled Up
+        # -----------------------------------------------------------------
+        hdr = tk.Frame(dialog, bg=BG_APP, padx=20, pady=12, height=68)
+        hdr.pack(fill=tk.X)
+        hdr.pack_propagate(False)
+
+        hdr_left = tk.Frame(hdr, bg=BG_APP)
+        hdr_left.pack(side=tk.LEFT, fill=tk.Y)
+
+        tk.Label(
+            hdr_left,
+            text="⚙️ SYSTEM OPTIONS & MANAGEMENT DASHBOARD",
+            font=("Helvetica", 16, "bold"),
+            fg=CLR_LIME,
+            bg=BG_APP,
+        ).pack(anchor="w")
+
+        tk.Label(
+            hdr_left,
+            text="Edge Hill University Smart Vending — Administration & Hardware Diagnostics",
+            font=("Helvetica", 12),
+            fg=CLR_LILAC,
+            bg=BG_APP,
+        ).pack(anchor="w")
+
+        close_btn = tk.Button(
+            hdr,
+            text="✕ Close (Esc)",
+            font=("Helvetica", 12, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            activebackground=CLR_WHITE,
+            activeforeground=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=18,
+            pady=8,
+            cursor="hand2",
+            command=on_close,
+        )
+        close_btn.pack(side=tk.RIGHT, pady=4)
+        self._attach_button_animation(close_btn)
+
+        # -----------------------------------------------------------------
+        # Main Split: Left Vertical Tabs + Right Content Pane
+        # -----------------------------------------------------------------
+        main_split = tk.Frame(dialog, bg=BG_MIDDLE)
+        main_split.pack(fill=tk.BOTH, expand=True)
+
+        # Left Sidebar (Vertical Navigation Tabs) - Wider & Larger Text
+        sidebar = tk.Frame(main_split, bg=BG_APP, width=270, padx=12, pady=14)
+        sidebar.pack(side=tk.LEFT, fill=tk.Y)
+        sidebar.pack_propagate(False)
+
+        tk.Label(
+            sidebar,
+            text="MANAGEMENT TABS",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LILAC,
+            bg=BG_APP,
+        ).pack(anchor="w", pady=(0, 10))
+
+        # Right Content Area
+        content_area = tk.Frame(main_split, bg=BG_MIDDLE, padx=12, pady=12)
+        content_area.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
+        tabs: Dict[str, tk.Frame] = {}
+        tab_buttons: Dict[str, tk.Button] = {}
+
+        def select_tab(name: str):
+            for tname, frame in tabs.items():
+                if tname == name:
+                    frame.pack(fill=tk.BOTH, expand=True)
+                else:
+                    frame.pack_forget()
+
+            for tname, btn in tab_buttons.items():
+                if tname == name:
+                    btn.config(
+                        fg=BTN_FG,
+                        font=("Helvetica", 13, "bold"),
+                        relief=tk.SOLID,
+                        bd=1,
+                        highlightthickness=2,
+                        highlightbackground=CLR_LIME,
+                    )
+                else:
+                    btn.config(
+                        fg=BTN_FG,
+                        font=("Helvetica", 13),
+                        relief=tk.FLAT,
+                        bd=0,
+                        highlightthickness=0,
+                        highlightbackground=CLR_DEEP_PURPLE,
+                    )
+
+            if name == "products":
+                refresh_products_view()
+            elif name == "cash":
+                refresh_cash_view()
+            elif name == "payments":
+                refresh_payments_view()
+            elif name == "transactions":
+                refresh_transactions_view()
+            elif name == "members":
+                refresh_members_view()
+            elif name == "logs":
+                refresh_logs_view()
+
+        nav_tabs = [
+            ("products", "📦 Products & Stock"),
+            ("cash", "💵 Cash & Coins"),
+            ("payments", "💳 Payment Methods"),
+            ("transactions", "🧾 Transaction Records"),
+            ("members", "🎖️ Loyalty Members"),
+            ("logs", "📋 System & Logs"),
+        ]
+
+        for tab_id, tab_label in nav_tabs:
+            btn = tk.Button(
+                sidebar,
+                text=tab_label,
+                font=("Helvetica", 13),
+                bg=BTN_BG,
+                fg=BTN_FG,
+                activebackground=CLR_WHITE,
+                activeforeground=BTN_FG,
+                relief=tk.FLAT,
+                bd=0,
+                padx=14,
+                pady=12,
+                anchor="w",
+                cursor="hand2",
+                command=lambda tid=tab_id: select_tab(tid),
+            )
+            btn.pack(fill=tk.X, pady=4)
+            tab_buttons[tab_id] = btn
+
+        # Sidebar Bottom Info Card
+        side_info = tk.Frame(sidebar, bg=BG_SCREEN, padx=12, pady=12)
+        side_info.pack(side=tk.BOTTOM, fill=tk.X)
+
+        tk.Label(
+            side_info,
+            text="SYSTEM SUMMARY",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LIME,
+            bg=BG_SCREEN,
+        ).pack(anchor="w")
+
+        side_summary_lbl = tk.Label(
+            side_info,
+            text="• State: READY (IDLE)\n• Currency: GBP (£)\n• Timeout: 60s Policy\n• Stripe: Connected",
+            font=("Menlo", 10),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+            justify=tk.LEFT,
+        )
+        side_summary_lbl.pack(anchor="w", pady=(4, 0))
+
+        # =================================================================
+        # TAB 1: 📦 Product & Stock Management
+        # =================================================================
+        tab_products_frame = tk.Frame(content_area, bg=BG_MIDDLE)
+        tabs["products"] = tab_products_frame
+
+        # Top Card
+        prod_hdr = tk.Frame(tab_products_frame, bg=BG_CARD, padx=14, pady=10)
+        prod_hdr.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            prod_hdr,
+            text="📦 PRODUCT CATALOGUE & DISPENSER INVENTORY",
+            font=("Helvetica", 14, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        tk.Label(
+            prod_hdr,
+            text="Live stock sensor telemetry from data/products.json and dispenser hardware",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        # Treeview Frame
+        prod_tree_frame = tk.Frame(tab_products_frame, bg=BG_CARD, padx=8, pady=8)
+        prod_tree_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+
+        prod_tree = ttk.Treeview(
+            prod_tree_frame,
+            style="Opt.Treeview",
+            columns=("slot", "name", "price", "stock", "weight", "sensor"),
+            show="headings",
+            height=9,
+        )
+        prod_tree.heading("slot", text="Slot")
+        prod_tree.heading("name", text="Product Name")
+        prod_tree.heading("price", text="Price")
+        prod_tree.heading("stock", text="Stock")
+        prod_tree.heading("weight", text="Row Weight (g)")
+        prod_tree.heading("sensor", text="Dual-Sensor Status")
+
+        prod_tree.column("slot", width=65, anchor="center")
+        prod_tree.column("name", width=220, anchor="w")
+        prod_tree.column("price", width=105, anchor="center")
+        prod_tree.column("stock", width=115, anchor="center")
+        prod_tree.column("weight", width=160, anchor="center")
+        prod_tree.column("sensor", width=195, anchor="center")
+
+        prod_scroll = ttk.Scrollbar(prod_tree_frame, orient=tk.VERTICAL, command=prod_tree.yview)
+        prod_tree.configure(yscrollcommand=prod_scroll.set)
+        prod_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        prod_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Bottom Edit & Actions Frame
+        prod_ctrl = tk.Frame(tab_products_frame, bg=BG_CARD, padx=14, pady=12)
+        prod_ctrl.pack(fill=tk.X)
+
+        # Quick Actions Row
+        prod_act_row = tk.Frame(prod_ctrl, bg=BG_CARD)
+        prod_act_row.pack(fill=tk.X, pady=(0, 8))
+
+        def refresh_products_view():
+            prod_tree.delete(*prod_tree.get_children())
+            catalogue = load_catalogue_data()
+            sensor = getattr(self, "stock_sensor", None)
+            for item in catalogue:
+                did = item.get("drink_id", "")
+                slot = item.get("slot_num", "--")
+                name = item.get("name", "Unknown")
+                price = item.get("price", 0)
+                price_str = f"{price}p"
+
+                if sensor:
+                    telem = sensor.verifyStock(did)
+                    stock = telem.get("verified_stock", item.get("stock", 0))
+                    w_g = telem.get("measured_weight_g", 0.0)
+                    w_str = f"{w_g:.0f}g ({telem.get('stock_by_weight')} cans)"
+                    sensor_cnt = telem.get("stock_by_sensor")
+                    if not telem.get("is_consistent"):
+                        st_text = f"⚠️ Mismatch (Beam: {sensor_cnt})"
+                    elif stock == 0:
+                        st_text = "❌ Empty"
+                    elif stock <= 3:
+                        st_text = f"⚠️ Low ({stock} cans)"
+                    else:
+                        st_text = f"✅ Verified ({stock} cans)"
+                else:
+                    stock = item.get("stock", 0)
+                    w_str = f"{stock * 250 + 50:.0f}g"
+                    st_text = "✅ In Stock" if stock >= 5 else ("⚠️ Low" if stock > 0 else "❌ Out of Stock")
+
+                stock_str = f"{stock} cans"
+                prod_tree.insert("", tk.END, values=(slot, name, price_str, stock_str, w_str, st_text))
+
+        def do_reload_products():
+            self._sync_products_from_file(animate=True)
+            sensor = getattr(self, "stock_sensor", None)
+            if sensor:
+                sensor.calibrateSensors()
+            refresh_products_view()
+            prod_msg_lbl.config(text="✅ Catalogue reloaded successfully from products.json", fg=CLR_LIME)
+
+        def do_restock_all():
+            catalogue = load_catalogue_data()
+            for item in catalogue:
+                item["stock"] = 10
+            save_catalogue_data(catalogue)
+            # Update dispenser slots
+            if hasattr(self, "dispenser") and hasattr(self.dispenser, "_slots"):
+                for d in self.dispenser._slots:
+                    d.stock = 10
+            sensor = getattr(self, "stock_sensor", None)
+            if sensor:
+                sensor.calibrateSensors()
+            self._sync_products_from_file(animate=True)
+            refresh_products_view()
+            prod_msg_lbl.config(text="✅ All beverage slots replenished to 10 cans", fg=CLR_LIME)
+
+        def do_scan_dual_sensors():
+            sensor = getattr(self, "stock_sensor", None)
+            if sensor:
+                sensor.refresh()
+            refresh_products_view()
+            prod_msg_lbl.config(text="✅ Scanned row load cells and optical detection sensors", fg=CLR_LIME)
+
+        btn_reload_prod = tk.Button(
+            prod_act_row,
+            text="🔄 Reload Catalogue",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=do_reload_products,
+        )
+        btn_reload_prod.pack(side=tk.LEFT, padx=(0, 8))
+        self._attach_button_animation(btn_reload_prod)
+
+        btn_restock_all = tk.Button(
+            prod_act_row,
+            text="➕ Restock All Slots (+10 Cans)",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=do_restock_all,
+        )
+        btn_restock_all.pack(side=tk.LEFT, padx=(0, 8))
+        self._attach_button_animation(btn_restock_all)
+
+        btn_scan_sensors = tk.Button(
+            prod_act_row,
+            text="⚖️ Scan Weight & Sensors",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=do_scan_dual_sensors,
+        )
+        btn_scan_sensors.pack(side=tk.LEFT, padx=(0, 8))
+        self._attach_button_animation(btn_scan_sensors)
+
+        # Edit Form Row
+        edit_row = tk.Frame(prod_ctrl, bg=BG_CARD)
+        edit_row.pack(fill=tk.X, pady=(4, 0))
+
+        tk.Label(edit_row, text="Edit Slot:", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT, padx=(0, 4))
+        edit_slot_var = tk.StringVar(value="01")
+        ent_slot = tk.Entry(edit_row, textvariable=edit_slot_var, width=4, font=("Helvetica", 11))
+        ent_slot.pack(side=tk.LEFT, padx=(0, 8))
+
+        tk.Label(edit_row, text="Price (p):", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT, padx=(0, 4))
+        edit_price_var = tk.StringVar(value="150")
+        ent_price = tk.Entry(edit_row, textvariable=edit_price_var, width=6, font=("Helvetica", 11))
+        ent_price.pack(side=tk.LEFT, padx=(0, 8))
+
+        tk.Label(edit_row, text="Stock:", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT, padx=(0, 4))
+        edit_stock_var = tk.StringVar(value="10")
+        ent_stock = tk.Entry(edit_row, textvariable=edit_stock_var, width=5, font=("Helvetica", 11))
+        ent_stock.pack(side=tk.LEFT, padx=(0, 8))
+
+        tk.Label(edit_row, text="Unit Wt (g):", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT, padx=(0, 4))
+        edit_weight_var = tk.StringVar(value="160")
+        ent_weight = tk.Entry(edit_row, textvariable=edit_weight_var, width=6, font=("Helvetica", 11))
+        ent_weight.pack(side=tk.LEFT, padx=(0, 8))
+
+        def save_product_changes():
+            slot_target = edit_slot_var.get().strip()
+            try:
+                new_p = int(edit_price_var.get().strip())
+                new_s = int(edit_stock_var.get().strip())
+                new_w = float(edit_weight_var.get().strip())
+            except ValueError:
+                prod_msg_lbl.config(text="❌ Error: Price/Stock must be ints, Weight float", fg="#FF6B6B")
+                return
+
+            catalogue = load_catalogue_data()
+            matched = False
+            for item in catalogue:
+                if str(item.get("slot_num", "")).strip() == slot_target:
+                    item["price"] = new_p
+                    item["stock"] = new_s
+                    item["unit_weight"] = new_w
+                    matched = True
+                    break
+
+            if matched:
+                save_catalogue_data(catalogue)
+                if hasattr(self, "dispenser") and hasattr(self.dispenser, "_slots"):
+                    for d in self.dispenser._slots:
+                        if getattr(d, "slot_num", "") == slot_target:
+                            d.price = new_p
+                            d.stock = new_s
+                            d.unit_weight = new_w
+                sensor = getattr(self, "stock_sensor", None)
+                if sensor:
+                    sensor.calibrateSensors()
+                self._sync_products_from_file(animate=True)
+                refresh_products_view()
+                prod_msg_lbl.config(text=f"✅ Slot {slot_target} updated: {new_p}p, {new_s} cans, {new_w}g", fg=CLR_LIME)
+            else:
+                prod_msg_lbl.config(text=f"❌ Slot {slot_target} not found", fg="#FF6B6B")
+
+        btn_save_prod = tk.Button(
+            edit_row,
+            text="💾 Save Item",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=14,
+            pady=5,
+            cursor="hand2",
+            command=save_product_changes,
+        )
+        btn_save_prod.pack(side=tk.LEFT, padx=(4, 0))
+        self._attach_button_animation(btn_save_prod)
+
+        prod_msg_lbl = tk.Label(prod_ctrl, text="💡 Tip: Click any row in the table to load it into the editor.", font=("Helvetica", 11), fg=CLR_LILAC, bg=BG_CARD)
+        prod_msg_lbl.pack(anchor="w", pady=(6, 0))
+        prod_msg_lbl.pack(anchor="w", pady=(6, 0))
+
+        def on_tree_select(e):
+            sel = prod_tree.selection()
+            if sel:
+                vals = prod_tree.item(sel[0], "values")
+                edit_slot_var.set(vals[0])
+                p_clean = vals[2].split("p")[0].strip()
+                edit_price_var.set(p_clean)
+                s_clean = vals[3].split()[0].strip()
+                edit_stock_var.set(s_clean)
+                catalogue = load_catalogue_data()
+                for it in catalogue:
+                    if str(it.get("slot_num", "")).strip() == vals[0]:
+                        edit_weight_var.set(str(it.get("unit_weight", 250.0)))
+                        break
+                prod_msg_lbl.config(text=f"Loaded Slot {vals[0]}: {vals[1]} into editor", fg=CLR_WHITE)
+
+        prod_tree.bind("<ButtonRelease-1>", on_tree_select)
+
+        # =================================================================
+        # TAB 2: 💵 Cash & Coins Management
+        # =================================================================
+        tab_cash_frame = tk.Frame(content_area, bg=BG_MIDDLE)
+        tabs["cash"] = tab_cash_frame
+
+        cash_hdr = tk.Frame(tab_cash_frame, bg=BG_CARD, padx=14, pady=10)
+        cash_hdr.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            cash_hdr,
+            text="💵 CASH RECEIVER & CHANGE DISPENSER FLOAT",
+            font=("Helvetica", 14, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        tk.Label(
+            cash_hdr,
+            text="Change hopper coin inventory, balance calculation, and cash validator checks",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        # Total Balance Card
+        cash_bal_card = tk.Frame(tab_cash_frame, bg=BG_SCREEN, padx=16, pady=12)
+        cash_bal_card.pack(fill=tk.X, pady=(0, 8))
+
+        cash_tot_lbl = tk.Label(
+            cash_bal_card,
+            text="💰 TOTAL COIN FLOAT: £0.00",
+            font=("Helvetica", 16, "bold"),
+            fg=CLR_LIME,
+            bg=BG_SCREEN,
+        )
+        cash_tot_lbl.pack(anchor="w")
+
+        tk.Label(
+            cash_bal_card,
+            text="Accepted Denominations (10p - £10.00): 10p, 20p, 50p, £1, £2, £5 Note, £10 Note\nPolicy: Banknotes £20 and £50 are not accepted by the machine and will be returned.",
+            font=("Menlo", 11),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+            justify=tk.LEFT,
+        ).pack(anchor="w", pady=(2, 0))
+
+        # Coin Table Frame
+        cash_tree_frame = tk.Frame(tab_cash_frame, bg=BG_CARD, padx=8, pady=8)
+        cash_tree_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+
+        cash_tree = ttk.Treeview(
+            cash_tree_frame,
+            style="Opt.Treeview",
+            columns=("type", "coin", "qty", "subtotal", "status"),
+            show="headings",
+            height=8,
+        )
+        cash_tree.heading("type", text="Type")
+        cash_tree.heading("coin", text="Denomination")
+        cash_tree.heading("qty", text="Quantity in Machine")
+        cash_tree.heading("subtotal", text="Subtotal Value")
+        cash_tree.heading("status", text="Storage Status")
+
+        cash_tree.column("type", width=110, anchor="center")
+        cash_tree.column("coin", width=180, anchor="center")
+        cash_tree.column("qty", width=180, anchor="center")
+        cash_tree.column("subtotal", width=150, anchor="center")
+        cash_tree.column("status", width=160, anchor="center")
+
+        cash_tree.pack(fill=tk.BOTH, expand=True)
+
+        def refresh_cash_view():
+            cash_tree.delete(*cash_tree.get_children())
+            cash_data = load_cash_inventory()
+            coins = cash_data.get("coins", [])
+            notes = cash_data.get("banknotes", [])
+            total_pence = 0
+
+            # Render Coins (Hopper)
+            for c in coins:
+                d = c.get("denomination", 0)
+                qty = c.get("quantity", 0)
+                sub = d * qty
+                total_pence += sub
+                st = "✅ Plentiful" if qty >= 10 else ("⚠️ Low (<10)" if qty > 0 else "❌ Empty")
+                cash_tree.insert("", tk.END, values=("🪙 Coin", c.get("label", f"{d}p"), f"{qty} in hopper", f"£{sub/100:.2f}", st))
+
+            # Render Banknotes (Stacker Cassette)
+            for n in notes:
+                d = n.get("denomination", 0)
+                qty = n.get("quantity", 0)
+                sub = d * qty
+                total_pence += sub
+                st = "✅ Stored" if qty >= 5 else ("⚠️ Low (<5)" if qty > 0 else "❌ Empty")
+                cash_tree.insert("", tk.END, values=("💵 Note", n.get("label", f"£{d//100}"), f"{qty} in cassette", f"£{sub/100:.2f}", st))
+
+            cash_tot_lbl.config(text=f"💰 TOTAL CASH IN MACHINE: £{total_pence/100:.2f} ({total_pence}p)")
+
+        # Controls & Validator Test Frame
+        cash_ctrl = tk.Frame(tab_cash_frame, bg=BG_CARD, padx=14, pady=12)
+        cash_ctrl.pack(fill=tk.X)
+
+        def do_refill_cash():
+            cash_data = load_cash_inventory()
+            coins = cash_data.get("coins", [])
+            dispenser = getattr(self.cash_receiver, "_dispenser", None)
+            for c in coins:
+                c["quantity"] = c.get("quantity", 0) + 20
+                c["subtotal_pence"] = c["denomination"] * c["quantity"]
+                if dispenser and hasattr(dispenser, "_coin_stock"):
+                    d = c["denomination"]
+                    dispenser._coin_stock[d] = dispenser._coin_stock.get(d, 0) + 20
+
+            tot_coins = sum(c["subtotal_pence"] for c in coins)
+            tot_notes = sum(n.get("subtotal_pence", 0) for n in cash_data.get("banknotes", []))
+            tot_all = tot_coins + tot_notes
+            cash_data["summary"] = {
+                "total_coins_pence": tot_coins,
+                "total_banknotes_pence": tot_notes,
+                "total_cash_pence": tot_all,
+                "total_cash_formatted": f"£{tot_all/100:.2f}",
+                "last_updated": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            }
+            save_cash_inventory(cash_data)
+            refresh_cash_view()
+            cash_val_res_lbl.config(text="✅ Refilled +20 coins & updated cash_inventory.json", fg=CLR_LIME)
+
+        btn_refill_cash = tk.Button(
+            cash_ctrl,
+            text="💰 Refill Coin Float (+20 of Each Coin)",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=16,
+            pady=6,
+            cursor="hand2",
+            command=do_refill_cash,
+        )
+        btn_refill_cash.pack(side=tk.LEFT, padx=(0, 12))
+        self._attach_button_animation(btn_refill_cash)
+
+        # Validator testing widget
+        val_test_frame = tk.Frame(cash_ctrl, bg=BG_CARD)
+        val_test_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        tk.Label(val_test_frame, text="Test Coin (p):", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT, padx=(0, 4))
+        test_coin_var = tk.StringVar(value="50")
+        ent_coin = tk.Entry(val_test_frame, textvariable=test_coin_var, width=6, font=("Helvetica", 11))
+        ent_coin.pack(side=tk.LEFT, padx=(0, 6))
+
+        def test_coin_validation():
+            try:
+                amt = int(test_coin_var.get().strip())
+                validator = getattr(self.cash_receiver, "_validator", None)
+                ok = validator.validate(amt) if validator else (amt in [10, 20, 50, 100, 200, 500, 1000])
+                if ok:
+                    cash_val_res_lbl.config(text=f"✅ {amt}p is VALID & ACCEPTED (Range: 10p - £10.00)", fg=CLR_LIME)
+                else:
+                    if amt in (2000, 5000):
+                        cash_val_res_lbl.config(text=f"❌ £{amt//100}.00 Note REJECTED & RETURNED (Max £10 accepted)", fg="#FF6B6B")
+                    elif amt < 10:
+                        cash_val_res_lbl.config(text=f"❌ {amt}p REJECTED & RETURNED (Min 10p accepted)", fg="#FF6B6B")
+                    else:
+                        cash_val_res_lbl.config(text=f"❌ {amt}p REJECTED & RETURNED (Accepted: 10p to £10.00 only)", fg="#FF6B6B")
+            except ValueError:
+                cash_val_res_lbl.config(text="❌ Error: Please enter valid integer pence", fg="#FF6B6B")
+
+        btn_val = tk.Button(
+            val_test_frame,
+            text="Validate",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=12,
+            pady=5,
+            cursor="hand2",
+            command=test_coin_validation,
+        )
+        btn_val.pack(side=tk.LEFT, padx=(0, 8))
+        self._attach_button_animation(btn_val)
+
+        cash_val_res_lbl = tk.Label(cash_ctrl, text="CashValidator ready (Accepted: 10p to £10.00).", font=("Helvetica", 11), fg=CLR_LILAC, bg=BG_CARD)
+        cash_val_res_lbl.pack(side=tk.RIGHT)
+
+        # =================================================================
+        # TAB 3: 💳 Payment Methods & Gateway Management
+        # =================================================================
+        tab_pay_frame = tk.Frame(content_area, bg=BG_MIDDLE)
+        tabs["payments"] = tab_pay_frame
+
+        pay_hdr = tk.Frame(tab_pay_frame, bg=BG_CARD, padx=14, pady=10)
+        pay_hdr.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            pay_hdr,
+            text="💳 PAYMENT METHODS & GATEWAY MANAGEMENT",
+            font=("Helvetica", 14, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        tk.Label(
+            pay_hdr,
+            text="Control Cash / Card payment availability and configure connection to banking gateways",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        # Scrollable container for Tab 3 content
+        pay_canvas = tk.Canvas(tab_pay_frame, bg=BG_MIDDLE, highlightthickness=0)
+        pay_scroll = ttk.Scrollbar(tab_pay_frame, orient=tk.VERTICAL, command=pay_canvas.yview)
+        pay_inner = tk.Frame(pay_canvas, bg=BG_MIDDLE)
+
+        pay_scroll_window = pay_canvas.create_window((0, 0), window=pay_inner, anchor="nw")
+
+        def _on_pay_canvas_configure(event):
+            pay_canvas.itemconfig(pay_scroll_window, width=event.width)
+
+        pay_canvas.bind("<Configure>", _on_pay_canvas_configure)
+        pay_inner.bind("<Configure>", lambda e: pay_canvas.configure(scrollregion=pay_canvas.bbox("all")))
+        pay_canvas.configure(yscrollcommand=pay_scroll.set)
+
+        pay_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        pay_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # -------------------------------------------------------------
+        # 1. Payment Channels Availability (Cash & Card Toggles)
+        # -------------------------------------------------------------
+        avail_card = tk.Frame(pay_inner, bg=BG_CARD, padx=14, pady=12)
+        avail_card.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            avail_card,
+            text="PAYMENT CHANNELS AVAILABILITY (CUSTOMER-FACING)",
+            font=("Helvetica", 13, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(anchor="w", pady=(0, 8))
+
+        channels_box = tk.Frame(avail_card, bg=BG_CARD)
+        channels_box.pack(fill=tk.X)
+        channels_box.columnconfigure(0, weight=1, uniform="chan")
+        channels_box.columnconfigure(1, weight=1, uniform="chan")
+
+        # Cash Channel Frame
+        cash_chan_frame = tk.Frame(channels_box, bg=BG_SCREEN, padx=12, pady=10, highlightbackground=CLR_LILAC, highlightthickness=1)
+        cash_chan_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+
+        tk.Label(
+            cash_chan_frame,
+            text="💵 Cash Payment Channel",
+            font=("Helvetica", 12, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+        ).pack(anchor="w")
+
+        cash_status_lbl = tk.Label(
+            cash_chan_frame,
+            text="STATUS: [ ENABLED ]",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LIME,
+            bg=BG_SCREEN,
+        )
+        cash_status_lbl.pack(anchor="w", pady=(3, 4))
+
+        tk.Label(
+            cash_chan_frame,
+            text="Hardware coin validator (£2, £1, 50p, 20p, 10p)\nand automatic change return hopper.",
+            font=("Helvetica", 10),
+            fg=CLR_LILAC,
+            bg=BG_SCREEN,
+            justify=tk.LEFT,
+        ).pack(anchor="w", pady=(0, 8))
+
+        def update_channels_ui():
+            if self.cash_enabled:
+                cash_status_lbl.config(text="STATUS: [ ENABLED ]", fg=CLR_LIME)
+                btn_toggle_cash.config(text="⛔ Disable Cash Payment", bg=CLR_DEEP_PURPLE, fg=CLR_WHITE)
+                cash_chan_frame.config(highlightbackground=CLR_LIME)
+            else:
+                cash_status_lbl.config(text="STATUS: [ DISABLED ]", fg="#FF6B6B")
+                btn_toggle_cash.config(text="✅ Enable Cash Payment", bg=BTN_BG, fg=BTN_FG)
+                cash_chan_frame.config(highlightbackground="#FF6B6B")
+
+            if self.card_enabled:
+                card_status_lbl.config(text="STATUS: [ ENABLED ]", fg=CLR_LIME)
+                btn_toggle_card.config(text="⛔ Disable Card Payment", bg=CLR_DEEP_PURPLE, fg=CLR_WHITE)
+                card_chan_frame.config(highlightbackground=CLR_LIME)
+            else:
+                card_status_lbl.config(text="STATUS: [ DISABLED ]", fg="#FF6B6B")
+                btn_toggle_card.config(text="✅ Enable Card Payment", bg=BTN_BG, fg=BTN_FG)
+                card_chan_frame.config(highlightbackground="#FF6B6B")
+
+        def toggle_cash_channel():
+            self.cash_enabled = not self.cash_enabled
+            self.payment_config["cash_enabled"] = self.cash_enabled
+            save_payment_config(self.payment_config)
+            st_text = "ENABLED" if self.cash_enabled else "DISABLED"
+            log_activity("PAYMENT_METHOD_TOGGLE", f"Cash payment channel set to {st_text}")
+            update_channels_ui()
+            if hasattr(self, "current_page") and self.current_page == "payment":
+                self._refresh_payment_page()
+
+        btn_toggle_cash = tk.Button(
+            cash_chan_frame,
+            text="⛔ Disable Cash Payment",
+            font=("Helvetica", 11, "bold"),
+            bg=CLR_DEEP_PURPLE,
+            fg=CLR_WHITE,
+            activebackground=CLR_WHITE,
+            activeforeground=CLR_DEEP_PURPLE,
+            relief=tk.FLAT,
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=toggle_cash_channel,
+        )
+        btn_toggle_cash.pack(anchor="w")
+        self._attach_button_animation(btn_toggle_cash)
+
+        # Card Channel Frame
+        card_chan_frame = tk.Frame(channels_box, bg=BG_SCREEN, padx=12, pady=10, highlightbackground=CLR_LILAC, highlightthickness=1)
+        card_chan_frame.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
+
+        tk.Label(
+            card_chan_frame,
+            text="💳 Card & Digital Payment Channel",
+            font=("Helvetica", 12, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+        ).pack(anchor="w")
+
+        card_status_lbl = tk.Label(
+            card_chan_frame,
+            text="STATUS: [ ENABLED ]",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LIME,
+            bg=BG_SCREEN,
+        )
+        card_status_lbl.pack(anchor="w", pady=(3, 4))
+
+        tk.Label(
+            card_chan_frame,
+            text="Contactless card reader, dynamic QR checkout,\nand online payment gateway processing.",
+            font=("Helvetica", 10),
+            fg=CLR_LILAC,
+            bg=BG_SCREEN,
+            justify=tk.LEFT,
+        ).pack(anchor="w", pady=(0, 8))
+
+        def toggle_card_channel():
+            self.card_enabled = not self.card_enabled
+            self.payment_config["card_enabled"] = self.card_enabled
+            save_payment_config(self.payment_config)
+            st_text = "ENABLED" if self.card_enabled else "DISABLED"
+            log_activity("PAYMENT_METHOD_TOGGLE", f"Card payment channel set to {st_text}")
+            update_channels_ui()
+            if hasattr(self, "current_page") and self.current_page == "payment":
+                self._refresh_payment_page()
+
+        btn_toggle_card = tk.Button(
+            card_chan_frame,
+            text="⛔ Disable Card Payment",
+            font=("Helvetica", 11, "bold"),
+            bg=CLR_DEEP_PURPLE,
+            fg=CLR_WHITE,
+            activebackground=CLR_WHITE,
+            activeforeground=CLR_DEEP_PURPLE,
+            relief=tk.FLAT,
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=toggle_card_channel,
+        )
+        btn_toggle_card.pack(anchor="w")
+        self._attach_button_animation(btn_toggle_card)
+
+        # -------------------------------------------------------------
+        # 2. Payment Gateway Configuration & Connection Manager
+        # -------------------------------------------------------------
+        gw_card = tk.Frame(pay_inner, bg=BG_CARD, padx=14, pady=12)
+        gw_card.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            gw_card,
+            text="PAYMENT GATEWAY INTEGRATION & CONNECTION MANAGER",
+            font=("Helvetica", 13, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        tk.Label(
+            gw_card,
+            text="Select active payment provider or update connection endpoints and API keys",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        ).pack(anchor="w", pady=(0, 8))
+
+        # Active Gateway Selection Row
+        gw_select_row = tk.Frame(gw_card, bg=BG_SCREEN, padx=12, pady=10)
+        gw_select_row.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            gw_select_row,
+            text="Gateway Provider:",
+            font=("Helvetica", 12, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+        ).pack(side=tk.LEFT, padx=(0, 8))
+
+        gw_options = [
+            ("stripe", "Stripe Checkout (Dynamic QR)"),
+            ("paypal", "PayPal REST Gateway"),
+            ("custom_rest", "Custom REST Payment Gateway"),
+            ("mock", "Offline Mock Bank (Simulator)"),
+        ]
+        gw_var = tk.StringVar(value=self.active_gateway_name)
+
+        gw_combo = ttk.Combobox(
+            gw_select_row,
+            textvariable=gw_var,
+            values=[opt[0] for opt in gw_options],
+            state="readonly",
+            width=18,
+            font=("Helvetica", 11),
+        )
+        gw_combo.pack(side=tk.LEFT, padx=(0, 10))
+
+        active_badge_lbl = tk.Label(
+            gw_select_row,
+            text=f"Active: {self.active_gateway_name.upper()}",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LIME,
+            bg=BG_SCREEN,
+        )
+        active_badge_lbl.pack(side=tk.LEFT)
+
+        # Connection Parameter Inputs Form Frame
+        form_frame = tk.Frame(gw_card, bg=BG_CARD)
+        form_frame.pack(fill=tk.X, pady=(0, 8))
+
+        # Row 1: Name and Currency
+        r1 = tk.Frame(form_frame, bg=BG_CARD)
+        r1.pack(fill=tk.X, pady=3)
+        r1.columnconfigure(0, weight=2)
+        r1.columnconfigure(1, weight=1)
+
+        f_name_box = tk.Frame(r1, bg=BG_CARD)
+        f_name_box.grid(row=0, column=0, sticky="ew", padx=(0, 5))
+        tk.Label(f_name_box, text="Gateway Display Name:", font=("Helvetica", 11, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        ent_gw_name = tk.Entry(f_name_box, font=("Helvetica", 11), bg=BG_SCREEN, fg=CLR_WHITE, insertbackground=CLR_WHITE, relief=tk.FLAT)
+        ent_gw_name.pack(fill=tk.X, ipady=4)
+
+        f_curr_box = tk.Frame(r1, bg=BG_CARD)
+        f_curr_box.grid(row=0, column=1, sticky="ew", padx=(5, 0))
+        tk.Label(f_curr_box, text="Currency Code:", font=("Helvetica", 11, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        ent_gw_curr = tk.Entry(f_curr_box, font=("Helvetica", 11), bg=BG_SCREEN, fg=CLR_WHITE, insertbackground=CLR_WHITE, relief=tk.FLAT)
+        ent_gw_curr.pack(fill=tk.X, ipady=4)
+
+        # Row 2: API Endpoint URL
+        r2 = tk.Frame(form_frame, bg=BG_CARD)
+        r2.pack(fill=tk.X, pady=3)
+        tk.Label(r2, text="API Endpoint / Base URL:", font=("Helvetica", 11, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        ent_gw_url = tk.Entry(r2, font=("Helvetica", 11), bg=BG_SCREEN, fg=CLR_WHITE, insertbackground=CLR_WHITE, relief=tk.FLAT)
+        ent_gw_url.pack(fill=tk.X, ipady=4)
+
+        # Row 3: API Key / Client ID / Publishable Key
+        r3 = tk.Frame(form_frame, bg=BG_CARD)
+        r3.pack(fill=tk.X, pady=3)
+        lbl_key1 = tk.Label(r3, text="Publishable Key / Client ID:", font=("Helvetica", 11, "bold"), fg=CLR_LILAC, bg=BG_CARD)
+        lbl_key1.pack(anchor="w")
+        ent_gw_key1 = tk.Entry(r3, font=("Helvetica", 11), bg=BG_SCREEN, fg=CLR_WHITE, insertbackground=CLR_WHITE, relief=tk.FLAT)
+        ent_gw_key1.pack(fill=tk.X, ipady=4)
+
+        # Row 4: Secret Key / Token (with Show/Hide)
+        r4 = tk.Frame(form_frame, bg=BG_CARD)
+        r4.pack(fill=tk.X, pady=3)
+        lbl_key2 = tk.Label(r4, text="Secret Key / Merchant Token:", font=("Helvetica", 11, "bold"), fg=CLR_LILAC, bg=BG_CARD)
+        lbl_key2.pack(anchor="w")
+
+        sec_box = tk.Frame(r4, bg=BG_CARD)
+        sec_box.pack(fill=tk.X)
+        ent_gw_key2 = tk.Entry(sec_box, font=("Helvetica", 11), bg=BG_SCREEN, fg=CLR_WHITE, insertbackground=CLR_WHITE, relief=tk.FLAT, show="*")
+        ent_gw_key2.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=4)
+
+        show_secret_var = tk.BooleanVar(value=False)
+        def toggle_show_secret():
+            if show_secret_var.get():
+                ent_gw_key2.config(show="*")
+                show_secret_var.set(False)
+                btn_toggle_sec.config(text="👁️ Show")
+            else:
+                ent_gw_key2.config(show="")
+                show_secret_var.set(True)
+                btn_toggle_sec.config(text="🙈 Hide")
+
+        btn_toggle_sec = tk.Button(
+            sec_box,
+            text="👁️ Show",
+            font=("Helvetica", 10, "bold"),
+            bg=CLR_DEEP_PURPLE,
+            fg=CLR_WHITE,
+            activebackground=CLR_WHITE,
+            activeforeground=CLR_DEEP_PURPLE,
+            relief=tk.FLAT,
+            bd=0,
+            padx=10,
+            pady=3,
+            cursor="hand2",
+            command=toggle_show_secret,
+        )
+        btn_toggle_sec.pack(side=tk.RIGHT, padx=(6, 0))
+
+        # Helper to load form values from current gateway selection
+        def load_gateway_form(selected_gw: str):
+            gateways = self.payment_config.get("gateways", {})
+            gw_data = gateways.get(selected_gw, {})
+
+            ent_gw_name.delete(0, tk.END)
+            ent_gw_name.insert(0, gw_data.get("name", ""))
+
+            ent_gw_curr.delete(0, tk.END)
+            ent_gw_curr.insert(0, gw_data.get("currency", "GBP"))
+
+            ent_gw_url.delete(0, tk.END)
+            ent_gw_url.insert(0, gw_data.get("api_url", ""))
+
+            ent_gw_key1.delete(0, tk.END)
+            ent_gw_key2.delete(0, tk.END)
+
+            if selected_gw == "stripe":
+                lbl_key1.config(text="Publishable Key (pk_test_...):")
+                lbl_key2.config(text="Secret Key (sk_test_...):")
+                ent_gw_key1.insert(0, gw_data.get("publishable_key", ""))
+                ent_gw_key2.insert(0, gw_data.get("secret_key", ""))
+            elif selected_gw == "paypal":
+                lbl_key1.config(text="Client ID (OAuth):")
+                lbl_key2.config(text="Secret Key (OAuth):")
+                ent_gw_key1.insert(0, gw_data.get("client_id", ""))
+                ent_gw_key2.insert(0, gw_data.get("secret_key", ""))
+            elif selected_gw == "custom_rest":
+                lbl_key1.config(text="API Key / Auth Header Token:")
+                lbl_key2.config(text="Webhook Signing Secret:")
+                ent_gw_key1.insert(0, gw_data.get("api_key", ""))
+                ent_gw_key2.insert(0, gw_data.get("webhook_secret", ""))
+            elif selected_gw == "mock":
+                lbl_key1.config(text="Simulation Mode:")
+                lbl_key2.config(text="Test Response Status:")
+                ent_gw_key1.insert(0, "LOCAL_SIMULATOR")
+                ent_gw_key2.insert(0, "ALWAYS_APPROVE")
+
+        gw_combo.bind("<<ComboboxSelected>>", lambda e: load_gateway_form(gw_var.get()))
+
+        # Form Buttons (Save and Test Connection)
+        gw_btn_row = tk.Frame(gw_card, bg=BG_CARD)
+        gw_btn_row.pack(fill=tk.X, pady=(8, 0))
+
+        def save_gateway_configuration():
+            selected_gw = gw_var.get().strip()
+            if not selected_gw:
+                return
+
+            if "gateways" not in self.payment_config:
+                self.payment_config["gateways"] = {}
+            if selected_gw not in self.payment_config["gateways"]:
+                self.payment_config["gateways"][selected_gw] = {}
+
+            gw_entry = self.payment_config["gateways"][selected_gw]
+            gw_entry["name"] = ent_gw_name.get().strip()
+            gw_entry["currency"] = ent_gw_curr.get().strip().upper()
+            gw_entry["api_url"] = ent_gw_url.get().strip()
+
+            if selected_gw == "stripe":
+                gw_entry["publishable_key"] = ent_gw_key1.get().strip()
+                gw_entry["secret_key"] = ent_gw_key2.get().strip()
+            elif selected_gw == "paypal":
+                gw_entry["client_id"] = ent_gw_key1.get().strip()
+                gw_entry["secret_key"] = ent_gw_key2.get().strip()
+            elif selected_gw == "custom_rest":
+                gw_entry["api_key"] = ent_gw_key1.get().strip()
+                gw_entry["webhook_secret"] = ent_gw_key2.get().strip()
+
+            self.payment_config["active_gateway"] = selected_gw
+            self.active_gateway_name = selected_gw
+            save_payment_config(self.payment_config)
+
+            # Dynamically instantiate and switch bank service
+            new_bank = create_bank_service(selected_gw, gw_entry)
+            self.active_bank = new_bank
+            self.stripe_bank = new_bank
+            self.card_reader._bank = new_bank
+
+            active_badge_lbl.config(text=f"Active: {selected_gw.upper()}", fg=CLR_LIME)
+            diag_status_lbl.config(text=f"🟢 Activated: {gw_entry.get('name', selected_gw)}", fg=CLR_LIME)
+            log_activity("PAYMENT_GATEWAY_CONFIGURED", f"Switched active gateway to '{selected_gw}' ({gw_entry.get('name')})")
+
+            if hasattr(self, "current_page") and self.current_page == "payment":
+                self._refresh_payment_page()
+
+        btn_save_gw = tk.Button(
+            gw_btn_row,
+            text="💾 Save & Activate Gateway",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=16,
+            pady=6,
+            cursor="hand2",
+            command=save_gateway_configuration,
+        )
+        btn_save_gw.pack(side=tk.LEFT, padx=(0, 10))
+        self._attach_button_animation(btn_save_gw)
+
+        def test_gateway_connection():
+            selected_gw = gw_var.get().strip()
+            diag_status_lbl.config(text=f"Testing connection to {selected_gw.upper()}...", fg=CLR_WHITE)
+
+            def worker():
+                try:
+                    temp_config = {
+                        "name": ent_gw_name.get().strip(),
+                        "currency": ent_gw_curr.get().strip(),
+                        "api_url": ent_gw_url.get().strip(),
+                    }
+                    if selected_gw == "stripe":
+                        temp_config["publishable_key"] = ent_gw_key1.get().strip()
+                        temp_config["secret_key"] = ent_gw_key2.get().strip()
+                    elif selected_gw == "paypal":
+                        temp_config["client_id"] = ent_gw_key1.get().strip()
+                        temp_config["secret_key"] = ent_gw_key2.get().strip()
+                    elif selected_gw == "custom_rest":
+                        temp_config["api_key"] = ent_gw_key1.get().strip()
+
+                    test_bank = create_bank_service(selected_gw, temp_config)
+                    ok, msg = test_bank.testConnection()
+                    if ok:
+                        dialog.after(0, lambda: diag_status_lbl.config(text=f"🟢 {msg}", fg=CLR_LIME))
+                    else:
+                        dialog.after(0, lambda: diag_status_lbl.config(text=f"⚠️ {msg}", fg="#FF6B6B"))
+                except Exception as ex:
+                    dialog.after(0, lambda: diag_status_lbl.config(text=f"⚠️ Test Error: {str(ex)[:50]}", fg=CLR_LILAC))
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        btn_test_gw = tk.Button(
+            gw_btn_row,
+            text="🧪 Test Connection",
+            font=("Helvetica", 11, "bold"),
+            bg=CLR_DEEP_PURPLE,
+            fg=CLR_WHITE,
+            activebackground=CLR_WHITE,
+            activeforeground=CLR_DEEP_PURPLE,
+            relief=tk.FLAT,
+            bd=0,
+            padx=16,
+            pady=6,
+            cursor="hand2",
+            command=test_gateway_connection,
+        )
+        btn_test_gw.pack(side=tk.LEFT, padx=(0, 10))
+        self._attach_button_animation(btn_test_gw)
+
+        diag_status_lbl = tk.Label(
+            gw_btn_row,
+            text="Ready to test connection.",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        )
+        diag_status_lbl.pack(side=tk.LEFT)
+
+        # -------------------------------------------------------------
+        # 3. Session Timeout & Transaction Safety Configuration
+        # -------------------------------------------------------------
+        policy_card = tk.Frame(pay_inner, bg=BG_CARD, padx=14, pady=12)
+        policy_card.pack(fill=tk.X)
+
+        tk.Label(
+            policy_card,
+            text="⏱️ PAYMENT SESSION TIMEOUT & SAFETY POLICIES",
+            font=("Helvetica", 13, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        tk.Label(
+            policy_card,
+            text="Configure payment countdown duration (seconds) before session is automatically cancelled",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        ).pack(anchor="w", pady=(0, 8))
+
+        # Timeout Duration Editor Row
+        timeout_row = tk.Frame(policy_card, bg=BG_SCREEN, padx=12, pady=10)
+        timeout_row.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            timeout_row,
+            text="Session Timeout:",
+            font=("Helvetica", 12, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+        ).pack(side=tk.LEFT, padx=(0, 8))
+
+        ent_timeout = tk.Entry(
+            timeout_row,
+            font=("Helvetica", 12, "bold"),
+            bg=BG_CARD,
+            fg=CLR_LIME,
+            insertbackground=CLR_WHITE,
+            relief=tk.FLAT,
+            width=5,
+            justify="center",
+        )
+        ent_timeout.pack(side=tk.LEFT, padx=(0, 4), ipady=4)
+        ent_timeout.insert(0, str(getattr(self, "session_timeout_seconds", 60)))
+
+        tk.Label(
+            timeout_row,
+            text="Seconds",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_SCREEN,
+        ).pack(side=tk.LEFT, padx=(0, 14))
+
+        # Preset Buttons
+        tk.Label(
+            timeout_row,
+            text="Quick Presets:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+        ).pack(side=tk.LEFT, padx=(0, 6))
+
+        def set_preset_timeout(seconds: int):
+            ent_timeout.delete(0, tk.END)
+            ent_timeout.insert(0, str(seconds))
+
+        for sec in (30, 45, 60, 90, 120):
+            p_btn = tk.Button(
+                timeout_row,
+                text=f"{sec}s",
+                font=("Helvetica", 10, "bold"),
+                bg=BTN_BG,
+                fg=BTN_FG,
+                relief=tk.FLAT,
+                bd=0,
+                padx=8,
+                pady=3,
+                cursor="hand2",
+                command=lambda s=sec: set_preset_timeout(s),
+            )
+            p_btn.pack(side=tk.LEFT, padx=3)
+            self._attach_button_animation(p_btn)
+
+        # Save Timeout Button Row
+        timeout_save_row = tk.Frame(policy_card, bg=BG_CARD)
+        timeout_save_row.pack(fill=tk.X, pady=(4, 6))
+
+        def save_session_timeout():
+            raw_val = ent_timeout.get().strip()
+            try:
+                val = int(raw_val)
+                if val < 10 or val > 600:
+                    messagebox.showwarning(
+                        "Invalid Timeout Value",
+                        "Please enter a session timeout between 10 and 600 seconds.",
+                        parent=dialog,
+                    )
+                    return
+            except ValueError:
+                messagebox.showerror(
+                    "Invalid Number",
+                    "Please enter a valid numeric value for session timeout seconds.",
+                    parent=dialog,
+                )
+                return
+
+            self.session_timeout_seconds = val
+            self.payment_config["timeout_seconds"] = val
+            save_payment_config(self.payment_config)
+            self.timer.timeoutSeconds = val
+            log_activity("TIMEOUT_CONFIG_UPDATED", f"Payment session timeout set to {val}s")
+            timeout_status_lbl.config(text=f"🟢 Saved: Session timeout set to {val} seconds", fg=CLR_LIME)
+            update_policy_text()
+
+        btn_save_timeout = tk.Button(
+            timeout_save_row,
+            text="💾 Save Timeout Setting",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=16,
+            pady=6,
+            cursor="hand2",
+            command=save_session_timeout,
+        )
+        btn_save_timeout.pack(side=tk.LEFT, padx=(0, 10))
+        self._attach_button_animation(btn_save_timeout)
+
+        timeout_status_lbl = tk.Label(
+            timeout_save_row,
+            text=f"Current Timeout: {getattr(self, 'session_timeout_seconds', 60)}s",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        )
+        timeout_status_lbl.pack(side=tk.LEFT)
+
+        # Safety Rules Description
+        policy_lbl = tk.Label(
+            policy_card,
+            text="",
+            font=("Menlo", 10),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+            justify=tk.LEFT,
+        )
+        policy_lbl.pack(anchor="w", pady=(6, 0))
+
+        def update_policy_text():
+            cur_sec = getattr(self, "session_timeout_seconds", 60)
+            p_text = (
+                f"• Active Limit: {cur_sec} Seconds countdown timer active on Cash and Card modal dialogs\n"
+                f"• Cash Payment Policy: At {cur_sec}s timeout, automatically cancels order and refunds 100% of inserted coins\n"
+                f"• Card Payment Policy: At {cur_sec}s timeout, automatically cancels order and expires remote session\n"
+                f"• UML Contract: TransactionTimer.hasExpired() monitored once per second during processing"
+            )
+            policy_lbl.config(text=p_text)
+
+        update_policy_text()
+
+        def refresh_payments_view():
+            self.payment_config = load_payment_config()
+            self.cash_enabled = bool(self.payment_config.get("cash_enabled", True))
+            self.card_enabled = bool(self.payment_config.get("card_enabled", True))
+            self.active_gateway_name = self.payment_config.get("active_gateway", "stripe")
+            self.session_timeout_seconds = int(self.payment_config.get("timeout_seconds", 60))
+            self.timer.timeoutSeconds = self.session_timeout_seconds
+            update_channels_ui()
+            gw_var.set(self.active_gateway_name)
+            load_gateway_form(self.active_gateway_name)
+            active_badge_lbl.config(text=f"Active: {self.active_gateway_name.upper()}", fg=CLR_LIME)
+            diag_status_lbl.config(text="Ready to test connection.", fg=CLR_LILAC)
+            ent_timeout.delete(0, tk.END)
+            ent_timeout.insert(0, str(self.session_timeout_seconds))
+            timeout_status_lbl.config(text=f"Current Timeout: {self.session_timeout_seconds}s", fg=CLR_LILAC)
+            update_policy_text()
+
+        # =================================================================
+        # TAB 4: 🧾 Transaction Records & Sales History
+        # =================================================================
+        tab_trans_frame = tk.Frame(content_area, bg=BG_MIDDLE)
+        tabs["transactions"] = tab_trans_frame
+
+        # Top Header
+        trans_hdr = tk.Frame(tab_trans_frame, bg=BG_CARD, padx=14, pady=10)
+        trans_hdr.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            trans_hdr,
+            text="🧾 TRANSACTION RECORDS & SALES AUDIT",
+            font=("Helvetica", 14, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        tk.Label(
+            trans_hdr,
+            text="Persistent drink sales history, customer charges, and payment outcomes loaded from data/transactions.json",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        # KPI Summary Cards Row (Revenue, Completed Sales, Cancelled, Timeouts)
+        kpi_row = tk.Frame(tab_trans_frame, bg=BG_MIDDLE)
+        kpi_row.pack(fill=tk.X, pady=(0, 8))
+        kpi_row.columnconfigure(0, weight=1, uniform="kpi")
+        kpi_row.columnconfigure(1, weight=1, uniform="kpi")
+        kpi_row.columnconfigure(2, weight=1, uniform="kpi")
+        kpi_row.columnconfigure(3, weight=1, uniform="kpi")
+
+        # 1. Total Revenue Card
+        c1 = tk.Frame(kpi_row, bg=BG_CARD, padx=12, pady=10, highlightbackground=CLR_LIME, highlightthickness=1)
+        c1.grid(row=0, column=0, sticky="nsew", padx=(0, 4))
+        tk.Label(c1, text="TOTAL REVENUE", font=("Helvetica", 10, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        kpi_rev_lbl = tk.Label(c1, text="£0.00", font=("Helvetica", 18, "bold"), fg=CLR_LIME, bg=BG_CARD)
+        kpi_rev_lbl.pack(anchor="w", pady=(2, 0))
+        tk.Label(c1, text="Settled Sales Revenue", font=("Helvetica", 10), fg=CLR_WHITE, bg=BG_CARD).pack(anchor="w")
+
+        # 2. Successful Orders Card
+        c2 = tk.Frame(kpi_row, bg=BG_CARD, padx=12, pady=10, highlightbackground=CLR_LILAC, highlightthickness=1)
+        c2.grid(row=0, column=1, sticky="nsew", padx=2)
+        tk.Label(c2, text="COMPLETED ORDERS", font=("Helvetica", 10, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        kpi_succ_lbl = tk.Label(c2, text="0 Drinks", font=("Helvetica", 18, "bold"), fg=CLR_WHITE, bg=BG_CARD)
+        kpi_succ_lbl.pack(anchor="w", pady=(2, 0))
+        tk.Label(c2, text="Dispensed Successfully", font=("Helvetica", 10), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+
+        # 3. Cancelled Orders Card
+        c3 = tk.Frame(kpi_row, bg=BG_CARD, padx=12, pady=10, highlightbackground=CLR_LILAC, highlightthickness=1)
+        c3.grid(row=0, column=2, sticky="nsew", padx=2)
+        tk.Label(c3, text="CANCELLED ORDERS", font=("Helvetica", 10, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        kpi_canc_lbl = tk.Label(c3, text="0 Orders", font=("Helvetica", 18, "bold"), fg=CLR_LILAC, bg=BG_CARD)
+        kpi_canc_lbl.pack(anchor="w", pady=(2, 0))
+        tk.Label(c3, text="User Refunded 100%", font=("Helvetica", 10), fg=CLR_WHITE, bg=BG_CARD).pack(anchor="w")
+
+        # 4. Timed Out / Failed Card
+        c4 = tk.Frame(kpi_row, bg=BG_CARD, padx=12, pady=10, highlightbackground=CLR_LILAC, highlightthickness=1)
+        c4.grid(row=0, column=3, sticky="nsew", padx=(4, 0))
+        tk.Label(c4, text="TIMEOUTS / DECLINED", font=("Helvetica", 10, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        kpi_fail_lbl = tk.Label(c4, text="0 Orders", font=("Helvetica", 18, "bold"), fg="#FF6B6B", bg=BG_CARD)
+        kpi_fail_lbl.pack(anchor="w", pady=(2, 0))
+        tk.Label(c4, text="60s Timeout Auto-Aborts", font=("Helvetica", 10), fg=CLR_WHITE, bg=BG_CARD).pack(anchor="w")
+
+        # Filter & Search Bar
+        trans_filter_bar = tk.Frame(tab_trans_frame, bg=BG_CARD, padx=12, pady=8)
+        trans_filter_bar.pack(fill=tk.X, pady=(0, 6))
+
+        tk.Label(
+            trans_filter_bar,
+            text="Filter Status:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+        ).pack(side=tk.LEFT, padx=(0, 6))
+
+        tx_status_var = tk.StringVar(value="ALL")
+        tx_status_combo = ttk.Combobox(
+            trans_filter_bar,
+            textvariable=tx_status_var,
+            values=["ALL", "SUCCESS", "CANCELLED", "TIMEOUT", "FAILED"],
+            state="readonly",
+            width=14,
+            font=("Helvetica", 11),
+        )
+        tx_status_combo.pack(side=tk.LEFT, padx=(0, 14))
+
+        tk.Label(
+            trans_filter_bar,
+            text="Search Drink:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+        ).pack(side=tk.LEFT, padx=(0, 6))
+
+        tx_search_ent = tk.Entry(
+            trans_filter_bar,
+            font=("Helvetica", 11),
+            bg=BG_SCREEN,
+            fg=CLR_WHITE,
+            insertbackground=CLR_WHITE,
+            relief=tk.FLAT,
+            width=18,
+        )
+        tx_search_ent.pack(side=tk.LEFT, padx=(0, 10), ipady=3)
+
+        def on_tx_filter_change(*args):
+            refresh_transactions_view()
+
+        tx_status_combo.bind("<<ComboboxSelected>>", on_tx_filter_change)
+        tx_search_ent.bind("<KeyRelease>", on_tx_filter_change)
+
+        btn_tx_clear_filter = tk.Button(
+            trans_filter_bar,
+            text="Reset Filter",
+            font=("Helvetica", 11),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=10,
+            pady=3,
+            cursor="hand2",
+            command=lambda: (tx_status_var.set("ALL"), tx_search_ent.delete(0, tk.END), refresh_transactions_view()),
+        )
+        btn_tx_clear_filter.pack(side=tk.LEFT)
+        self._attach_button_animation(btn_tx_clear_filter)
+
+        # Transactions Treeview
+        trans_tree_frame = tk.Frame(tab_trans_frame, bg=BG_CARD, padx=8, pady=8)
+        trans_tree_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+
+        trans_tree = ttk.Treeview(
+            trans_tree_frame,
+            style="Opt.Treeview",
+            columns=("id", "time", "drink", "amount", "status"),
+            show="headings",
+            height=9,
+        )
+        trans_tree.heading("id", text="#")
+        trans_tree.heading("time", text="Timestamp")
+        trans_tree.heading("drink", text="Beverage Name")
+        trans_tree.heading("amount", text="Amount Paid")
+        trans_tree.heading("status", text="Outcome Status")
+
+        trans_tree.column("id", width=60, anchor="center")
+        trans_tree.column("time", width=190, anchor="center")
+        trans_tree.column("drink", width=260, anchor="w")
+        trans_tree.column("amount", width=150, anchor="center")
+        trans_tree.column("status", width=170, anchor="center")
+
+        trans_scroll = ttk.Scrollbar(trans_tree_frame, orient=tk.VERTICAL, command=trans_tree.yview)
+        trans_tree.configure(yscrollcommand=trans_scroll.set)
+        trans_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        trans_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        trans_tree.tag_configure("tag_success", foreground=CLR_LIME)
+        trans_tree.tag_configure("tag_cancelled", foreground=CLR_LILAC)
+        trans_tree.tag_configure("tag_failed", foreground="#FF6B6B")
+
+        # Control Panel Frame
+        trans_ctrl = tk.Frame(tab_trans_frame, bg=BG_CARD, padx=14, pady=12)
+        trans_ctrl.pack(fill=tk.X)
+
+        btn_refresh_trans = tk.Button(
+            trans_ctrl,
+            text="🔄 Refresh Records",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=16,
+            pady=6,
+            cursor="hand2",
+            command=lambda: refresh_transactions_view(),
+        )
+        btn_refresh_trans.pack(side=tk.LEFT, padx=(0, 10))
+        self._attach_button_animation(btn_refresh_trans)
+
+        def clear_transactions_history():
+            if messagebox.askyesno(
+                "Clear Transaction History",
+                "Are you sure you want to clear all transaction records?\nThis operation will empty data/transactions.json.",
+            ):
+                save_transactions([])
+                if hasattr(self, "logger") and self.logger is not None:
+                    self.logger._records = []
+                log_activity("TRANSACTIONS_CLEARED", "All transaction history records cleared by admin")
+                refresh_transactions_view()
+
+        btn_clear_trans = tk.Button(
+            trans_ctrl,
+            text="🗑️ Clear Transaction History",
+            font=("Helvetica", 11, "bold"),
+            bg=CLR_DEEP_PURPLE,
+            fg=CLR_WHITE,
+            activebackground=CLR_WHITE,
+            activeforeground=CLR_DEEP_PURPLE,
+            relief=tk.FLAT,
+            bd=0,
+            padx=16,
+            pady=6,
+            cursor="hand2",
+            command=clear_transactions_history,
+        )
+        btn_clear_trans.pack(side=tk.LEFT, padx=(0, 10))
+        self._attach_button_animation(btn_clear_trans)
+
+        trans_count_lbl = tk.Label(trans_ctrl, text="0 records found.", font=("Helvetica", 11), fg=CLR_LILAC, bg=BG_CARD)
+        trans_count_lbl.pack(side=tk.RIGHT)
+
+        def refresh_transactions_view():
+            trans_tree.delete(*trans_tree.get_children())
+            records = load_transactions()
+            if hasattr(self, "logger") and self.logger is not None:
+                mem_records = self.logger.getHistory()
+                if len(mem_records) > len(records):
+                    records = mem_records
+                    save_transactions(records)
+
+            total_rev_pence = 0
+            succ_count = 0
+            canc_count = 0
+            fail_count = 0
+
+            for r in records:
+                st = r.status.upper()
+                if st == "SUCCESS":
+                    total_rev_pence += r.amountPaid
+                    succ_count += 1
+                elif "CANCEL" in st:
+                    canc_count += 1
+                else:
+                    fail_count += 1
+
+            kpi_rev_lbl.config(text=f"£{total_rev_pence / 100:.2f}")
+            kpi_succ_lbl.config(text=f"{succ_count} Drinks")
+            kpi_canc_lbl.config(text=f"{canc_count} Orders")
+            kpi_fail_lbl.config(text=f"{fail_count} Orders")
+
+            status_filter = tx_status_var.get().upper()
+            search_query = tx_search_ent.get().strip().lower()
+
+            displayed_count = 0
+            for idx, r in enumerate(reversed(records), 1):
+                st = r.status.upper()
+                if status_filter != "ALL" and status_filter not in st:
+                    continue
+                if search_query and search_query not in r.drinkName.lower():
+                    continue
+
+                ts_str = r.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                amt_str = f"£{r.amountPaid / 100:.2f} ({r.amountPaid}p)"
+
+                tag = "tag_success" if st == "SUCCESS" else ("tag_cancelled" if "CANCEL" in st else "tag_failed")
+                status_display = f"✅ {st}" if st == "SUCCESS" else (f"⚠️ {st}" if "CANCEL" in st else f"⏱️ {st}")
+
+                trans_tree.insert(
+                    "",
+                    tk.END,
+                    values=(len(records) - idx + 1, ts_str, r.drinkName, amt_str, status_display),
+                    tags=(tag,),
+                )
+                displayed_count += 1
+
+            trans_count_lbl.config(text=f"Displaying {displayed_count} of {len(records)} transactions.")
+
+        # =================================================================
+        # TAB 5: 🎖️ Loyalty Membership Management
+        # =================================================================
+        tab_members_frame = tk.Frame(content_area, bg=BG_MIDDLE)
+        tabs["members"] = tab_members_frame
+
+        # Top Header
+        members_hdr = tk.Frame(tab_members_frame, bg=BG_CARD, padx=14, pady=10)
+        members_hdr.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            members_hdr,
+            text="🎖️ LOYALTY PROGRAMME MEMBERSHIP MANAGEMENT",
+            font=("Helvetica", 14, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        tk.Label(
+            members_hdr,
+            text="Manage registered loyalty cardholders, toggle account status, delete, or register new member accounts",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        # KPI Summary Cards Row
+        mem_kpi_row = tk.Frame(tab_members_frame, bg=BG_MIDDLE)
+        mem_kpi_row.pack(fill=tk.X, pady=(0, 8))
+        mem_kpi_row.columnconfigure(0, weight=1, uniform="memkpi")
+        mem_kpi_row.columnconfigure(1, weight=1, uniform="memkpi")
+        mem_kpi_row.columnconfigure(2, weight=1, uniform="memkpi")
+        mem_kpi_row.columnconfigure(3, weight=1, uniform="memkpi")
+
+        # 1. Total Members
+        mc1 = tk.Frame(mem_kpi_row, bg=BG_CARD, padx=12, pady=10, highlightbackground=CLR_LIME, highlightthickness=1)
+        mc1.grid(row=0, column=0, sticky="nsew", padx=(0, 4))
+        tk.Label(mc1, text="TOTAL MEMBERS", font=("Helvetica", 10, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        mem_kpi_total_lbl = tk.Label(mc1, text="0 Members", font=("Helvetica", 18, "bold"), fg=CLR_WHITE, bg=BG_CARD)
+        mem_kpi_total_lbl.pack(anchor="w", pady=(2, 0))
+        tk.Label(mc1, text="Registered Accounts", font=("Helvetica", 10), fg=CLR_WHITE, bg=BG_CARD).pack(anchor="w")
+
+        # 2. Active Members
+        mc2 = tk.Frame(mem_kpi_row, bg=BG_CARD, padx=12, pady=10, highlightbackground=CLR_LIME, highlightthickness=1)
+        mc2.grid(row=0, column=1, sticky="nsew", padx=2)
+        tk.Label(mc2, text="ACTIVE STATUS", font=("Helvetica", 10, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        mem_kpi_active_lbl = tk.Label(mc2, text="0 Active", font=("Helvetica", 18, "bold"), fg=CLR_LIME, bg=BG_CARD)
+        mem_kpi_active_lbl.pack(anchor="w", pady=(2, 0))
+        tk.Label(mc2, text="Eligible for Discounts", font=("Helvetica", 10), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+
+        # 3. Inactive Members
+        mc3 = tk.Frame(mem_kpi_row, bg=BG_CARD, padx=12, pady=10, highlightbackground=CLR_LILAC, highlightthickness=1)
+        mc3.grid(row=0, column=2, sticky="nsew", padx=2)
+        tk.Label(mc3, text="SUSPENDED / INACTIVE", font=("Helvetica", 10, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        mem_kpi_inact_lbl = tk.Label(mc3, text="0 Inactive", font=("Helvetica", 18, "bold"), fg="#FF6B6B", bg=BG_CARD)
+        mem_kpi_inact_lbl.pack(anchor="w", pady=(2, 0))
+        tk.Label(mc3, text="Discount Blocked", font=("Helvetica", 10), fg=CLR_WHITE, bg=BG_CARD).pack(anchor="w")
+
+        # 4. Loyalty Benefit
+        mc4 = tk.Frame(mem_kpi_row, bg=BG_CARD, padx=12, pady=10, highlightbackground=CLR_LILAC, highlightthickness=1)
+        mc4.grid(row=0, column=3, sticky="nsew", padx=(4, 0))
+        tk.Label(mc4, text="MEMBER BENEFIT", font=("Helvetica", 10, "bold"), fg=CLR_LILAC, bg=BG_CARD).pack(anchor="w")
+        mem_kpi_rate_lbl = tk.Label(mc4, text="10% OFF", font=("Helvetica", 18, "bold"), fg=CLR_LILAC, bg=BG_CARD)
+        mem_kpi_rate_lbl.pack(anchor="w", pady=(2, 0))
+        tk.Label(mc4, text="All Beverage Purchases", font=("Helvetica", 10), fg=CLR_WHITE, bg=BG_CARD).pack(anchor="w")
+
+        # Filter & Search Bar
+        mem_filter_bar = tk.Frame(tab_members_frame, bg=BG_CARD, padx=12, pady=8)
+        mem_filter_bar.pack(fill=tk.X, pady=(0, 6))
+
+        tk.Label(
+            mem_filter_bar,
+            text="Filter Status:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+        ).pack(side=tk.LEFT, padx=(0, 6))
+
+        mem_status_var = tk.StringVar(value="ALL")
+        mem_status_combo = ttk.Combobox(
+            mem_filter_bar,
+            textvariable=mem_status_var,
+            values=["ALL", "ACTIVE ONLY", "INACTIVE ONLY"],
+            state="readonly",
+            width=16,
+            font=("Helvetica", 11),
+        )
+        mem_status_combo.pack(side=tk.LEFT, padx=(0, 14))
+
+        tk.Label(
+            mem_filter_bar,
+            text="Search Member / Card ID:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+        ).pack(side=tk.LEFT, padx=(0, 6))
+
+        mem_search_ent = tk.Entry(
+            mem_filter_bar,
+            font=("Helvetica", 11),
+            bg=BG_SCREEN,
+            fg=CLR_WHITE,
+            insertbackground=CLR_WHITE,
+            relief=tk.FLAT,
+            width=18,
+        )
+        mem_search_ent.pack(side=tk.LEFT, padx=(0, 10), ipady=3)
+
+        def on_mem_filter_change(*args):
+            refresh_members_view()
+
+        mem_status_combo.bind("<<ComboboxSelected>>", on_mem_filter_change)
+        mem_search_ent.bind("<KeyRelease>", on_mem_filter_change)
+
+        btn_mem_reset = tk.Button(
+            mem_filter_bar,
+            text="Reset Filter",
+            font=("Helvetica", 11),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=10,
+            pady=3,
+            cursor="hand2",
+            command=lambda: (mem_status_var.set("ALL"), mem_search_ent.delete(0, tk.END), refresh_members_view()),
+        )
+        btn_mem_reset.pack(side=tk.LEFT)
+        self._attach_button_animation(btn_mem_reset)
+
+        # Members Treeview Frame
+        members_tree_frame = tk.Frame(tab_members_frame, bg=BG_CARD, padx=8, pady=8)
+        members_tree_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+
+        members_tree = ttk.Treeview(
+            members_tree_frame,
+            style="Opt.Treeview",
+            columns=("id", "card_id", "name", "status", "discount"),
+            show="headings",
+            height=9,
+        )
+        members_tree.heading("id", text="#")
+        members_tree.heading("card_id", text="Loyalty Card ID / Barcode")
+        members_tree.heading("name", text="Member Full Name")
+        members_tree.heading("status", text="Account Status")
+        members_tree.heading("discount", text="Discount Benefit")
+
+        members_tree.column("id", width=60, anchor="center")
+        members_tree.column("card_id", width=230, anchor="center")
+        members_tree.column("name", width=280, anchor="w")
+        members_tree.column("status", width=170, anchor="center")
+        members_tree.column("discount", width=150, anchor="center")
+
+        members_scroll = ttk.Scrollbar(members_tree_frame, orient=tk.VERTICAL, command=members_tree.yview)
+        members_tree.configure(yscrollcommand=members_scroll.set)
+        members_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        members_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        members_tree.tag_configure("tag_active", foreground=CLR_LIME)
+        members_tree.tag_configure("tag_inactive", foreground="#FF6B6B")
+
+        # Members Action Control Panel
+        members_ctrl = tk.Frame(tab_members_frame, bg=BG_CARD, padx=14, pady=12)
+        members_ctrl.pack(fill=tk.X)
+
+        # Action 1: Add New Member
+        def open_add_member_dialog():
+            add_win = tk.Toplevel(dialog)
+            add_win.title("Register New Loyalty Member")
+            add_win.geometry("520x350")
+            add_win.resizable(False, False)
+            add_win.configure(bg=BG_APP)
+            add_win.transient(dialog)
+            add_win.grab_set()
+
+            # Center on dialog
+            add_win.update_idletasks()
+            ax = dialog.winfo_x() + (dialog.winfo_width() - 520) // 2
+            ay = dialog.winfo_y() + (dialog.winfo_height() - 350) // 2
+            add_win.geometry(f"+{ax}+{ay}")
+
+            top_f = tk.Frame(add_win, bg=BG_APP, padx=18, pady=12)
+            top_f.pack(fill=tk.X)
+            tk.Label(top_f, text="➕ REGISTER NEW LOYALTY MEMBER", font=("Helvetica", 14, "bold"), fg=CLR_LIME, bg=BG_APP).pack(anchor="w")
+            tk.Label(top_f, text="Add a new cardholder to Edge Hill Loyalty Programme", font=("Helvetica", 11), fg=CLR_LILAC, bg=BG_APP).pack(anchor="w")
+
+            form_f = tk.Frame(add_win, bg=BG_CARD, padx=18, pady=14)
+            form_f.pack(fill=tk.BOTH, expand=True, padx=18, pady=(0, 10))
+
+            tk.Label(form_f, text="Member Full Name:", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(anchor="w")
+            ent_new_name = tk.Entry(form_f, font=("Helvetica", 11), bg=BG_SCREEN, fg=CLR_WHITE, insertbackground=CLR_WHITE, relief=tk.FLAT)
+            ent_new_name.pack(fill=tk.X, pady=(3, 10), ipady=4)
+
+            tk.Label(form_f, text="Loyalty Card ID / Barcode:", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(anchor="w")
+            cid_row = tk.Frame(form_f, bg=BG_CARD)
+            cid_row.pack(fill=tk.X, pady=(3, 10))
+            ent_new_cid = tk.Entry(cid_row, font=("Helvetica", 11), bg=BG_SCREEN, fg=CLR_WHITE, insertbackground=CLR_WHITE, relief=tk.FLAT)
+            ent_new_cid.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=4)
+
+            def generate_random_cid():
+                import random
+                rnd_num = random.randint(100, 999)
+                ent_new_cid.delete(0, tk.END)
+                ent_new_cid.insert(0, f"247480103B{rnd_num}")
+
+            btn_gen_cid = tk.Button(
+                cid_row,
+                text="🎲 Auto ID",
+                font=("Helvetica", 10, "bold"),
+                bg=CLR_DEEP_PURPLE,
+                fg=CLR_WHITE,
+                activebackground=CLR_WHITE,
+                activeforeground=CLR_DEEP_PURPLE,
+                relief=tk.FLAT,
+                bd=0,
+                padx=10,
+                pady=3,
+                cursor="hand2",
+                command=generate_random_cid,
+            )
+            btn_gen_cid.pack(side=tk.RIGHT, padx=(8, 0))
+
+            is_act_var = tk.BooleanVar(value=True)
+            chk_act = tk.Checkbutton(
+                form_f,
+                text="Account Active (Eligible for 10% Discount immediately)",
+                variable=is_act_var,
+                font=("Helvetica", 11),
+                fg=CLR_LIME,
+                bg=BG_CARD,
+                selectcolor=BG_SCREEN,
+                activebackground=BG_CARD,
+                activeforeground=CLR_LIME,
+            )
+            chk_act.pack(anchor="w", pady=(4, 0))
+
+            btn_box = tk.Frame(add_win, bg=BG_APP, padx=18, pady=12)
+            btn_box.pack(fill=tk.X)
+
+            def do_save_new_member():
+                m_name = ent_new_name.get().strip()
+                m_cid = ent_new_cid.get().strip()
+                if not m_name:
+                    messagebox.showwarning("Incomplete Information", "Please enter the member's full name.", parent=add_win)
+                    ent_new_name.focus_set()
+                    return
+                if not m_cid:
+                    messagebox.showwarning("Incomplete Information", "Please enter or generate a Card ID.", parent=add_win)
+                    ent_new_cid.focus_set()
+                    return
+
+                # Check duplicate card id
+                curr_members = load_members()
+                for existing in curr_members:
+                    if existing.card_id.upper() == m_cid.upper():
+                        messagebox.showerror("Duplicate Card ID", f"Card ID '{m_cid}' is already assigned to {existing.member_name}!", parent=add_win)
+                        return
+
+                new_acc = LoyaltyAccount(card_id=m_cid, member_name=m_name, active=is_act_var.get())
+                curr_members.append(new_acc)
+                save_members(curr_members)
+                if hasattr(self, "loyalty_scanner") and self.loyalty_scanner is not None:
+                    self.loyalty_scanner._accounts = list(curr_members)
+
+                log_activity("MEMBER_REGISTERED", f"Registered new member '{m_name}' (Card: {m_cid}, Active: {is_act_var.get()})")
+                refresh_members_view()
+                add_win.destroy()
+
+            btn_submit = tk.Button(
+                btn_box,
+                text="💾 Save Member",
+                font=("Helvetica", 11, "bold"),
+                bg=BTN_BG,
+                fg=BTN_FG,
+                relief=tk.FLAT,
+                bd=0,
+                padx=16,
+                pady=6,
+                cursor="hand2",
+                command=do_save_new_member,
+            )
+            btn_submit.pack(side=tk.RIGHT, padx=(8, 0))
+            self._attach_button_animation(btn_submit)
+
+            btn_cancel = tk.Button(
+                btn_box,
+                text="Cancel",
+                font=("Helvetica", 11),
+                bg=CLR_DEEP_PURPLE,
+                fg=CLR_WHITE,
+                relief=tk.FLAT,
+                bd=0,
+                padx=14,
+                pady=6,
+                cursor="hand2",
+                command=add_win.destroy,
+            )
+            btn_cancel.pack(side=tk.RIGHT)
+            self._attach_button_animation(btn_cancel)
+
+        btn_add_mem = tk.Button(
+            members_ctrl,
+            text="➕ Add New Member",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=16,
+            pady=6,
+            cursor="hand2",
+            command=open_add_member_dialog,
+        )
+        btn_add_mem.pack(side=tk.LEFT, padx=(0, 8))
+        self._attach_button_animation(btn_add_mem)
+
+        # Action 2: Toggle Active Status
+        def toggle_selected_member():
+            sel = members_tree.selection()
+            if not sel:
+                messagebox.showinfo("Selection Required", "Please select a member row from the table to toggle active/inactive status.", parent=dialog)
+                return
+
+            item_vals = members_tree.item(sel[0], "values")
+            card_id = item_vals[1]
+
+            curr_members = load_members()
+            found = False
+            new_st = False
+            for m in curr_members:
+                if m.card_id == card_id:
+                    m.active = not m.active
+                    new_st = m.active
+                    found = True
+                    break
+
+            if found:
+                save_members(curr_members)
+                if hasattr(self, "loyalty_scanner") and self.loyalty_scanner is not None:
+                    self.loyalty_scanner._accounts = list(curr_members)
+                st_text = "ACTIVE" if new_st else "INACTIVE"
+                log_activity("MEMBER_STATUS_TOGGLED", f"Member {card_id} status changed to {st_text}")
+                refresh_members_view()
+
+        btn_toggle_mem = tk.Button(
+            members_ctrl,
+            text="🔄 Toggle Active / Inactive",
+            font=("Helvetica", 11, "bold"),
+            bg=CLR_DEEP_PURPLE,
+            fg=CLR_WHITE,
+            activebackground=CLR_WHITE,
+            activeforeground=CLR_DEEP_PURPLE,
+            relief=tk.FLAT,
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=toggle_selected_member,
+        )
+        btn_toggle_mem.pack(side=tk.LEFT, padx=(0, 8))
+        self._attach_button_animation(btn_toggle_mem)
+
+        # Action 3: Delete Member
+        def delete_selected_member():
+            sel = members_tree.selection()
+            if not sel:
+                messagebox.showinfo("Selection Required", "Please select a member row from the table to delete.", parent=dialog)
+                return
+
+            item_vals = members_tree.item(sel[0], "values")
+            card_id = item_vals[1]
+            m_name = item_vals[2]
+
+            if messagebox.askyesno(
+                "Confirm Member Deletion",
+                f"Are you sure you want to delete member:\n\n• Name: {m_name}\n• Card ID: {card_id}\n\nThis action cannot be undone.",
+                parent=dialog,
+            ):
+                curr_members = load_members()
+                curr_members = [m for m in curr_members if m.card_id != card_id]
+                save_members(curr_members)
+                if hasattr(self, "loyalty_scanner") and self.loyalty_scanner is not None:
+                    self.loyalty_scanner._accounts = list(curr_members)
+                log_activity("MEMBER_DELETED", f"Member '{m_name}' ({card_id}) deleted by administrator")
+                refresh_members_view()
+
+        btn_del_mem = tk.Button(
+            members_ctrl,
+            text="🗑️ Delete Member",
+            font=("Helvetica", 11, "bold"),
+            bg=CLR_DEEP_PURPLE,
+            fg=CLR_WHITE,
+            activebackground=CLR_WHITE,
+            activeforeground=CLR_DEEP_PURPLE,
+            relief=tk.FLAT,
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=delete_selected_member,
+        )
+        btn_del_mem.pack(side=tk.LEFT, padx=(0, 8))
+        self._attach_button_animation(btn_del_mem)
+
+        # Action 4: Refresh List
+        btn_ref_mem = tk.Button(
+            members_ctrl,
+            text="🔄 Refresh",
+            font=("Helvetica", 11),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=12,
+            pady=6,
+            cursor="hand2",
+            command=lambda: refresh_members_view(),
+        )
+        btn_ref_mem.pack(side=tk.LEFT, padx=(0, 8))
+        self._attach_button_animation(btn_ref_mem)
+
+        mem_count_lbl = tk.Label(members_ctrl, text="0 members found.", font=("Helvetica", 11), fg=CLR_LILAC, bg=BG_CARD)
+        mem_count_lbl.pack(side=tk.RIGHT)
+
+        def refresh_members_view():
+            members_tree.delete(*members_tree.get_children())
+            members_list = load_members()
+            if hasattr(self, "loyalty_scanner") and self.loyalty_scanner is not None:
+                self.loyalty_scanner._accounts = list(members_list)
+
+            total_count = len(members_list)
+            active_count = sum(1 for m in members_list if m.active)
+            inactive_count = total_count - active_count
+
+            mem_kpi_total_lbl.config(text=f"{total_count} Members")
+            mem_kpi_active_lbl.config(text=f"{active_count} Active")
+            mem_kpi_inact_lbl.config(text=f"{inactive_count} Inactive")
+
+            status_f = mem_status_var.get().upper()
+            search_q = mem_search_ent.get().strip().lower()
+
+            displayed = 0
+            for idx, m in enumerate(members_list, 1):
+                if status_f == "ACTIVE ONLY" and not m.active:
+                    continue
+                if status_f == "INACTIVE ONLY" and m.active:
+                    continue
+                if search_q and (search_q not in m.member_name.lower() and search_q not in m.card_id.lower()):
+                    continue
+
+                st_tag = "tag_active" if m.active else "tag_inactive"
+                st_text = "✅ ACTIVE" if m.active else "⛔ INACTIVE"
+                disc_text = "10% OFF" if m.active else "None (Blocked)"
+
+                members_tree.insert(
+                    "",
+                    tk.END,
+                    values=(idx, m.card_id, m.member_name, st_text, disc_text),
+                    tags=(st_tag,),
+                )
+                displayed += 1
+
+            mem_count_lbl.config(text=f"Displaying {displayed} of {total_count} members.")
+
+        # =================================================================
+        # TAB 6: 📋 Activity & Audit Logs
+        # =================================================================
+        tab_logs_frame = tk.Frame(content_area, bg=BG_MIDDLE)
+        tabs["logs"] = tab_logs_frame
+
+        logs_hdr = tk.Frame(tab_logs_frame, bg=BG_CARD, padx=14, pady=10)
+        logs_hdr.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            logs_hdr,
+            text="📋 ACTIVITY & AUDIT TRAIL LOGS",
+            font=("Helvetica", 14, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        tk.Label(
+            logs_hdr,
+            text="Persistent audit log events loaded from data/activity_log.json",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        ).pack(anchor="w")
+
+        # Logs Treeview
+        logs_tree_frame = tk.Frame(tab_logs_frame, bg=BG_CARD, padx=8, pady=8)
+        logs_tree_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+
+        logs_tree = ttk.Treeview(
+            logs_tree_frame,
+            style="Opt.Treeview",
+            columns=("time", "event", "details"),
+            show="headings",
+            height=11,
+        )
+        logs_tree.heading("time", text="Timestamp")
+        logs_tree.heading("event", text="Event Type")
+        logs_tree.heading("details", text="Event Details")
+
+        logs_tree.column("time", width=190, anchor="center")
+        logs_tree.column("event", width=200, anchor="center")
+        logs_tree.column("details", width=420, anchor="w")
+
+        logs_scroll = ttk.Scrollbar(logs_tree_frame, orient=tk.VERTICAL, command=logs_tree.yview)
+        logs_tree.configure(yscrollcommand=logs_scroll.set)
+        logs_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        logs_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        def refresh_logs_view():
+            logs_tree.delete(*logs_tree.get_children())
+            log_file = os.path.join(DATA_DIR, "activity_log.json")
+            if os.path.exists(log_file):
+                try:
+                    with open(log_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    if isinstance(data, list):
+                        for entry in reversed(data):
+                            ts = entry.get("timestamp", "--")
+                            ev = entry.get("event", "--")
+                            dt = entry.get("details", "")
+                            logs_tree.insert("", tk.END, values=(ts, ev, dt))
+                except Exception as ex:
+                    print(f"[Options] Error reading activity logs: {ex}")
+
+        # Logs Control Frame
+        logs_ctrl = tk.Frame(tab_logs_frame, bg=BG_CARD, padx=14, pady=12)
+        logs_ctrl.pack(fill=tk.X)
+
+        btn_refresh_logs = tk.Button(
+            logs_ctrl,
+            text="🔄 Refresh Event Logs",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=16,
+            pady=6,
+            cursor="hand2",
+            command=refresh_logs_view,
+        )
+        btn_refresh_logs.pack(side=tk.LEFT, padx=(0, 10))
+        self._attach_button_animation(btn_refresh_logs)
+
+        def clear_logs():
+            log_file = os.path.join(DATA_DIR, "activity_log.json")
+            try:
+                with open(log_file, "w", encoding="utf-8") as f:
+                    f.write("[]\n")
+                refresh_logs_view()
+            except Exception as ex:
+                print(f"[Options] Error clearing activity logs: {ex}")
+
+        btn_clear_logs = tk.Button(
+            logs_ctrl,
+            text="🗑️ Clear Activity Logs",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=16,
+            pady=6,
+            cursor="hand2",
+            command=clear_logs,
+        )
+        btn_clear_logs.pack(side=tk.LEFT)
+        self._attach_button_animation(btn_clear_logs)
+        self._attach_button_animation(btn_clear_logs)
+
+        # Default select Tab 1: Products
+        select_tab("products")
 
     # =======================================================================
     # Page 2: Payment Method & Loyalty Membership Selection
@@ -2202,6 +4506,45 @@ class CustomerVendingApp:
         if hasattr(self, "loyalty_status_lbl"):
             self.loyalty_status_lbl.config(text=status_text, fg=status_color)
 
+        # 5. Update Cash & Card Channel Availability on Page 2
+        if hasattr(self, "cash_btn") and self.cash_btn.winfo_exists():
+            if getattr(self, "cash_enabled", True):
+                self.cash_btn.config(
+                    text="[ 2 ] 💵 PAY WITH CASH",
+                    state=tk.NORMAL,
+                    bg=BTN_BG,
+                    fg=BTN_FG,
+                    cursor="hand2",
+                )
+            else:
+                self.cash_btn.config(
+                    text="[ 2 ] 💵 CASH (UNAVAILABLE)",
+                    state=tk.DISABLED,
+                    bg="#444444",
+                    fg="#888888",
+                    cursor="arrow",
+                )
+
+        if hasattr(self, "card_btn") and self.card_btn.winfo_exists():
+            if getattr(self, "card_enabled", True):
+                gw = getattr(self, "active_gateway_name", "stripe").upper()
+                gw_lbl = "CARD / QR" if gw == "STRIPE" else f"CARD / {gw}"
+                self.card_btn.config(
+                    text=f"[ 3 ] 💳 PAY WITH {gw_lbl}",
+                    state=tk.NORMAL,
+                    bg=BTN_BG,
+                    fg=BTN_FG,
+                    cursor="hand2",
+                )
+            else:
+                self.card_btn.config(
+                    text="[ 3 ] 💳 CARD / QR (UNAVAILABLE)",
+                    state=tk.DISABLED,
+                    bg="#444444",
+                    fg="#888888",
+                    cursor="arrow",
+                )
+
     def _on_cancel_payment(self) -> None:
         """Cancels payment and slides back to catalogue with reverse motion."""
         self.controller.cancel()
@@ -2507,6 +4850,13 @@ class CustomerVendingApp:
 
     def _on_choose_cash(self) -> None:
         """Handles Cash payment selection and opens cash insertion dialog."""
+        if not getattr(self, "cash_enabled", True):
+            messagebox.showwarning(
+                "Payment Unavailable",
+                "Cash payment is currently disabled by system administration.\n"
+                "Please choose another payment method or contact support.",
+            )
+            return
         self._last_payment_method = "Cash Receiver"
         amount_due = self.controller.amountDue
         self.controller.startPayment(self.cash_receiver)
@@ -2518,7 +4868,8 @@ class CustomerVendingApp:
         dialog = tk.Toplevel(self.root)
         self._active_modal = dialog
         dialog.title("Cash Payment Terminal")
-        dialog.geometry("500x530")
+        cw, ch = 540, 590
+        dialog.geometry(f"{cw}x{ch}")
         dialog.resizable(False, False)
         dialog.configure(bg=BG_APP)
         dialog.transient(self.root)
@@ -2547,8 +4898,8 @@ class CustomerVendingApp:
 
         # Center on parent
         dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() - 500) // 2
-        y = self.root.winfo_y() + (self.root.winfo_height() - 530) // 2
+        x = self.root.winfo_x() + (self.root.winfo_width() - cw) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - ch) // 2
         dialog.geometry(f"+{x}+{y}")
 
         top_bar = tk.Frame(dialog, bg=BG_APP, padx=16, pady=12)
@@ -2561,9 +4912,10 @@ class CustomerVendingApp:
             bg=BG_APP,
         ).pack(side=tk.LEFT)
 
+        initial_timeout = getattr(self, "session_timeout_seconds", 60)
         cash_timer_badge = tk.Label(
             top_bar,
-            text="⏱️ 60s",
+            text=f"⏱️ {initial_timeout}s",
             font=("Menlo", 12, "bold"),
             fg=CLR_WHITE,
             bg=BG_CARD,
@@ -2576,7 +4928,8 @@ class CustomerVendingApp:
             if not dialog.winfo_exists() or cash_state["completed"]:
                 return
             if self.timer.hasExpired():
-                print("[Cash Payment] 60s TransactionTimer expired without full payment. Refunding all inserted cash.")
+                to_sec = getattr(self, "session_timeout_seconds", 60)
+                print(f"[Cash Payment] {to_sec}s TransactionTimer expired without full payment. Refunding all inserted cash.")
                 cash_state["completed"] = True
                 cleanup_cash()
                 self.timer.stop()
@@ -2634,7 +4987,7 @@ class CustomerVendingApp:
             font=("Helvetica", 10, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
-            wraplength=450,
+            wraplength=480,
             justify="left",
         )
         lbl_change.pack(anchor="w", pady=(2, 0))
@@ -2644,9 +4997,17 @@ class CustomerVendingApp:
 
         tk.Label(
             coins_box,
-            text="Simulate Coin & Note Insertion (Keypad 1 - 9):",
+            text="Simulate Cash Insertion — Accepted: 10p to £10.00 (Keypad 1 - 9):",
             font=("Helvetica", 11, "bold"),
             fg=CLR_WHITE,
+            bg=BG_CARD,
+        ).pack(anchor="w", pady=(0, 2))
+
+        tk.Label(
+            coins_box,
+            text="⚠️ Note: £20 and £50 banknotes will not be accepted and will be returned.",
+            font=("Helvetica", 9),
+            fg=CLR_LILAC,
             bg=BG_CARD,
         ).pack(anchor="w", pady=(0, 6))
 
@@ -2654,24 +5015,59 @@ class CustomerVendingApp:
         grid_btn.pack(fill=tk.X)
 
         denominations = [
-            ("[ 1 ] 1p", 1),
-            ("[ 2 ] 2p", 2),
-            ("[ 3 ] 5p", 5),
-            ("[ 4 ] 10p", 10),
-            ("[ 5 ] 20p", 20),
-            ("[ 6 ] 50p", 50),
-            ("[ 7 ] £1.00", 100),
-            ("[ 8 ] £2.00", 200),
-            ("[ 9 ] £5.00", 500),
+            ("[ 1 ] 10p", 10),
+            ("[ 2 ] 20p", 20),
+            ("[ 3 ] 50p", 50),
+            ("[ 4 ] £1.00", 100),
+            ("[ 5 ] £2.00", 200),
+            ("[ 6 ] £5.00 Note", 500),
+            ("[ 7 ] £10.00 Note", 1000),
+            ("[ 8 ] £20 Note ⚠️", 2000),
+            ("[ 9 ] £50 Note ⚠️", 5000),
         ]
 
         coin_buttons = []
 
         def insert_coin(pence: int):
-            self.cash_receiver.insertItem(pence)
+            accepted = self.cash_receiver.insertItem(pence)
             inserted = self.cash_receiver._total
             rem = max(0, amount_due - inserted)
             lbl_inserted.config(text=f"Total Inserted: £{inserted / 100:.2f} ({inserted}p)")
+
+            if not accepted:
+                # Banknote or coin is rejected and returned to customer
+                if pence >= 100:
+                    val_str = f"£{pence / 100:.2f}"
+                else:
+                    val_str = f"{pence}p"
+
+                note_or_coin = "Banknote" if pence >= 500 else "Coin"
+                lbl_status.config(
+                    text=f"❌ {val_str} {note_or_coin} Rejected! Accepted: 10p to £10.00 only.",
+                    fg="#FF6B6B",
+                )
+                lbl_change.config(
+                    text=f"↩️ {note_or_coin} Ejected & Returned: {val_str} was not accepted and has been returned to customer.",
+                    fg="#FF6B6B",
+                )
+                screen.config(highlightbackground="#FF6B6B")
+                dialog.after(1400, lambda: screen.config(highlightbackground=CLR_LIME) if dialog.winfo_exists() else None)
+                log_activity("CASH_REJECTED", f"{val_str} {note_or_coin.lower()} rejected by CashValidator and returned (Accepted: 10p to £10.00 only)")
+
+                def restore_prompt():
+                    if dialog.winfo_exists() and not cash_state["completed"]:
+                        cur_inserted = self.cash_receiver._total
+                        cur_rem = max(0, amount_due - cur_inserted)
+                        lbl_status.config(
+                            text=f"Awaiting cash: £{cur_rem / 100:.2f} ({cur_rem}p remaining) — Accepted: 10p to £10",
+                            fg=CLR_LILAC,
+                        )
+                dialog.after(3500, restore_prompt)
+                return
+
+            # Accepted item
+            screen.config(highlightbackground=CLR_LIME)
+            lbl_change.config(text="", fg=CLR_LIME)
 
             if self.cash_receiver._state == CashReceiverState.PAYMENT_COMPLETE:
                 cash_state["completed"] = True
@@ -2712,15 +5108,19 @@ class CustomerVendingApp:
         for i, (label, val) in enumerate(denominations):
             r = i // 3
             c = i % 3
+            is_rej = (val in (2000, 5000))
             btn = tk.Button(
                 grid_btn,
                 text=label,
                 font=("Menlo", 10, "bold"),
-                bg=BTN_BG,
-                fg=BTN_FG,
+                bg=CLR_DEEP_PURPLE if is_rej else BTN_BG,
+                fg=CLR_WHITE if is_rej else BTN_FG,
+                activebackground=CLR_WHITE,
+                activeforeground=CLR_DEEP_PURPLE if is_rej else BTN_FG,
                 relief=tk.FLAT,
                 padx=6,
-                pady=5,
+                pady=6,
+                cursor="hand2",
                 command=lambda v=val: insert_coin(v),
             )
             btn.grid(row=r, column=c, padx=3, pady=3, sticky="nsew")
@@ -2754,15 +5154,15 @@ class CustomerVendingApp:
                 on_cancel()
                 return "break"
             key_map = {
-                "1": (0, 1), "KP_1": (0, 1),
-                "2": (1, 2), "KP_2": (1, 2),
-                "3": (2, 5), "KP_3": (2, 5),
-                "4": (3, 10), "KP_4": (3, 10),
-                "5": (4, 20), "KP_5": (4, 20),
-                "6": (5, 50), "KP_6": (5, 50),
-                "7": (6, 100), "KP_7": (6, 100),
-                "8": (7, 200), "KP_8": (7, 200),
-                "9": (8, 500), "KP_9": (8, 500),
+                "1": (0, 10), "KP_1": (0, 10),
+                "2": (1, 20), "KP_2": (1, 20),
+                "3": (2, 50), "KP_3": (2, 50),
+                "4": (3, 100), "KP_4": (3, 100),
+                "5": (4, 200), "KP_5": (4, 200),
+                "6": (5, 500), "KP_6": (5, 500),
+                "7": (6, 1000), "KP_7": (6, 1000),
+                "8": (7, 2000), "KP_8": (7, 2000),
+                "9": (8, 5000), "KP_9": (8, 5000),
             }
             target = key_map.get(k) or key_map.get(ch)
             if target:
@@ -2771,15 +5171,24 @@ class CustomerVendingApp:
                     btn = coin_buttons[idx]
                     if btn.cget("state") != tk.DISABLED:
                         btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
-                        dialog.after(120, lambda b=btn: self._safe_config(b, bg=BTN_BG, relief=tk.FLAT))
+                        orig_bg = CLR_DEEP_PURPLE if (val in (2000, 5000)) else BTN_BG
+                        dialog.after(120, lambda b=btn, ob=orig_bg: self._safe_config(b, bg=ob, relief=tk.FLAT))
                 insert_coin(val)
                 return "break"
 
         dialog.bind("<Key>", on_cash_key)
+        cancel_btn.bind("<Key>", on_cash_key)
         cancel_btn.focus_set()
 
     def _on_choose_card(self) -> None:
         """Handles Card payment selection and opens QR Code payment terminal dialog."""
+        if not getattr(self, "card_enabled", True):
+            messagebox.showwarning(
+                "Payment Unavailable",
+                "Card & Digital payment is currently disabled by system administration.\n"
+                "Please choose another payment method or contact support.",
+            )
+            return
         self._last_payment_method = "Contactless Card"
         amount_due = self.controller.amountDue
         self.controller.startPayment(self.card_reader)
@@ -2788,9 +5197,10 @@ class CustomerVendingApp:
         # Start 60-second TransactionTimer for card payment
         self.timer.start()
 
+        gw_name_title = getattr(self, "active_gateway_name", "stripe").upper()
         dialog = tk.Toplevel(self.root)
         self._active_modal = dialog
-        dialog.title("Scan QR Code to Pay (Stripe)")
+        dialog.title(f"Scan QR Code to Pay ({gw_name_title})")
         dw, dh = 560, 690
         dialog.geometry(f"{dw}x{dh}")
         dialog.minsize(540, 670)
@@ -2857,9 +5267,10 @@ class CustomerVendingApp:
             bg=BG_APP,
         ).pack(side=tk.LEFT)
 
+        initial_timeout = getattr(self, "session_timeout_seconds", 60)
         card_timer_badge = tk.Label(
             top_bar,
-            text="⏱️ 60s",
+            text=f"⏱️ {initial_timeout}s",
             font=("Menlo", 12, "bold"),
             fg=CLR_WHITE,
             bg=BG_CARD,
@@ -2872,7 +5283,8 @@ class CustomerVendingApp:
             if not dialog.winfo_exists() or checkout_state["completed"]:
                 return
             if self.timer.hasExpired():
-                print("[Card Payment] 60s TransactionTimer expired without payment. Cancelling order.")
+                to_sec = getattr(self, "session_timeout_seconds", 60)
+                print(f"[Card Payment] {to_sec}s TransactionTimer expired without payment. Cancelling order.")
                 checkout_state["completed"] = True
                 cleanup_dialog()
                 self.timer.stop()

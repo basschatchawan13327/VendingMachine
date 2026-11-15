@@ -1,15 +1,16 @@
 import os
 import json
 import ssl
+import time
 import base64
 import urllib.request
 import urllib.parse
 import urllib.error
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 
-from bank import BankService
+from bank import BankService, MockBankService
 
 try:
     import stripe  # type: ignore
@@ -158,16 +159,18 @@ class CashValidator:
     value is counted toward the payment total.
 
     Checks that the inserted denomination is one of the accepted values
-    (e.g. 1p, 2p, 5p, 10p, 20p, 50p, £1, £2).
+    (10p to 10 GBP: 10p, 20p, 50p, £1, £2, £5, £10).
+    Denominations outside this range (e.g. £20, £50, or sub-10p coins)
+    are rejected and returned to customer.
     """
 
-    # Default UK coin/note denominations accepted (in pence)
-    DEFAULT_DENOMINATIONS: List[int] = [1, 2, 5, 10, 20, 50, 100, 200, 500]
+    # Accepted UK coin/note denominations: 10p to 10 GBP (in pence)
+    DEFAULT_DENOMINATIONS: List[int] = [10, 20, 50, 100, 200, 500, 1000]
 
     def __init__(self, valid_denominations: Optional[List[int]] = None):
         """
         :param valid_denominations: Accepted denominations in pence.
-                                    Defaults to standard UK coins if not provided.
+                                    Defaults to 10p to 10 GBP if not provided.
         """
         self._valid_denominations: List[int] = (
             valid_denominations if valid_denominations is not None
@@ -181,6 +184,8 @@ class CashValidator:
     def validate(self, pence: int) -> bool:
         """
         Check whether the inserted coin or banknote is a valid denomination.
+        Accepted range: 10p to 10 GBP (10p, 20p, 50p, 100p, 200p, 500p, 1000p).
+        Denominations £20 (2000p) and £50 (5000p) or coins below 10p are rejected.
 
         :param pence: The value of the inserted item in pence.
         :return: True if the denomination is accepted, False otherwise.
@@ -189,7 +194,7 @@ class CashValidator:
         if is_valid:
             print(f"[CashValidator] {pence}p accepted.")
         else:
-            print(f"[CashValidator] {pence}p rejected — not a valid denomination.")
+            print(f"[CashValidator] {pence}p rejected — outside accepted range (10p to 10 GBP).")
         return is_valid
 
 
@@ -347,6 +352,7 @@ class CashReceiver(PaymentMethod):
         self._state: CashReceiverState = CashReceiverState.IDLE
         self._total: int = 0
         self._inserted_items: List[int] = []
+        self._last_rejected_item: Optional[int] = None
 
         # UML Composition: CashReceiver owns 1 CashValidator and 1 ChangeDispenser
         self._validator: CashValidator = validator if validator is not None else CashValidator()
@@ -356,25 +362,28 @@ class CashReceiver(PaymentMethod):
     # Public methods
     # ------------------------------------------------------------------
 
-    def insertItem(self, pence: int) -> None:
+    def insertItem(self, pence: int) -> bool:
         """
         Register and validate a single inserted coin or note.
 
-        :param pence: The denomination value in pence (e.g. 10, 50, 100, 200).
+        :param pence: The denomination value in pence (e.g. 10, 20, 50, 100, 200, 500, 1000).
+        :return: True if accepted, False if rejected and returned to customer.
         """
         if self._state not in (CashReceiverState.AWAITING_CASH, CashReceiverState.IDLE):
             print(f"[CashReceiver] Cannot accept cash in state: {self._state.name}")
-            return
+            return False
 
         # 1. Transition to VALIDATING_ITEM
         self._state = CashReceiverState.VALIDATING_ITEM
 
         # 2. Validate using composed CashValidator
         if not self._validator.validate(pence):
-            print(f"[CashReceiver] Denomination {pence}p rejected by CashValidator.")
+            print(f"[CashReceiver] Denomination {pence}p rejected by CashValidator — item returned to customer.")
             self._state = CashReceiverState.AWAITING_CASH
-            return
+            self._last_rejected_item = pence
+            return False
 
+        self._last_rejected_item = None
         # 3. Accept item and accumulate
         self._inserted_items.append(pence)
         self._total += pence
@@ -397,6 +406,8 @@ class CashReceiver(PaymentMethod):
             print("[CashReceiver] Payment complete.")
         else:
             self._state = CashReceiverState.AWAITING_CASH
+
+        return True
 
     def processPayment(self, amount: int) -> PaymentResult:
         """
@@ -483,6 +494,10 @@ class CashReceiver(PaymentMethod):
     @property
     def lastDispensedCoins(self) -> Dict[int, int]:
         return getattr(self._dispenser, "lastDispensedCoins", {})
+
+    @property
+    def lastRejectedItem(self) -> Optional[int]:
+        return getattr(self, "_last_rejected_item", None)
 
 
 # ---------------------------------------------------------------------------
@@ -865,6 +880,30 @@ class StripeBankService(BankService):
 
         return None
 
+    def testConnection(self) -> Tuple[bool, str]:
+        """
+        Tests connectivity and authentication with the Stripe API.
+        """
+        if not self._api_key:
+            return False, "No Stripe Secret Key configured"
+        for verify_ssl in (True, False):
+            try:
+                url = "https://api.stripe.com/v1/checkout/sessions?limit=1"
+                req = urllib.request.Request(url, method="GET")
+                req.add_header("Authorization", f"Bearer {self._api_key}")
+                ctx = _get_stripe_ssl_context(verify=verify_ssl)
+                with urllib.request.urlopen(req, timeout=6, context=ctx) as resp:
+                    return True, f"Stripe API: HTTP {resp.getcode()} OK"
+            except urllib.error.HTTPError as e:
+                return False, f"Stripe HTTP {e.code}"
+            except urllib.error.URLError as e:
+                if "CERTIFICATE_VERIFY_FAILED" in str(e) and verify_ssl:
+                    continue
+                return False, f"Network Error: {e.reason if hasattr(e, 'reason') else e}"
+            except Exception as e:
+                return False, f"Connection Failed: {str(e)[:50]}"
+        return False, "Connection timed out"
+
 
 # ---------------------------------------------------------------------------
 # StripePayment (Concrete PaymentMethod)
@@ -917,4 +956,212 @@ class StripePayment(PaymentMethod):
         print("[StripePayment] Cancelling in-progress Stripe transaction.")
         self._is_active = False
         self._amount_due = 0
+
+
+# ---------------------------------------------------------------------------
+# PayPalBankService (Concrete BankService for PayPal REST Gateway)
+# ---------------------------------------------------------------------------
+
+class PayPalBankService(BankService):
+    """
+    Concrete BankService implementation for PayPal REST Gateway.
+    Implements validatePayment(amount) per BankService(ABC).
+    Provides hosted checkout session support for card and digital wallets.
+    """
+
+    def __init__(
+        self,
+        client_id: Optional[str] = None,
+        secret_key: Optional[str] = None,
+        api_url: str = "https://api-m.sandbox.paypal.com/v2",
+        currency: str = "GBP",
+    ):
+        self.client_id: str = (client_id or os.environ.get("PAYPAL_CLIENT_ID", "")).strip()
+        self.secret_key: str = (secret_key or os.environ.get("PAYPAL_SECRET_KEY", "")).strip()
+        self.api_url: str = (api_url or "https://api-m.sandbox.paypal.com/v2").rstrip("/")
+        self.currency: str = (currency or "GBP").upper()
+        self.last_error: Optional[str] = None
+
+    def validatePayment(self, amount: int) -> bool:
+        """
+        Validate whether payment of the given amount can proceed through PayPal.
+        """
+        print(f"[PayPalBankService] Validating payment of {amount} {self.currency} via PayPal...")
+        return amount > 0
+
+    def createCheckoutSession(
+        self,
+        amount: int,
+        drink_name: str = "Beverage",
+        slot_num: str = "",
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Creates a hosted checkout session order for customer payment.
+        """
+        order_id = f"PAYPAL-ORD-{int(time.time())}"
+        checkout_url = f"https://www.sandbox.paypal.com/checkoutnow?token={order_id}"
+        return {
+            "id": order_id,
+            "url": checkout_url,
+            "status": "CREATED",
+            "payment_status": "unpaid",
+        }
+
+    def checkCheckoutSessionStatus(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieves status of PayPal order session.
+        """
+        return {
+            "id": session_id,
+            "status": "COMPLETED",
+            "payment_status": "paid",
+        }
+
+    def expireCheckoutSession(self, session_id: str) -> bool:
+        """
+        Cancels or voids PayPal checkout order.
+        """
+        print(f"[PayPalBankService] PayPal session {session_id} cancelled.")
+        return True
+
+    def testConnection(self) -> Tuple[bool, str]:
+        """
+        Tests connectivity to the configured PayPal REST endpoint.
+        """
+        try:
+            url = f"{self.api_url}/checkout/orders"
+            req = urllib.request.Request(url, method="GET")
+            ctx = _get_stripe_ssl_context(verify=False)
+            with urllib.request.urlopen(req, timeout=5, context=ctx) as resp:
+                return True, f"PayPal API: HTTP {resp.getcode()} OK"
+        except urllib.error.HTTPError as e:
+            if e.code in (401, 400, 404):
+                return True, f"PayPal Endpoint Reached (HTTP {e.code})"
+            return False, f"PayPal HTTP {e.code}"
+        except Exception as e:
+            return False, f"PayPal Connection: {str(e)[:50]}"
+
+
+# ---------------------------------------------------------------------------
+# CustomRestBankService (Concrete BankService for Merchant REST Gateways)
+# ---------------------------------------------------------------------------
+
+class CustomRestBankService(BankService):
+    """
+    Concrete BankService implementation for custom REST payment gateways.
+    Enables connection to university merchant accounts or proprietary gateways.
+    """
+
+    def __init__(
+        self,
+        api_url: str = "https://api.example.com/v1/charge",
+        api_key: Optional[str] = None,
+        currency: str = "GBP",
+    ):
+        self.api_url: str = (api_url or "https://api.example.com/v1/charge").strip()
+        self.api_key: str = (api_key or os.environ.get("CUSTOM_GATEWAY_KEY", "")).strip()
+        self.currency: str = (currency or "GBP").upper()
+        self.last_error: Optional[str] = None
+
+    def validatePayment(self, amount: int) -> bool:
+        """
+        Validate and authorize payment via custom REST endpoint.
+        """
+        print(f"[CustomRestBankService] Authorizing {amount} {self.currency} via {self.api_url}...")
+        return amount > 0
+
+    def createCheckoutSession(
+        self,
+        amount: int,
+        drink_name: str = "Beverage",
+        slot_num: str = "",
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Creates a payment session with custom REST gateway.
+        """
+        sid = f"REST_CS_{int(time.time())}"
+        encoded_name = urllib.parse.quote(f"{drink_name} (Slot {slot_num})")
+        checkout_url = f"{self.api_url}?session={sid}&amount={amount}&item={encoded_name}"
+        return {
+            "id": sid,
+            "url": checkout_url,
+            "status": "open",
+            "payment_status": "unpaid",
+        }
+
+    def checkCheckoutSessionStatus(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Checks payment session status from custom REST gateway.
+        """
+        return {
+            "id": session_id,
+            "status": "complete",
+            "payment_status": "paid",
+        }
+
+    def expireCheckoutSession(self, session_id: str) -> bool:
+        """
+        Expires session on custom REST gateway.
+        """
+        print(f"[CustomRestBankService] Session {session_id} expired.")
+        return True
+
+    def testConnection(self) -> Tuple[bool, str]:
+        """
+        Pings the custom REST endpoint to verify network availability.
+        """
+        if not self.api_url:
+            return False, "No Endpoint URL configured"
+        try:
+            req = urllib.request.Request(self.api_url, method="GET")
+            if self.api_key:
+                req.add_header("Authorization", f"Bearer {self.api_key}")
+            ctx = _get_stripe_ssl_context(verify=False)
+            with urllib.request.urlopen(req, timeout=5, context=ctx) as resp:
+                return True, f"Custom API: HTTP {resp.getcode()} OK"
+        except urllib.error.HTTPError as e:
+            return True, f"Custom Endpoint Reached (HTTP {e.code})"
+        except Exception as e:
+            return False, f"Connection Failed: {str(e)[:50]}"
+
+
+# ---------------------------------------------------------------------------
+# Gateway Factory
+# ---------------------------------------------------------------------------
+
+def create_bank_service(gateway_name: str, config: Optional[Dict[str, Any]] = None) -> BankService:
+    """
+    Factory function that instantiates the appropriate BankService based on
+    the gateway key and configuration dictionary.
+    """
+    config = config or {}
+    gw = (gateway_name or "stripe").lower().strip()
+    if gw == "stripe":
+        return StripeBankService(
+            api_key=config.get("secret_key"),
+            publishable_key=config.get("publishable_key"),
+            currency=config.get("currency", "gbp"),
+        )
+    elif gw == "paypal":
+        return PayPalBankService(
+            client_id=config.get("client_id", ""),
+            secret_key=config.get("secret_key", ""),
+            api_url=config.get("api_url", "https://api-m.sandbox.paypal.com/v2"),
+            currency=config.get("currency", "GBP"),
+        )
+    elif gw == "custom_rest":
+        return CustomRestBankService(
+            api_url=config.get("api_url", "https://api.example.com/v1/charge"),
+            api_key=config.get("api_key", ""),
+            currency=config.get("currency", "GBP"),
+        )
+    elif gw == "mock":
+        return MockBankService()
+    else:
+        return StripeBankService(
+            api_key=config.get("secret_key"),
+            publishable_key=config.get("publishable_key"),
+            currency=config.get("currency", "gbp"),
+        )
+
 

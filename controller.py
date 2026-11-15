@@ -19,6 +19,8 @@ PRODUCTS_FILE = os.path.join(DATA_DIR, "products.json")
 MEMBERS_FILE = os.path.join(DATA_DIR, "members.json")
 TRANSACTIONS_FILE = os.path.join(DATA_DIR, "transactions.json")
 ACTIVITY_LOG_FILE = os.path.join(DATA_DIR, "activity_log.json")
+CASH_FILE = os.path.join(DATA_DIR, "cash_inventory.json")
+PAYMENT_CONFIG_FILE = os.path.join(DATA_DIR, "payment_config.json")
 
 
 def _ensure_data_dir() -> None:
@@ -57,6 +59,8 @@ def load_products(file_path: str = PRODUCTS_FILE) -> List[Drink]:
                     icon_type=item.get("icon_type", "can"),
                     category=item.get("category", "Drinks"),
                     image=item.get("image"),
+                    unit_weight=item.get("unit_weight", 250.0),
+                    tare_weight=item.get("tare_weight", 50.0),
                 )
                 for item in data
             ]
@@ -94,6 +98,10 @@ def save_products(drinks: List[Drink], file_path: str = PRODUCTS_FILE) -> None:
                 item["icon_type"] = d.icon_type
             if getattr(d, "image", None):
                 item["image"] = d.image
+            if hasattr(d, "unit_weight"):
+                item["unit_weight"] = d.unit_weight
+            if hasattr(d, "tare_weight"):
+                item["tare_weight"] = d.tare_weight
             data.append(item)
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
@@ -271,6 +279,105 @@ def log_activity(event: str, details: str = "", file_path: str = ACTIVITY_LOG_FI
     }
     logs.append(entry)
     save_activity_logs(logs, file_path)
+
+
+# 5. Cash Inventory Database Functions (Coins & Banknotes)
+def load_cash_inventory(file_path: str = CASH_FILE) -> Dict[str, Any]:
+    """
+    Load cash inventory (coins and banknotes) from the cash inventory JSON database.
+
+    :param file_path: Path to cash inventory JSON file.
+    :return: Dictionary containing coins, banknotes, and summary.
+    """
+    _ensure_data_dir()
+    if not os.path.exists(file_path):
+        return {}
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception as e:
+        print(f"[Database] Error loading cash inventory: {e}")
+        return {}
+
+
+def save_cash_inventory(cash_data: Dict[str, Any], file_path: str = CASH_FILE) -> None:
+    """
+    Save cash inventory (coins and banknotes) to the cash inventory JSON database.
+
+    :param cash_data: Dictionary containing coins, banknotes, and summary.
+    :param file_path: Path to cash inventory JSON file.
+    """
+    _ensure_data_dir()
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(cash_data, f, indent=2)
+    except Exception as e:
+        print(f"[Database] Error saving cash inventory: {e}")
+
+
+# 6. Payment Configuration Functions (Gateway & Enable/Disable flags)
+def load_payment_config(file_path: str = PAYMENT_CONFIG_FILE) -> Dict[str, Any]:
+    """
+    Load payment configuration (gateway settings, cash/card enabled flags)
+    from the payment config JSON database.
+    """
+    _ensure_data_dir()
+    default_config = {
+        "cash_enabled": True,
+        "card_enabled": True,
+        "active_gateway": "stripe",
+        "timeout_seconds": 60,
+        "gateways": {
+            "stripe": {
+                "name": "Stripe Checkout (Dynamic QR)",
+                "publishable_key": "pk_test_51Uat0EAmBRfTB92ljvPqPkVTex633aK4lUAltmWfzsNQvF1LhZDlmHP7MAoTTZFqVZ39nQFuQmZ1cnB0Y8M3exjz00lbPksXW4",
+                "secret_key": "",
+                "api_url": "https://api.stripe.com/v1",
+                "currency": "gbp",
+            },
+            "paypal": {
+                "name": "PayPal REST Gateway",
+                "client_id": "sandbox_paypal_client_id_01",
+                "secret_key": "sandbox_paypal_secret_key_01",
+                "api_url": "https://api-m.sandbox.paypal.com/v2",
+                "currency": "GBP",
+            },
+            "custom_rest": {
+                "name": "Custom REST Payment Gateway",
+                "api_url": "https://api.example.com/v1/charge",
+                "api_key": "custom_api_key_token_12345",
+                "currency": "GBP",
+            },
+            "mock": {
+                "name": "Offline Mock Bank (Testing Simulation)",
+                "api_url": "local://mock-bank",
+                "currency": "GBP",
+            },
+        },
+    }
+    if not os.path.exists(file_path):
+        return default_config
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else default_config
+    except Exception as e:
+        print(f"[Database] Error loading payment config: {e}")
+        return default_config
+
+
+def save_payment_config(config_data: Dict[str, Any], file_path: str = PAYMENT_CONFIG_FILE) -> None:
+    """
+    Save payment configuration (gateway settings, cash/card enabled flags)
+    to the payment config JSON database.
+    """
+    _ensure_data_dir()
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(config_data, f, indent=2)
+    except Exception as e:
+        print(f"[Database] Error saving payment config: {e}")
 
 
 # Combined Helpers
@@ -527,6 +634,8 @@ class VendingController:
         # 1. Physically dispense drink via DrinkDispenser (reduces stock)
         if self._dispenser is not None and drink_id:
             self._dispenser.dispense(drink_id)
+            if self._stock_sensor is not None and hasattr(self._stock_sensor, "calibrateSensors"):
+                self._stock_sensor.calibrateSensors()
             # Auto-save updated stock levels to products database
             save_products(self._dispenser._slots)
 

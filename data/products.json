@@ -3,12 +3,14 @@
     "drink_id": "ESPRESSO",
     "name": "Espresso",
     "price": 150,
-    "stock": 10,
+    "stock": 11,
     "slot_num": "01",
     "category": "Coffee",
     "desc": "Rich & bold single-origin double shot",
     "icon_type": "espresso",
-    "image": "Starbuck_Espresso.jpg"
+    "image": "Starbuck_Espresso.jpg",
+    "unit_weight": 160.0,
+    "tare_weight": 50.0
   },
   {
     "drink_id": "LATTE",
@@ -19,7 +21,9 @@
     "category": "Coffee",
     "desc": "Silky steamed fresh milk with espresso",
     "icon_type": "latte",
-    "image": "Nescafe_Latte.avif"
+    "image": "Nescafe_Latte.avif",
+    "unit_weight": 250.0,
+    "tare_weight": 50.0
   },
   {
     "drink_id": "HOT_CHOCOLATE",
@@ -30,7 +34,9 @@
     "category": "Chocolate & Tea",
     "desc": "Velvety Belgian dark chocolate & foam",
     "icon_type": "chocolate",
-    "image": "milo_can.jpg"
+    "image": "milo_can.jpg",
+    "unit_weight": 240.0,
+    "tare_weight": 50.0
   },
   {
     "drink_id": "WATER",
@@ -41,6 +47,8 @@
     "category": "Cold Drinks",
     "desc": "Chilled pure natural mountain spring water",
     "icon_type": "water",
-    "image": "Aquafina_water.jpg"
+    "image": "Aquafina_water.jpg",
+    "unit_weight": 520.0,
+    "tare_weight": 50.0
   }
 ]

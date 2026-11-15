@@ -84,3 +84,13 @@ class TransactionTimer:
             return 0.0
         return time.monotonic() - self._start_time
 
+    @property
+    def timeoutSeconds(self) -> int:
+        """Return the current timeout limit in seconds."""
+        return self._timeout_seconds
+
+    @timeoutSeconds.setter
+    def timeoutSeconds(self, value: int) -> None:
+        """Update the timeout limit in seconds (minimum 5s)."""
+        self._timeout_seconds = max(5, int(value))
+
