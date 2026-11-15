@@ -805,11 +805,22 @@ class CustomerVendingApp:
         if page_name == "catalogue":
             self.root.focus_set()
             self.sync_products_from_json(animate=False)
+            if hasattr(self, "_unbind_page2_mousewheel"):
+                self._unbind_page2_mousewheel()
         elif page_name == "payment":
             self._refresh_payment_page()
+            if hasattr(self, "_bind_page2_mousewheel"):
+                self._bind_page2_mousewheel()
+            if hasattr(self, "_update_page2_scrollregion"):
+                self.root.after(50, self._update_page2_scrollregion)
         elif page_name == "success":
             self._refresh_success_page()
             self._start_success_countdown()
+            if hasattr(self, "_unbind_page2_mousewheel"):
+                self._unbind_page2_mousewheel()
+        else:
+            if hasattr(self, "_unbind_page2_mousewheel"):
+                self._unbind_page2_mousewheel()
 
     def transition_to_page(
         self,
@@ -1835,6 +1846,9 @@ class CustomerVendingApp:
 
         def on_close():
             try:
+                dialog.unbind_all("<MouseWheel>")
+                dialog.unbind_all("<Button-4>")
+                dialog.unbind_all("<Button-5>")
                 dialog.grab_release()
                 dialog.destroy()
             except Exception:
@@ -1948,6 +1962,7 @@ class CustomerVendingApp:
 
         tabs: Dict[str, tk.Frame] = {}
         tab_buttons: Dict[str, tk.Button] = {}
+        tab_wheel_binders: Dict[str, Tuple[Any, Any]] = {}
 
         def select_tab(name: str):
             for tname, frame in tabs.items():
@@ -1988,6 +2003,13 @@ class CustomerVendingApp:
                 refresh_members_view()
             elif name == "logs":
                 refresh_logs_view()
+
+            # Manage mousewheel binding for scrollable tabs
+            if name in tab_wheel_binders:
+                tab_wheel_binders[name][0]()
+            else:
+                for b in tab_wheel_binders.values():
+                    b[1]()
 
             refresh_system_summary()
 
@@ -2628,22 +2650,95 @@ class CustomerVendingApp:
             bg=BG_CARD,
         ).pack(anchor="w")
 
-        # Scrollable container for Tab 3 content
+        # Scrollable container for Tab 3 content (Full MouseWheel, Trackpad, & Keyboard Scroll)
         pay_canvas = tk.Canvas(tab_pay_frame, bg=BG_MIDDLE, highlightthickness=0)
         pay_scroll = ttk.Scrollbar(tab_pay_frame, orient=tk.VERTICAL, command=pay_canvas.yview)
         pay_inner = tk.Frame(pay_canvas, bg=BG_MIDDLE)
 
         pay_scroll_window = pay_canvas.create_window((0, 0), window=pay_inner, anchor="nw")
 
+        def _update_pay_scrollregion(event=None):
+            if pay_canvas.winfo_exists() and pay_inner.winfo_exists():
+                pay_canvas.update_idletasks()
+                bbox = pay_canvas.bbox("all")
+                if bbox:
+                    # Provide extra bottom margin so bottom controls are fully visible
+                    pay_canvas.configure(scrollregion=(0, 0, bbox[2], bbox[3] + 28))
+
         def _on_pay_canvas_configure(event):
             pay_canvas.itemconfig(pay_scroll_window, width=event.width)
+            _update_pay_scrollregion()
 
         pay_canvas.bind("<Configure>", _on_pay_canvas_configure)
-        pay_inner.bind("<Configure>", lambda e: pay_canvas.configure(scrollregion=pay_canvas.bbox("all")))
+        pay_inner.bind("<Configure>", _update_pay_scrollregion)
         pay_canvas.configure(yscrollcommand=pay_scroll.set)
 
-        pay_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # MouseWheel & Trackpad Scrolling Handler (macOS, Windows, Linux)
+        def _on_pay_mousewheel(event):
+            if not pay_canvas.winfo_exists() or tab_pay_frame.winfo_manager() != "pack":
+                return
+            bbox = pay_canvas.bbox("all")
+            if not bbox:
+                return
+            ch = bbox[3] - bbox[1]
+            if ch <= pay_canvas.winfo_height():
+                return
+
+            if sys.platform == "darwin":
+                if abs(event.delta) >= 120:
+                    step = int(-1 * (event.delta / 120)) * 2
+                else:
+                    step = int(-1 * event.delta)
+                if step == 0 and event.delta != 0:
+                    step = 1 if event.delta < 0 else -1
+                pay_canvas.yview_scroll(step, "units")
+            elif event.num == 5:
+                pay_canvas.yview_scroll(2, "units")
+            elif event.num == 4:
+                pay_canvas.yview_scroll(-2, "units")
+            else:
+                step = int(-1 * (event.delta / 120)) * 2 if abs(event.delta) >= 120 else int(-1 * event.delta)
+                if step == 0 and event.delta != 0:
+                    step = 1 if event.delta < 0 else -1
+                pay_canvas.yview_scroll(step, "units")
+
+        def _bind_pay_mousewheel(event=None):
+            dialog.bind_all("<MouseWheel>", _on_pay_mousewheel)
+            dialog.bind_all("<Button-4>", _on_pay_mousewheel)
+            dialog.bind_all("<Button-5>", _on_pay_mousewheel)
+
+        def _unbind_pay_mousewheel(event=None):
+            try:
+                dialog.unbind_all("<MouseWheel>")
+                dialog.unbind_all("<Button-4>")
+                dialog.unbind_all("<Button-5>")
+            except Exception:
+                pass
+
+        # Register in tab_wheel_binders for automatic lifecycle binding on tab selection
+        tab_wheel_binders["payments"] = (_bind_pay_mousewheel, _unbind_pay_mousewheel)
+
+        # Keyboard PageUp / PageDown navigation
+        def _on_pay_key_nav(event):
+            if not pay_canvas.winfo_exists() or tab_pay_frame.winfo_manager() != "pack":
+                return
+            if isinstance(event.widget, (tk.Entry, ttk.Combobox)):
+                return
+            if event.keysym in ("Next", "Page_Down"):
+                pay_canvas.yview_scroll(1, "pages")
+            elif event.keysym in ("Prior", "Page_Up"):
+                pay_canvas.yview_scroll(-1, "pages")
+
+        dialog.bind("<Next>", _on_pay_key_nav, add="+")
+        dialog.bind("<Prior>", _on_pay_key_nav, add="+")
+
         pay_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        pay_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        tab_pay_frame.bind("<Enter>", lambda e: _bind_pay_mousewheel())
+        tab_pay_frame.bind("<Leave>", lambda e: _unbind_pay_mousewheel())
+        pay_canvas.bind("<Enter>", lambda e: _bind_pay_mousewheel())
+        pay_inner.bind("<Enter>", lambda e: _bind_pay_mousewheel())
 
         # -------------------------------------------------------------
         # 1. Payment Channels Availability (Cash & Card Toggles)
@@ -3215,6 +3310,7 @@ class CustomerVendingApp:
             timeout_status_lbl.config(text=f"🟢 Saved: Session timeout set to {val} seconds", fg=CLR_LIME)
             update_policy_text()
             refresh_system_summary()
+            _update_pay_scrollregion()
 
         btn_save_timeout = tk.Button(
             timeout_save_row,
@@ -3281,6 +3377,7 @@ class CustomerVendingApp:
             timeout_status_lbl.config(text=f"Current Timeout: {self.session_timeout_seconds}s", fg=CLR_LILAC)
             update_policy_text()
             refresh_system_summary()
+            _update_pay_scrollregion()
 
         # =================================================================
         # TAB 4: 🧾 Transaction Records & Sales History
@@ -4143,11 +4240,93 @@ class CustomerVendingApp:
         # 1. Header (Color #3A0C51)
         self._build_payment_header(page)
 
-        # 2. Middle Content Area (Between Top & Bottom Bars: Color #D883FF)
-        middle_area = tk.Frame(page, bg=BG_MIDDLE)
-        middle_area.pack(fill=tk.BOTH, expand=True)
+        # 3. Footer (Color #3A0C51) packed at bottom first so it remains pinned
+        self._build_payment_footer(page)
 
-        content_split = tk.Frame(middle_area, bg=BG_MIDDLE)
+        # 2. Middle Content Area (Between Top & Bottom Bars: Color #D883FF) - Responsive Scrollable Container
+        page2_canvas = tk.Canvas(page, bg=BG_MIDDLE, highlightthickness=0)
+        page2_scroll = ttk.Scrollbar(page, orient=tk.VERTICAL, command=page2_canvas.yview)
+        page2_canvas.configure(yscrollcommand=page2_scroll.set)
+
+        page2_inner = tk.Frame(page2_canvas, bg=BG_MIDDLE)
+        page2_win_id = page2_canvas.create_window((0, 0), window=page2_inner, anchor="nw")
+
+        def _update_page2_scrollregion(event=None):
+            if page2_canvas.winfo_exists() and page2_inner.winfo_exists():
+                page2_canvas.update_idletasks()
+                bbox = page2_canvas.bbox("all")
+                if bbox:
+                    ch = bbox[3] - bbox[1]
+                    wh = page2_canvas.winfo_height()
+                    if ch > wh and wh > 50:
+                        page2_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+                        page2_canvas.configure(scrollregion=(0, 0, bbox[2], ch + 12))
+                    else:
+                        page2_scroll.pack_forget()
+                        page2_canvas.configure(scrollregion=(0, 0, bbox[2], max(wh, ch)))
+
+        def _on_page2_canvas_configure(event):
+            target_h = max(event.height, 490)
+            page2_canvas.itemconfig(page2_win_id, width=event.width, height=target_h)
+            _update_page2_scrollregion()
+
+        page2_canvas.bind("<Configure>", _on_page2_canvas_configure)
+        page2_inner.bind("<Configure>", _update_page2_scrollregion)
+
+        # MouseWheel / Trackpad smooth scrolling for Page 2
+        def _on_page2_mousewheel(event):
+            if not page2_canvas.winfo_exists() or getattr(self, "current_page", "") != "payment":
+                return
+            bbox = page2_canvas.bbox("all")
+            if not bbox:
+                return
+            ch = bbox[3] - bbox[1]
+            if ch <= page2_canvas.winfo_height():
+                return
+
+            if sys.platform == "darwin":
+                if abs(event.delta) >= 120:
+                    step = int(-1 * (event.delta / 120)) * 2
+                else:
+                    step = int(-1 * event.delta)
+                if step == 0 and event.delta != 0:
+                    step = 1 if event.delta < 0 else -1
+                page2_canvas.yview_scroll(step, "units")
+            elif event.num == 5:
+                page2_canvas.yview_scroll(2, "units")
+            elif event.num == 4:
+                page2_canvas.yview_scroll(-2, "units")
+            else:
+                step = int(-1 * (event.delta / 120)) * 2 if abs(event.delta) >= 120 else int(-1 * event.delta)
+                if step == 0 and event.delta != 0:
+                    step = 1 if event.delta < 0 else -1
+                page2_canvas.yview_scroll(step, "units")
+
+        def _bind_page2_mousewheel(event=None):
+            self.root.bind_all("<MouseWheel>", _on_page2_mousewheel)
+            self.root.bind_all("<Button-4>", _on_page2_mousewheel)
+            self.root.bind_all("<Button-5>", _on_page2_mousewheel)
+
+        def _unbind_page2_mousewheel(event=None):
+            try:
+                self.root.unbind_all("<MouseWheel>")
+                self.root.unbind_all("<Button-4>")
+                self.root.unbind_all("<Button-5>")
+            except Exception:
+                pass
+
+        self._bind_page2_mousewheel = _bind_page2_mousewheel
+        self._unbind_page2_mousewheel = _unbind_page2_mousewheel
+        self._update_page2_scrollregion = _update_page2_scrollregion
+
+        page.bind("<Enter>", lambda e: _bind_page2_mousewheel())
+        page.bind("<Leave>", lambda e: _unbind_page2_mousewheel())
+        page2_canvas.bind("<Enter>", lambda e: _bind_page2_mousewheel())
+        page2_inner.bind("<Enter>", lambda e: _bind_page2_mousewheel())
+
+        page2_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        content_split = tk.Frame(page2_inner, bg=BG_MIDDLE)
         content_split.pack(fill=tk.BOTH, expand=True, padx=20, pady=12)
 
         # Left Column: Order Summary Card (Width: ~350px)
@@ -4160,9 +4339,6 @@ class CustomerVendingApp:
         right_panel = tk.Frame(content_split, bg=BG_MIDDLE)
         right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self._build_payment_options_panel(right_panel)
-
-        # 3. Footer (Color #3A0C51)
-        self._build_payment_footer(page)
 
     def _build_payment_header(self, parent: tk.Frame) -> None:
         """Top banner for Page 2 (Background: #3A0C51)."""
