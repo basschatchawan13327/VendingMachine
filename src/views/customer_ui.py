@@ -723,6 +723,10 @@ class CustomerVendingApp:
         self.catalogue = load_catalogue_data()
         self.slot_map = {item["slot_num"]: item for item in self.catalogue}
 
+    def _sync_products_from_file(self, animate: bool = False) -> None:
+        """Alias for sync_products_from_json for backward compatibility."""
+        self.sync_products_from_json(animate=animate)
+
         # Synchronize dispenser slots with catalogue
         if hasattr(self, "dispenser"):
             existing_drinks = {d.drink_id.upper(): d for d in self.dispenser.getAllDrinks()}
@@ -2126,7 +2130,7 @@ class CustomerVendingApp:
                 prod_tree.insert("", tk.END, values=(slot, name, price_str, stock_str, w_str, st_text))
 
         def do_reload_products():
-            self._sync_products_from_file(animate=True)
+            self.sync_products_from_json(animate=True)
             sensor = getattr(self, "stock_sensor", None)
             if sensor:
                 sensor.calibrateSensors()
@@ -2145,7 +2149,7 @@ class CustomerVendingApp:
             sensor = getattr(self, "stock_sensor", None)
             if sensor:
                 sensor.calibrateSensors()
-            self._sync_products_from_file(animate=True)
+            self.sync_products_from_json(animate=True)
             refresh_products_view()
             prod_msg_lbl.config(text="✅ All beverage slots replenished to 10 cans", fg=CLR_LIME)
 
@@ -2259,7 +2263,7 @@ class CustomerVendingApp:
                 sensor = getattr(self, "stock_sensor", None)
                 if sensor:
                     sensor.calibrateSensors()
-                self._sync_products_from_file(animate=True)
+                self.sync_products_from_json(animate=True)
                 refresh_products_view()
                 prod_msg_lbl.config(text=f"✅ Slot {slot_target} updated: {new_p}p, {new_s} cans, {new_w}g", fg=CLR_LIME)
             else:

@@ -96,9 +96,21 @@ class Drink:
     def name(self) -> str:
         return self._name
 
+    @name.setter
+    def name(self, value: str) -> None:
+        self._name = str(value)
+
     @property
     def price(self) -> int:
         return self._price
+
+    @price.setter
+    def price(self, value: int) -> None:
+        self._price = max(0, int(value))
+
+    def setPrice(self, value: int) -> None:
+        """Alias method to update drink price."""
+        self.price = value
 
     @property
     def stock(self) -> int:
