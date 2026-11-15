@@ -4,17 +4,45 @@ from datetime import datetime
 from enum import Enum, auto
 from typing import Optional, List, Dict, Any
 
-from payment import PaymentMethod, PaymentModule
-from inventory import Drink, DrinkDispenser, LoyaltyAccount, LoyaltyScanner, StockSensor
-from logger import Logger, TransactionRecord
-from timer import TransactionTimer
+try:
+    from src.models.payment import PaymentMethod, PaymentModule
+    from src.models.inventory import Drink, DrinkDispenser, LoyaltyAccount, LoyaltyScanner, StockSensor
+    from src.utils.logger import Logger, TransactionRecord
+    from src.utils.timer import TransactionTimer
+except ImportError:
+    try:
+        from ..models.payment import PaymentMethod, PaymentModule
+        from ..models.inventory import Drink, DrinkDispenser, LoyaltyAccount, LoyaltyScanner, StockSensor
+        from ..utils.logger import Logger, TransactionRecord
+        from ..utils.timer import TransactionTimer
+    except ImportError:
+        from payment import PaymentMethod, PaymentModule
+        from inventory import Drink, DrinkDispenser, LoyaltyAccount, LoyaltyScanner, StockSensor
+        from logger import Logger, TransactionRecord
+        from timer import TransactionTimer
 
 
 # ===========================================================================
 # Database File Paths & Constants
 # ===========================================================================
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+def _resolve_data_dir() -> str:
+    """Resolve absolute path to data directory containing JSON database files."""
+    # Check project root data/ (two levels up from src/controllers)
+    proj_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    candidate = os.path.join(proj_root, "data")
+    if os.path.isdir(candidate):
+        return candidate
+    candidate_cwd = os.path.join(os.getcwd(), "data")
+    if os.path.isdir(candidate_cwd):
+        return candidate_cwd
+    sibling = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    if os.path.isdir(sibling):
+        return sibling
+    return candidate
+
+
+DATA_DIR = _resolve_data_dir()
 PRODUCTS_FILE = os.path.join(DATA_DIR, "products.json")
 MEMBERS_FILE = os.path.join(DATA_DIR, "members.json")
 TRANSACTIONS_FILE = os.path.join(DATA_DIR, "transactions.json")
@@ -421,6 +449,10 @@ class MachineState(Enum):
     CANCELLED = auto()
 
 
+# Aliases for architectural conventions
+VendingState = MachineState
+
+
 # ===========================================================================
 # VendingController
 # ===========================================================================
@@ -729,3 +761,7 @@ class VendingController:
     @property
     def loyaltyApplied(self) -> bool:
         return self._loyalty_applied
+
+
+# Alias for backward compatibility
+VendingMachineController = VendingController

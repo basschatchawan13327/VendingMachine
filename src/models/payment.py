@@ -10,7 +10,10 @@ from abc import ABC, abstractmethod
 from enum import Enum, auto
 from typing import List, Optional, Dict, Any, Tuple
 
-from bank import BankService, MockBankService
+try:
+    from .bank import BankService, MockBankService
+except ImportError:
+    from bank import BankService, MockBankService
 
 try:
     import stripe  # type: ignore
