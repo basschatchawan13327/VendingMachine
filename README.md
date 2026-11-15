@@ -27,8 +27,7 @@ VendingMachine/
 │   │
 │   ├── views/                  # [Presentation Layer] User Interface & Camera Feeds
 │   │   ├── __init__.py
-│   │   ├── customer_ui.py      # Tkinter GUI, Customer Flow, Admin Options Dashboard
-│   │   └── barcode_scanner.py  # OpenCV & Pyzbar Live Camera Barcode Scanner
+│   │   └── customer_ui.py      # Tkinter GUI, Customer Flow, Admin Options Dashboard
 │   │
 │   └── utils/                  # [Cross-Cutting Layer] Shared Utilities
 │       ├── __init__.py

@@ -154,7 +154,6 @@ from src.models.payment import (
 from src.models.bank import MockBankService
 from src.utils.logger import Logger, TransactionRecord
 from src.utils.timer import TransactionTimer
-from src.views.barcode_scanner import BarcodeCameraScanner
 
 
 # ===========================================================================

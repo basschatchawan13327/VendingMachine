@@ -402,34 +402,6 @@ def save_payment_config(config_data: Dict[str, Any], file_path: str = PAYMENT_CO
         print(f"[Database] Error saving payment config: {e}")
 
 
-# Combined Helpers
-def load_all_databases() -> tuple[List[Drink], List[LoyaltyAccount], List[TransactionRecord], List[Dict[str, Any]]]:
-    """Load all four database entities simultaneously."""
-    return (
-        load_products(),
-        load_members(),
-        load_transactions(),
-        load_activity_logs(),
-    )
-
-
-def save_all_databases(
-    drinks: Optional[List[Drink]] = None,
-    members: Optional[List[LoyaltyAccount]] = None,
-    transactions: Optional[List[TransactionRecord]] = None,
-    activity_logs: Optional[List[Dict[str, Any]]] = None,
-) -> None:
-    """Save all four database entities simultaneously if provided."""
-    if drinks is not None:
-        save_products(drinks)
-    if members is not None:
-        save_members(members)
-    if transactions is not None:
-        save_transactions(transactions)
-    if activity_logs is not None:
-        save_activity_logs(activity_logs)
-
-
 # ===========================================================================
 # Machine State Enum
 # ===========================================================================

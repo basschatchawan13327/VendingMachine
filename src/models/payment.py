@@ -906,59 +906,6 @@ class StripeBankService(BankService):
 
 
 # ---------------------------------------------------------------------------
-# StripePayment (Concrete PaymentMethod)
-# ---------------------------------------------------------------------------
-
-class StripePayment(PaymentMethod):
-    """
-    Concrete PaymentMethod that processes payments directly via Stripe API.
-    Implements processPayment(amount) and cancel() per PaymentMethod(ABC).
-    """
-
-    def __init__(
-        self,
-        api_key: Optional[str] = None,
-        currency: str = "gbp",
-        service: Optional[StripeBankService] = None,
-    ):
-        super().__init__()
-        self._service = service if service is not None else StripeBankService(api_key=api_key, currency=currency)
-        self._is_active: bool = False
-
-    @property
-    def service(self) -> StripeBankService:
-        return self._service
-
-    def processPayment(self, amount: int) -> PaymentResult:
-        """
-        Process one-time drink purchase through Stripe.
-
-        :param amount: Amount in pence.
-        :return: PaymentResult.SUCCESS or PaymentResult.FAILED.
-        """
-        self._amount_due = amount
-        self._is_active = True
-        approved = self._service.validatePayment(amount)
-        self._is_active = False
-
-        if approved:
-            print(f"[StripePayment] Payment of {amount}p authorized via Stripe.")
-            return PaymentResult.SUCCESS
-        else:
-            print(f"[StripePayment] Payment of {amount}p declined by Stripe.")
-            return PaymentResult.FAILED
-
-    def cancel(self) -> None:
-        """Cancel any in-progress Stripe payment."""
-        if not self._is_active:
-            print("[StripePayment] No active Stripe payment to cancel.")
-            return
-        print("[StripePayment] Cancelling in-progress Stripe transaction.")
-        self._is_active = False
-        self._amount_due = 0
-
-
-# ---------------------------------------------------------------------------
 # PayPalBankService (Concrete BankService for PayPal REST Gateway)
 # ---------------------------------------------------------------------------
 
