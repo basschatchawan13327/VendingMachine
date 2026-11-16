@@ -308,6 +308,7 @@ VendingMachine/
 ## 📄 8. Associated Documentation
 
 Complete Software Engineering (OOAD) documentation suite for this system:
+* **UML Use Case & Activity Diagrams:** [use_case_and_activity_diagrams.md](file:///Users/chatchawanjiamprasut/Desktop/Year%203/Software%20Engineering/CW1_Group_Assignment/VendingMachine/diagram/use_case_and_activity_diagrams.md) — Modular multi-page Use Case Diagrams (Overview, Customer Subsystem, Admin Subsystem) and Activity Diagrams (Customer Journey, Greedy Cash Dispensing, Digital Stripe QR Gateway, and Maintenance Calibration).
 * **UML Design Specifications:** [uml-diagrams.md](file:///Users/chatchawanjiamprasut/.gemini/antigravity/brain/13fa5075-f274-4566-ad65-387b625d3b6f/uml-diagrams.md) — Comprehensive UML Class Diagram, 2 Sequence Diagrams, State Machine Statechart, and Package Architecture.
 * **System Process Flowcharts:** [system-flowcharts.md](file:///Users/chatchawanjiamprasut/.gemini/antigravity/brain/13fa5075-f274-4566-ad65-387b625d3b6f/system-flowcharts.md) — 4 operational flowcharts (Customer Journey, Cash Validation & Greedy Change, Stripe QR Lifecycle, and Maintenance Dashboard Workflow).
 * **Software Test Plan (IEEE 829 Standard):** [Software_Test_Plan_Smart_Vending_Machine.docx](file:///Users/chatchawanjiamprasut/Desktop/Year%203/Software%20Engineering/CW1_Group_Assignment/VendingMachine/Software_Test_Plan_Smart_Vending_Machine.docx) — Formal Word document covering 7 test suites across 40+ test cases.
