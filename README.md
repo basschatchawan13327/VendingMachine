@@ -3,127 +3,129 @@
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![GUI](https://img.shields.io/badge/GUI-Tkinter-blue)](https://docs.python.org/3/library/tkinter.html)
 [![Payments](https://img.shields.io/badge/Payments-Stripe%20%7C%20PayPal%20%7C%20Mock-6772E5?logo=stripe&logoColor=white)](https://stripe.com)
-[![Architecture](https://img.shields.io/badge/Architecture-MVC%20%2F%20Layered-purple)](#-system-architecture--how-it-works)
-[![Testing](https://img.shields.io/badge/Standards-IEEE%20829%20Test%20Plan-success)](#-associated-documentation)
+[![Architecture](https://img.shields.io/badge/Architecture-MVC%20%2F%20Layered-purple)](#-4-system-architecture--how-it-works)
+[![Testing](https://img.shields.io/badge/Standards-IEEE%20829%20Test%20Plan-success)](#-8-associated-documentation)
 
-An accessible, robust, and touchscreen-optimised **Smart Vending Machine Software System** designed and developed for the **Software Engineering Group Assignment (CW1)** at **Edge Hill University**.
-
----
-
-## 📌 สารบัญ (Table of Contents)
-1. [📖 คำอธิบายโปรแกรม (Project Overview)](#-1-คำอธิบายโปรแกรม-project-overview)
-2. [💻 ความต้องการของระบบ (System Requirements)](#-2-ความต้องการของระบบ-system-requirements)
-3. [⚙️ ขั้นตอนการติดตั้ง (Installation & Setup)](#-3-ขั้นตอนการติดตั้ง-installation--setup)
-4. [🧠 การทำงานของระบบ (System Architecture & Mechanics)](#-4-การทำงานของระบบ-system-architecture--mechanics)
-   * [โครงสร้างสถาปัตยกรรม (MVC Architecture)](#41-โครงสร้างสถาปัตยกรรม-mvc-architecture)
-   * [ระบบจัดการเงินสด & การทอนเงิน (Cash Acceptance & Greedy Change)](#42-ระบบจัดการเงินสด--การทอนเงิน-cash-acceptance--greedy-change)
-   * [ระบบชำระเงินดิจิทัล & Stripe Dynamic QR](#43-ระบบชำระเงินดิจิทัล--stripe-dynamic-qr)
-   * [ระบบบัตรสมาชิกนักศึกษา & ส่วนลด (Loyalty Programme)](#44-ระบบบัตรสมาชิกนักศึกษา--ส่วนลด-loyalty-programme)
-   * [ระบบตรวจสอบสต็อกเซนเซอร์คู่ (Dual-Sensor Stock Telemetry)](#45-ระบบตรวจสอบสต็อกเซนเซอร์คู่-dual-sensor-stock-telemetry)
-5. [🕹️ การใช้งานโปรแกรม (User & Admin Manual)](#-5-การใช้งานโปรแกรม-user--admin-manual)
-   * [ขั้นตอนสำหรับลูกค้าทั่วไป (Customer Purchasing Workflow)](#51-ขั้นตอนสำหรับลูกค้าทั่วไป-customer-purchasing-workflow)
-   * [ขั้นตอนสำหรับผู้ดูแลระบบ (Admin & Maintenance Dashboard)](#52-ขั้นตอนสำหรับผู้ดูแลระบบ-admin--maintenance-dashboard)
-   * [ปุ่มลัดและการควบคุม (Keyboard Shortcuts & Navigation)](#53-ปุ่มลัดและการควบคุม-keyboard-shortcuts--navigation)
-6. [🎨 ธีมสีและการออกแบบ (UI Design & Accessibility)](#-6-ธีมสีและการออกแบบ-ui-design--accessibility)
-7. [📁 โครงสร้างโปรเจกต์ & ฐานข้อมูล JSON (Project Structure)](#-7-โครงสร้างโปรเจกต์--ฐานข้อมูล-json-project-structure)
-8. [📄 เอกสารประกอบระบบ (Associated Documentation)](#-8-เอกสารประกอบระบบ-associated-documentation)
+An accessible, robust, and touchscreen-optimised **Smart Vending Machine Software System** designed and engineered for the **Software Engineering Group Assignment (CW1)** at **Edge Hill University**.
 
 ---
 
-## 📖 1. คำอธิบายโปรแกรม (Project Overview)
-
-ระบบ **Smart Vending Machine System** เป็นระบบซอฟต์แวร์จำลองตู้จำหน่ายเครื่องดื่มอัตโนมัติอัจฉริยะ ออกแบบมาเพื่อรองรับการใช้งานจริงในมหาวิทยาลัย Edge Hill University โดยผสานการทำงานระหว่างการสั่งซื้อผ่านหน้าจอสัมผัส (Touchscreen), การกดรหัสช่องผ่านแป้นพิมพ์ตัวเลข (Physical Numpad), ระบบสแกนบัตรนักศึกษาเพื่อรับส่วนลดสะสมแต้ม (Loyalty Discount 10%), และระบบชำระเงินแบบ Hybrid ที่รองรับทั้งเหรียญ/ธนบัตรจริง และการชำระผ่าน Dynamic QR Code (Stripe / PayPal / Mock Bank)
-
-### 🌟 จุดเด่นของระบบ (Key Highlights):
-* **Flicker-Free Modern GUI:** หน้าจอคมชัด Responsive ปรับขนาดตามความละเอียดหน้าจออัตโนมัติ (ขนาดย่อสุด 860x560) พร้อมแอนิเมชันกระป๋องตกและเสียงสังเคราะห์
-* **Strict 5-Color Accessibility Theme:** ใช้พาเล็ตสีตามมาตรฐาน Contrast สูง 5 สีหลักตามอัตลักษณ์ของมหาวิทยาลัย
-* **Dual-Sensor Telemetry:** จำลองระบบตรวจสอบสต็อกด้วยโหลดเซลล์ชั่งน้ำหนัก (Weight Sensor) ร่วมกับเซนเซอร์ลำแสงตรวจจับกระป๋อง (Optical Beam Sensor)
-* **Greedy Coin Dispenser:** อัลกอริทึมคำนวณเงินทอนอัตโนมัติ พร้อมตรวจนับคลังเหรียญในตู้แบบเรียลไทม์
-* **Dynamic Payment Gateway Engine:** สลับระหว่าง Stripe Dynamic QR (สร้าง QR จาก PaymentIntent/Checkout API แบบเรียลไทม์), PayPal REST, Custom REST, และ Mock Bank สำหรับการทดสอบออฟไลน์
-* **Interactive Maintenance Dashboard:** แผงควบคุมช่างเทคนิค 6 แท็บ พร้อม Live Telemetry Sidebar แสดงสถานะระบบสด 8 ค่า
+## 📌 Table of Contents
+1. [📖 Project Overview](#-1-project-overview)
+2. [💻 System Requirements](#-2-system-requirements)
+3. [⚙️ Installation & Setup](#-3-installation--setup)
+4. [🧠 System Architecture & How It Works](#-4-system-architecture--how-it-works)
+   * [MVC Architectural Structure](#41-mvc-architectural-structure)
+   * [Cash Handling & Greedy Change Algorithm](#42-cash-handling--greedy-change-algorithm)
+   * [Digital Payment Gateways & Stripe Dynamic QR](#43-digital-payment-gateways--stripe-dynamic-qr)
+   * [Student & Staff Loyalty Programme](#44-student--staff-loyalty-programme)
+   * [Dual-Sensor Inventory Telemetry](#45-dual-sensor-inventory-telemetry)
+5. [🕹️ User & Administrator Guide](#-5-user--administrator-guide)
+   * [Customer Purchasing Workflow](#51-customer-purchasing-workflow)
+   * [Admin & Maintenance Dashboard](#52-admin--maintenance-dashboard)
+   * [Keyboard Shortcuts & Navigation Controls](#53-keyboard-shortcuts--navigation-controls)
+6. [🎨 UI Design & Accessibility (5-Color Theme)](#-6-ui-design--accessibility-5-color-theme)
+7. [📁 Project Structure & JSON Databases](#-7-project-structure--json-databases)
+8. [📄 Associated Documentation](#-8-associated-documentation)
+9. [👥 Project Credits](#-9-project-credits)
 
 ---
 
-## 💻 2. ความต้องการของระบบ (System Requirements)
+## 📖 1. Project Overview
 
-### ข้อกำหนดด้านฮาร์ดแวร์ (Hardware Requirements):
-* **หน่วยประมวลผล (CPU):** 1.6 GHz Dual-Core หรือสูงกว่า (รองรับสถาปัตยกรรม Intel x86_64, AMD64, และ Apple Silicon M-Series)
-* **หน่วยความจำ (RAM):** ขั้นต่ำ 2 GB (แนะนำ 4 GB ขึ้นไป)
-* **พื้นที่ว่างบนฮาร์ดดิสก์:** ขั้นต่ำ 250 MB
-* **จอแสดงผล (Display):** ความละเอียดขั้นต่ำ 1024 x 768 (แนะนำ Full HD 1920 x 1080 ขึ้นไป)
-* **กล้องเว็บแคม (Optional):** กล้องความละเอียด 720p ขึ้นไป (สำหรับทดสอบระบบกล้องสแกน Barcode/QR Code สด)
+The **Smart Vending Machine System** is an advanced interactive kiosk application simulating a campus-ready smart beverage vending unit. Developed specifically for Edge Hill University, the system bridges touchscreen navigation, hardware-emulated physical numpad keying, real-time student/staff loyalty barcode verification, and a hybrid payment terminal supporting physical UK currency alongside digital online payment gateways.
 
-### ข้อกำหนดด้านซอฟต์แวร์ (Software Requirements):
-* **ระบบปฏิบัติการ (Operating System):**
-  * macOS (Darwin 11.0 Big Sur หรือใหม่กว่า)
-  * Linux (Ubuntu 20.04 LTS+, Debian, Fedora)
+### 🌟 Key System Capabilities:
+* **Flicker-Free Responsive GUI:** High-definition Tkinter interface dynamically centered and scaled according to native display resolution (minimum bounded size: 860x560), complete with dispensing physics animations and synthesized chime acoustics.
+* **Strict 5-Color Accessibility Theme:** High-contrast color palette adhering to WCAG AAA contrast standards and Edge Hill University brand identity.
+* **Dual-Sensor Telemetry:** Hardware emulation of weight scales (Load Cells) combined with optical beam/proximity sensors for automated inventory discrepancy detection.
+* **Greedy Change Dispenser:** Real-time coin vault tracking and an automated greedy algorithm for dispensing optimal change.
+* **Dynamic Payment Gateway Engine:** Seamless switching between **Stripe Dynamic QR** (generating live PaymentIntent/Checkout sessions on the fly), **PayPal REST**, **Custom REST**, and an **Offline Mock Bank** test double.
+* **Live Maintenance Dashboard:** 6-tab administrator modal featuring a real-time **Live System Summary Sidebar** tracking 8 critical operational metrics.
+
+---
+
+## 💻 2. System Requirements
+
+### Hardware Specifications:
+* **Processor (CPU):** 1.6 GHz Dual-Core or faster (x86_64, AMD64, or Apple Silicon M-Series).
+* **System Memory (RAM):** 2 GB minimum (4 GB or higher recommended).
+* **Storage Capacity:** Minimum 250 MB free disk space.
+* **Display Resolution:** Minimum 1024 x 768 (Full HD 1920 x 1080 recommended for optimal kiosk experience).
+* **Integrated / USB Webcam (Optional):** 720p or higher (required only for live camera barcode scanning).
+
+### Software & Environment Specifications:
+* **Operating System:**
+  * macOS (Darwin 11.0 Big Sur or later; verified on macOS Sonoma / Sequoia)
+  * Linux (Ubuntu 20.04 LTS+, Debian 11+, Fedora 36+)
   * Microsoft Windows 10 / 11 (64-bit)
-* **Python Runtime:** Python **3.9** ขึ้นไป (ผ่านการทดสอบและรองรับ Python **3.14**)
-* **Tkinter Framework:** ติดตั้งมาพร้อมกับ Python มาตรฐาน
+* **Python Runtime:** Python **3.9** or higher (fully tested and verified on Python **3.14**).
+* **Tkinter Framework:** Standard Tcl/Tk runtime included with official Python distributions.
 
-### ไลบรารีที่จำเป็น (Python Dependencies):
-| แพ็กเกจ (Package) | เวอร์ชันขั้นต่ำ | วัตถุประสงค์การใช้งาน |
+### Python Dependencies:
+| Dependency | Minimum Version | Functional Purpose |
 | :--- | :--- | :--- |
-| **`Pillow`** | `>= 9.0.0` | ประมวลผลและปรับขนาดรูปภาพเครื่องดื่ม High-Resolution และโลโก้ |
-| **`opencv-python`** | `>= 4.5.0` | จัดการสัญญาณกล้องเว็บแคม และสร้าง Dynamic QR Code (`QRCodeEncoder`) |
-| **`pyzbar`** | `>= 0.1.8` | สแกนและถอดรหัสบาร์โค้ดบัตรนักศึกษา/อาจารย์จากภาพกล้อง |
-| **`numpy`** | `>= 1.20.0` | จัดการ Matrix สำหรับงานประมวลผลภาพ QR Code และการสเกลพิกเซล |
-| **`stripe`** | `>= 2.60.0` | เชื่อมต่อ Stripe Payments API (Checkout Sessions & Dynamic QR) |
+| **`Pillow`** | `>= 9.0.0` | High-resolution image resampling, product card artwork rendering, and canvas graphics. |
+| **`opencv-python`** | `>= 4.5.0` | Video capture feed processing and dynamic QR code generation (`cv2.QRCodeEncoder`). |
+| **`pyzbar`** | `>= 0.1.8` | Real-time optical barcode and QR code decoding from video streams. |
+| **`numpy`** | `>= 1.20.0` | Pixel array operations, quiet-zone padding, and nearest-neighbour module scaling. |
+| **`stripe`** | `>= 2.60.0` | Stripe API integration for Checkout Sessions, PaymentIntents, and dynamic QR polling. |
 
 ---
 
-## ⚙️ 3. ขั้นตอนการติดตั้ง (Installation & Setup)
+## ⚙️ 3. Installation & Setup
 
-### 3.1 การโคลนโปรเจกต์ (Clone Repository)
-เปิด Terminal หรือ Command Prompt แล้วไปยังโฟลเดอร์ที่ต้องการ:
+### 3.1 Clone the Repository
+Open a terminal and navigate to your target directory:
 ```bash
+git clone <repository-url>
 cd "CW1_Group_Assignment/VendingMachine"
 ```
 
-### 3.2 การสร้าง Virtual Environment (แนะนำ)
-เพื่อป้องกันการชนกันของเวอร์ชันไลบรารีในระบบ:
+### 3.2 Create a Virtual Environment (Recommended)
+Isolate dependencies using Python's standard `venv` module:
 
-* **บน macOS / Linux:**
+* **On macOS / Linux:**
   ```bash
   python3 -m venv venv
   source venv/bin/activate
   ```
-* **บน Windows:**
+* **On Windows:**
   ```cmd
   python -m venv venv
   venv\Scripts\activate
   ```
 
-### 3.3 การติดตั้ง Dependencies
-ติดตั้งแพ็กเกจทั้งหมดผ่านไฟล์ `requirements.txt`:
+### 3.3 Install Dependencies
+Install all required packages from `requirements.txt`:
 ```bash
 pip install -r requirements.txt
 ```
 
 > [!TIP]
-> ตัวโปรแกรมมีระบบ **Auto-Dependency Verification** ในไฟล์ `main.py` หากรันโปรแกรมแล้วตรวจพบว่าขาดไลบรารีใด ระบบจะพยายามดาวน์โหลดและติดตั้งให้อัตโนมัติก่อนเริ่มเปิดหน้าต่าง GUI
+> The primary entry point (`main.py`) includes an **Automated Dependency Verification Engine**. If dependencies are missing when launching the script, the system will detect and attempt to install them via pip automatically before initializing the GUI.
 
-### 3.4 การเปิดใช้งานโปรแกรม (Launch Application)
-รันไฟล์ Entry Point หลัก:
+### 3.4 Launch the Application
+Run the primary entry point:
 ```bash
 python3 main.py
 ```
 
 ---
 
-## 🧠 4. การทำงานของระบบ (System Architecture & Mechanics)
+## 🧠 4. System Architecture & How It Works
 
-### 4.1 โครงสร้างสถาปัตยกรรม (MVC Architecture)
-ระบบถูกออกแบบด้วยสถาปัตยกรรม **Model-View-Controller (MVC)** อย่างเคร่งครัดตามหลักการ Separation of Concerns (SoC):
+### 4.1 MVC Architectural Structure
+The system is architected around a strict **Model-View-Controller (MVC)** design pattern with clean separation of concerns:
 
 ```mermaid
 graph LR
     subgraph View["Presentation Layer (View)"]
-        UI["CustomerVendingApp<br/>(customer_ui.py)"]
+        UI["CustomerVendingApp<br/>(src/views/customer_ui.py)"]
     end
 
     subgraph Controller["Application Layer (Controller)"]
-        VC["VendingController<br/>(controller.py)"]
+        VC["VendingController<br/>(src/controllers/controller.py)"]
         State["MachineState<br/>(IDLE / SELECTED / PAYING)"]
     end
 
@@ -136,12 +138,12 @@ graph LR
         Bank["BankService & Gateways"]
     end
 
-    subgraph Persistence["Data Layer (JSON Persistence)"]
+    subgraph Persistence["Persistence Layer (JSON Database)"]
         DB[("products.json<br/>cash_inventory.json<br/>transactions.json<br/>members.json")]
     end
 
-    UI -->|Events & Callbacks| VC
-    VC -->|State & Signals| UI
+    UI -->|Events & Invocations| VC
+    VC -->|State Updates & Signals| UI
     VC --> Disp
     VC --> Sensor
     VC --> Loyalty
@@ -151,178 +153,168 @@ graph LR
     VC -.->|Auto-save / Sync| DB
 ```
 
-* **Presentation Layer (`src/views/`):** จัดการเรนเดอร์หน้าจอ GUI 4 หน้าหลัก (`catalogue`, `payment`, `success`, `cancelled`), แป้นพิมพ์ Numpad, การแสดงผลบาร์โค้ด และแผงควบคุม Options
-* **Controller Layer (`src/controllers/`):** ควบคุม State Machine (`MachineState`), รับส่งข้อมูลระหว่าง View และ Model, จัดการ Transaction Timer (นับถอยหลัง 60 วินาที) และสั่งบันทึกประวัติการขาย
-* **Domain Layer (`src/models/`):** จัดการกฎเกณฑ์ทางธุรกิจ (Business Rules), คลังสินค้า (`DrinkDispenser`), เซนเซอร์จำลอง (`StockSensor`), ระบบรับเงินสด (`CashReceiver`), และระบบธนาคาร (`BankService`)
-* **Persistence Layer (`data/`):** จัดเก็บข้อมูลในรูปแบบไฟล์ JSON โครงสร้างมาตรฐาน ทำให้ระบบทำงานได้แบบ Standalone โดยไม่ต้องติดตั้งฐานข้อมูล SQL ภายนอก
+* **Presentation Layer (`src/views/`):** Manages the 4 primary full-screen page frames (`catalogue`, `payment`, `success`, `cancelled`), numpad keypad bindings, camera feeds, and the administrative options modal.
+* **Controller Layer (`src/controllers/`):** Orchestrates the system state machine (`MachineState`), timer countdowns (60s session limits), sale completion, sale cancellation, and audit logging.
+* **Domain Layer (`src/models/`):** Encapsulates core business rules: inventory cataloguing (`DrinkDispenser`), load cell and optical sensors (`StockSensor`), cash validation (`CashValidator`), change dispensing (`ChangeDispenser`), and banking integrations (`BankService`).
+* **Persistence Layer (`data/`):** Zero-dependency JSON storage engine allowing instant standalone deployment without requiring external database servers.
 
 ---
 
-### 4.2 ระบบจัดการเงินสด & การทอนเงิน (Cash Acceptance & Greedy Change)
-ระบบมี **`CashValidator`** ทำหน้าที่ตรวจสอบและคัดกรองเงินสดที่หยอดเข้าตู้:
-* **สกุลเงินที่ยอมรับ (Accepted Denominations):**
-  * เหรียญ: `10p`, `20p`, `50p`, `£1.00 (100p)`, `£2.00 (200p)`
-  * ธนบัตร: `£5.00 Note (500p)`, `£10.00 Note (1000p)`
-* **นโยบายการปฏิเสธ (Rejection Policy):**
-  * เหรียญต่ำกว่า 10p (`1p`, `2p`, `5p`) และธนบัตรมูลค่าสูง (`£20.00`, `£50.00`) จะถูกปฏิเสธทันที และดีดคืนออกทางช่องรับเงินทอนโดยยอดเงินไม่ถูกบวกเพิ่ม
-* **Greedy Coin Dispenser Algorithm:**
-  เมื่อลูกค้าชำระเงินเกิน ระบบจะคำนวณเงินทอนโดยเรียงลำดับเหรียญมูลค่าสูงสุดลงไปหาต่ำสุด (`£2.00` ➔ `£1.00` ➔ `50p` ➔ `20p` ➔ `10p`) โดยหักจำนวนเหรียญออกจากคลังเหรียญในตู้ (`cash_inventory.json`) จริง
+### 4.2 Cash Handling & Greedy Change Algorithm
+The physical cash subsystem is governed by **`CashReceiver`** and its composed **`CashValidator`**:
+* **Accepted Denominations (10p to £10.00):**
+  * UK Coins: `10p`, `20p`, `50p`, `£1.00 (100p)`, `£2.00 (200p)`
+  * UK Banknotes: `£5.00 Note (500p)`, `£10.00 Note (1000p)`
+* **Rejection Policy:**
+  * Small coins below 10p (`1p`, `2p`, `5p`) and large banknotes (`£20.00`, `£50.00`) are rejected immediately by `CashValidator` and returned through the coin tray without incrementing the inserted balance.
+* **Greedy Change Dispenser Algorithm:**
+  When a transaction is overpaid, `ChangeDispenser` determines the optimal combination of coins using a greedy strategy descending through available denominations (`£2.00` ➔ `£1.00` ➔ `50p` ➔ `20p` ➔ `10p`). Coin quantities are verified and deducted directly from `data/cash_inventory.json`.
 
 ---
 
-### 4.3 ระบบชำระเงินดิจิทัล & Stripe Dynamic QR
-เมื่อลูกค้าเลือกจ่ายด้วยบัตรหรือคิวอาร์โค้ด:
-1. `CardReader` จะเรียก `BankService.createCheckoutSession()` ไปยัง Payment Gateway ที่กำลังใช้งาน
-2. **Stripe Gateway:** ส่งคำขอสร้าง Hosted Checkout Session ผ่าน HTTPS REST ไปยัง Stripe API (`api.stripe.com/v1`)
-3. ระบบจะนำ `checkout_url` ที่ได้รับมาแปลงเป็นภาพ Dynamic QR Code ด้วยโมดูล `cv2.QRCodeEncoder` หรือ `qrcode` แล้วแสดงบนหน้าจอทันที
-4. ระบบเปิด **Background Polling Thread** คอยตรวจเช็กสถานะการจ่ายเงินทุกๆ 1.5 วินาที
-5. หากลูกค้าสแกนจ่ายเงินสำเร็จ ระบบจะตัดยอดและจ่ายเครื่องดื่มทันที
-6. หากครบกำหนด 60 วินาที หรือลูกค้ากดยกเลิก ระบบจะส่งคำขอ `expireCheckoutSession()` ไปยัง Stripe เพื่อยกเลิกเซสชันทันที ป้องกันการถูกสแกนจ่ายย้อนหลัง
+### 4.3 Digital Payment Gateways & Stripe Dynamic QR
+When the customer chooses card or QR payment:
+1. `CardReader` requests a session via `BankService.createCheckoutSession()`.
+2. **Stripe Gateway:** Makes a direct REST call to the Stripe API (`api.stripe.com/v1/checkout/sessions`) to generate a dynamic hosted session URL.
+3. The URL is encoded into a high-contrast QR code using `cv2.QRCodeEncoder` / `qrcode` with quiet-zone padding and displayed on Page 2.
+4. An **Asynchronous Background Polling Thread** queries the gateway session every 1.5 seconds.
+5. Once payment is confirmed (`status == "complete"` and `payment_status == "paid"`), the controller completes the sale and triggers dispensing.
+6. If the 60-second timer expires or the customer cancels, the session is invalidated immediately via `expireCheckoutSession()`.
 
 ---
 
-### 4.4 ระบบบัตรสมาชิกนักศึกษา & ส่วนลด (Loyalty Programme)
-* บัตรนักศึกษาและอาจารย์ (Student & Staff Cards) ถูกจัดเก็บใน `data/members.json`
-* เมื่อสแกนบัตรผ่านกล้องหรือกรอกรหัสบัตร (เช่น `247480103B001`) ระบบจะตรวจสอบผ่าน `LoyaltyScanner.scan()`
-* บัตรที่ถูกต้องและมีสถานะ `active: true` จะได้รับ**ส่วนลด 10% ทันที** (สูตรคำนวณ: `amountDue = listPrice * 0.90`)
-* ระบบมีระบบป้องกันการสแกนซ้ำ (Idempotency Guard) เพื่อไม่ให้เกิดการลดราคาซ้ำซ้อนในรายการเดียวกัน
+### 4.4 Student & Staff Loyalty Programme
+* Registered university member accounts are maintained in `data/members.json`.
+* Customers scan their card via webcam or enter the card ID manually (e.g. `247480103B001`).
+* If the account exists and is active, a **10% discount** is applied instantly:
+  $$\text{Amount Due} = \text{List Price} \times 0.90$$
+* An **Idempotency Guard** ensures the discount can only be applied once per session.
 
 ---
 
-### 4.5 ระบบตรวจสอบสต็อกเซนเซอร์คู่ (Dual-Sensor Stock Telemetry)
-เพื่อความสมจริงในเชิงวิศวกรรม ระบบจำลองฮาร์ดแวร์ตรวจสอบสต็อกแบบ 2 ทาง (Dual-Sensor Cross-Verification):
-1. **Load Cell (Weight Scale):** ชั่งน้ำหนักรวมบนถาดของแถวนั้นๆ (สูตร: `(stock * unit_weight) + tare_weight`)
-2. **Optical Beam / Proximity Sensor:** เซนเซอร์ลำแสงตรวจนับจำนวนกระป๋องจริงทางกายภาพ
-3. ระบบจะทำการ Cross-Check หากค่าน้ำหนักไม่สอดคล้องกับจำนวนกระป๋อง (เช่น มีสิ่งแปลกปลอมตกใส่ถาด) ระบบจะส่งสัญญาณเตือน `DISCREPANCY_ALERT` ในแถบ Telemetry ทันที
+### 4.5 Dual-Sensor Inventory Telemetry
+To simulate physical vending hardware, the machine employs dual telemetry cross-checking:
+1. **Load Cell (Weight Scale):** Measures the total physical weight of the tray:
+   $$\text{Tray Weight} = (\text{Stock Count} \times \text{Unit Weight}) + \text{Tare Weight}$$
+2. **Optical Beam / Proximity Sensor:** Electronically detects and counts physical cans in the column.
+3. If measured weight does not correspond with the optical count (tolerance: 25g), the system flags a `DISCREPANCY_ALERT` on the telemetry dashboard.
 
 ---
 
-## 🕹️ 5. การใช้งานโปรแกรม (User & Admin Manual)
+## 🕹️ 5. User & Administrator Guide
 
-### 5.1 ขั้นตอนสำหรับลูกค้าทั่วไป (Customer Purchasing Workflow)
+### 5.1 Customer Purchasing Workflow
 
 ```
-[หน้า 1: เลือกสินค้า] ──► [สแกนบัตรลด 10%] ──► [เลือกวิธีชำระเงิน] ──► [รับเครื่องดื่ม]
+[Page 1: Select Drink] ──► [Page 2: Scan Loyalty & Pay] ──► [Page 3: Collect Drink & Change]
 ```
 
-1. **เลือกเครื่องดื่ม (Page 1):**
-   * คลิกที่การ์ดสินค้าบนหน้าจอ หรือกดปุ่มหมวดหมู่ด้านบน (Coffee, Chocolate & Tea, Cold Drinks)
-   * หรือใช้แป้น Numpad กดรหัสช่อง 2 หลัก (เช่น `0`, `1` สำหรับ Espresso หรือ `0`, `2` สำหรับ Latte)
-   * เมื่อรหัสถูกต้อง กรอบสินค้าจะสว่างเป็นสีเขียวมะนาว (Electric Lime) พร้อมรูปและข้อมูลสินค้า
-   * กดปุ่ม **"Proceed to Payment"** เพื่อไปหน้าถัดไป
-2. **สแกนบัตรสะสมแต้ม (Page 2 - Optional):**
-   * ลูกค้าที่มีบัตรนักศึกษาสามารถเปิดกล้องกด **"Turn On Camera"** เพื่อสแกนบาร์โค้ด หรือกรอกรหัสบัตรในช่อง Manual Entry
-   * ยอดเงินที่ต้องชำระจะลดลง 10% อัตโนมัติ
-3. **เลือกช่องทางชำระเงิน (Page 2):**
-   * **ชำระด้วยเงินสด (Cash):** คลิกปุ่มจำลองการหยอดเหรียญ/ธนบัตร (10p, 20p, 50p, £1, £2, £5, £10) ยอดเงินที่หยอดจะสะสมจนครบ ยอดเงินทอนจะแสดงขึ้นมา
-   * **ชำระด้วยบัตร / สแกน QR (Card/Stripe):** หน้าจอจะแสดง Dynamic QR Code ให้ใช้มือถือสแกนจ่ายเงิน หรือกดปุ่ม "Simulate Bank Approval" เพื่อจำลองการอนุมัติ
-4. **รับสินค้า (Page 3):**
-   * เมื่อชำระเงินสำเร็จ ระบบจะแสดงหน้าจอ Dispense Animation เครื่องดื่มกระป๋องจะเลื่อนลงมา พร้อมเสียงสัญญาณ Chime และสรุปเงินทอนที่ได้รับ
-   * เครื่องจะรีเซ็ตกลับสู่หน้าแรกอัตโนมัติภายใน 10 วินาที
+1. **Select a Drink (Page 1):**
+   * Browse drinks on the interactive grid or filter by category buttons (Coffee, Chocolate & Tea, Cold Drinks).
+   * Enter the 2-digit slot code using the physical keyboard or on-screen numpad (e.g. `0`, `1` for Espresso; `0`, `2` for Latte).
+   * The selected product card highlights in Electric Lime Green. Click **"Proceed to Payment"**.
+2. **Scan Loyalty Card (Page 2 - Optional):**
+   * Click **"Turn On Camera"** to present a barcode to the webcam, or enter the card ID manually.
+   * If valid, a 10% discount is applied to the amount due immediately.
+3. **Complete Payment (Page 2):**
+   * **Cash:** Click the coin/banknote insertion buttons (10p to £10). The inserted balance accumulates until the target amount is satisfied. Change is calculated and shown.
+   * **Card / QR Code:** Scan the dynamic QR code using a mobile device, or click "Simulate Bank Approval" for test mode.
+4. **Collect Product & Change (Page 3):**
+   * The system presents a drop-down dispensing animation, an audio chime, and a detailed change receipt breakdown.
+   * The system automatically returns to Page 1 after 10 seconds.
 
 ---
 
-### 5.2 ขั้นตอนสำหรับผู้ดูแลระบบ (Admin & Maintenance Dashboard)
-กดปุ่ม **"⚙️ Options"** ที่มุมขวาบนของหน้าจอหลัก เพื่อเปิดแผงควบคุมระบบ (มีแถบ **Live System Summary Sidebar** แสดงสถานะสด 8 ค่าตลอดเวลา):
+### 5.2 Admin & Maintenance Dashboard
+Click the **"⚙️ Options"** button at the top-right corner of the main screen to open the Maintenance Dashboard:
 
-* **แท็บ 1: Products Catalogue (จัดการสินค้า & สต็อก)**
-  * แก้ไขชื่อสินค้า, ราคา (หน่วย pence), หมวดหมู่ และช่อง Slot
-  * ปุ่ม **"Restock All Slots (+10)"** สำหรับเติมสินค้าทุกช่องให้เต็ม 10 กระป๋อง พร้อมปรับเทียบเซนเซอร์ชั่งน้ำหนักใหม่
-* **แท็บ 2: Cash Vault (คลังเงินสดและเงินทอน)**
-  * ดูจำนวนเหรียญและธนบัตรคงเหลือแต่ละชนิดในตู้
-  * ปุ่ม **"Refill All Denominations"** สำหรับเติมเหรียญสำรองทอนเงินให้เต็ม
-* **แท็บ 3: Payment Configuration (ตั้งค่าเกตเวย์)**
-  * สวิตช์เปิด/ปิด การรับเงินสด หรือบัตรเครดิต
-  * สลับ Gateway ใช้งานจริง: **Stripe**, **PayPal REST**, **Custom REST**, หรือ **Mock Bank**
-  * ปุ่ม **"Test Connection"** สำหรับทดสอบสัญญาณเชื่อมต่อ API ของเกตเวย์
-  * ปรับเวลา Timeout ของการทำรายการ (5 ถึง 300 วินาที)
-* **แท็บ 4: Transactions History (ประวัติการขาย)**
-  * ดูรายการใบเสร็จการสั่งซื้อย้อนหลังทั้งหมด พร้อมวันเวลา สถานะ (`SUCCESS`, `CANCELLED`, `TIMEOUT`)
-* **แท็บ 5: Loyalty Members (จัดการสมาชิก)**
-  * เพิ่มสมาชิกรหัสนักศึกษาใหม่, สลับสถานะบัตร (Active / Inactive), หรือลบสมาชิก
-* **แท็บ 6: System Activity Logs (บันทึกการทำงานของระบบ)**
-  * บันทึก Audit Log เหตุการณ์เชิงเทคนิคทั้งหมดของฮาร์ดแวร์และคอนโทรลเลอร์
+* **Live System Summary Sidebar:** Displays continuous live telemetry (Controller State, Active Gateway, Timeout limit, Cash/Card enabled flags, Total stock, Vault value, and Loyalty member count). Updates dynamically on every configuration change.
+* **Tab 1: Products Catalogue:** Edit drink names, prices, categories, and slot assignments. Restock individual slots or click **"Restock All Slots (+10)"** with automated load cell recalibration.
+* **Tab 2: Cash Inventory:** Monitor coins and banknotes in the vault. Click **"Refill All Denominations"** to replenish change reserves.
+* **Tab 3: Payment Configuration:** Enable or disable cash and card methods. Switch active gateways (**Stripe**, **PayPal**, **Custom REST**, or **Mock Bank**), test API connectivity, and configure the transaction timeout (5s to 300s).
+* **Tab 4: Transactions History:** Inspect timestamped receipts and financial totals with filtering options.
+* **Tab 5: Loyalty Members:** Register new card IDs, toggle member active/inactive status, or remove records.
+* **Tab 6: System Activity Logs:** View comprehensive audit trails and diagnostic system events.
 
 ---
 
-### 5.3 ปุ่มลัดและการควบคุม (Keyboard Shortcuts & Navigation)
-ระบบรองรับการควบคุมผ่านคีย์บอร์ดและเมาส์เต็มรูปแบบ:
-* **`0` – `9`:** กรอกรหัสช่องตู้สินค้า 2 หลัก
-* **`Backspace`:** ล้างรหัสช่องที่กรอกผิด หรือย้อนกลับ
-* **`Enter` / `Return`:** ยืนยันการเลือกสินค้าเข้าสู่หน้าชำระเงิน
-* **`Escape (Esc)`:** ยกเลิกรายการสั่งซื้อและขอเงินคืนทันที
-* **`Trackpad / MouseWheel Scroll`:** เลื่อนดูเนื้อหาในหน้าชำระเงิน (Page 2) และหน้าตั้งค่า Payment Methods (Tab 3) ได้อย่างลื่นไหล
-* **`PageUp` / `PageDown`:** เลื่อนหน้าจอขึ้น/ลงอย่างรวดเร็ว
+### 5.3 Keyboard Shortcuts & Navigation Controls
+* **`0` – `9`:** Input slot digits into the selection pad.
+* **`Backspace`:** Clear the entered slot digits.
+* **`Enter` / `Return`:** Confirm slot selection and proceed to payment.
+* **`Escape (Esc)`:** Cancel the transaction and issue an immediate refund.
+* **`MouseWheel / Trackpad Vertical Scrolling`:** Smooth scrolling across Tab 3 (Payment Methods) and Page 2 (Customer Payment).
+* **`PageUp` / `PageDown`:** Rapid page jump scrolling in dialogue canvases.
 
 ---
 
-## 🎨 6. ธีมสีและการออกแบบ (UI Design & Accessibility)
+## 🎨 6. UI Design & Accessibility (5-Color Theme)
 
-ระบบเลือกใช้ชุดสีตามมาตรฐาน Contrast สูงระดับสากล จำนวน 5 สีหลัก:
+The user interface adheres to a strict 5-color palette providing high contrast and visual clarity:
 
-| รหัสสี (Hex Code) | ชื่อสี (Color Name) | ตัวอย่างสี | วัตถุประสงค์การใช้งานใน UI |
+| Hex Code | Color Name | Swatch | Functional Role in Interface |
 | :---: | :--- | :---: | :--- |
-| **`#3A0C51`** | **Deep Aubergine Purple** | 🟣 | สีพื้นหลังหลักของตู้, ขอบหน้าต่าง, ส่วนหัว (Header) และการ์ดสินค้า |
-| **`#BAEF2D`** | **Electric Lime Green** | 🟢 | สีปุ่ม Call-to-Action หลัก, ป้ายราคา, การ์ดที่ถูกเลือก, สถานะสำเร็จ |
-| **`#FFFFFF`** | **Pure White** | ⚪ | ข้อความหัวข้อหลัก, พื้นหลัง Modal, คอนทราสต์สูงสำหรับอ่านง่าย |
-| **`#D883FF`** | **Bright Lavender Lilac** | 🟪 | เส้นแบ่งส่วนประกอบ, สีข้อความรอง, แถบสถานะย่อย |
-| **`#12372E`** | **Deep Forest Green** | 🌲 | พื้นหลังหน้าจอดิจิทัล (Terminal Display) และปุ่มกดตัวเลข Numpad |
+| **`#3A0C51`** | **Deep Aubergine Purple** | 🟣 | Primary window canvas, top header, bottom footer, and product card bases. |
+| **`#BAEF2D`** | **Electric Lime Green** | 🟢 | Primary Call-to-Action (CTA) buttons, selected slot highlights, price badges. |
+| **`#FFFFFF`** | **Pure White** | ⚪ | Primary typography, modal dialog surfaces, high-contrast readable text. |
+| **`#D883FF`** | **Bright Lavender Lilac** | 🟪 | Secondary accents, status subtitles, tab active highlights, dividers. |
+| **`#12372E`** | **Deep Forest Green** | 🌲 | Digital terminal displays, numpad button backgrounds, sensory telemetry cards. |
 
 ---
 
-## 📁 7. โครงสร้างโปรเจกต์ & ฐานข้อมูล JSON (Project Structure)
+## 📁 7. Project Structure & JSON Databases
 
 ```text
 VendingMachine/
-├── main.py                     # Entry point หลักของระบบ (มีระบบตรวจสอบ dependency อัตโนมัติ)
-├── requirements.txt            # รายการไลบรารีภายนอกที่ต้องติดตั้ง
-├── README.md                   # เอกสารคู่มือระบบฉบับสมบูรณ์
+├── main.py                     # Primary Application Entry Point (with dependency verification)
+├── requirements.txt            # Python Package Dependencies
+├── README.md                   # Complete System Documentation
 │
-├── src/                        # ซอร์สโค้ดหลักของโปรแกรม
-│   ├── controllers/            # [Controller Layer] State Machine & จัดการการไหลของข้อมูล
+├── src/                        # Core Application Source Tree
+│   ├── controllers/            # [Controller Layer] State Machine & Coordination
 │   │   ├── __init__.py
-│   │   └── controller.py       # VendingController & ตัวเชื่อมต่อฐานข้อมูล JSON
+│   │   └── controller.py       # VendingController & JSON Database I/O
 │   │
-│   ├── models/                 # [Domain Layer] Business Logic & ฮาร์ดแวร์จำลอง
+│   ├── models/                 # [Domain Layer] Business Logic & Hardware Entities
 │   │   ├── __init__.py
 │   │   ├── inventory.py        # Drink, DrinkDispenser, StockSensor, LoyaltyAccount, LoyaltyScanner
 │   │   ├── payment.py          # PaymentModule, CashReceiver, CashValidator, ChangeDispenser, CardReader
 │   │   └── bank.py             # BankService Interface, MockBankService
 │   │
-│   ├── views/                  # [Presentation Layer] User Interface & กล้องสแกน
+│   ├── views/                  # [Presentation Layer] User Interface & Hardware Views
 │   │   ├── __init__.py
-│   │   └── customer_ui.py      # Tkinter GUI (Page 1-4, Numpad, Options Dashboard)
+│   │   └── customer_ui.py      # Tkinter GUI (Pages 1-4, Numpad, Admin Options Panel)
 │   │
-│   └── utils/                  # [Cross-Cutting Layer] ยูทิลิตี้เสริม
+│   └── utils/                  # [Cross-Cutting Layer] Shared Utilities
 │       ├── __init__.py
-│       ├── timer.py            # TransactionTimer (ระบบนับถอยหลัง & ตรวจสอบหมดเวลา)
-│       └── logger.py           # Logger & TransactionRecord (บันทึกประวัติการขาย)
+│       ├── timer.py            # TransactionTimer (Countdown & Timeout Engine)
+│       └── logger.py           # Logger & TransactionRecord (Audit Trail Engine)
 │
-├── data/                       # [Persistence Layer] ฐานข้อมูลไฟล์ JSON
-│   ├── activity_log.json       # บันทึกประวัติเหตุการณ์ของระบบ (Audit Trail)
-│   ├── cash_inventory.json     # สต็อกเหรียญและธนบัตรคงเหลือในตู้
-│   ├── members.json            # รายชื่อสมาชิกรหัสนักศึกษา/อาจารย์และสถานะบัตร
-│   ├── payment_config.json     # ค่าคอนฟิกเกตเวย์ชำระเงิน และสวิตช์เปิด/ปิด
-│   ├── products.json           # แคตตาล็อกเครื่องดื่ม ราคา สต็อก และน้ำหนัก
-│   └── transactions.json       # ประวัติใบเสร็จการขายทั้งหมด
+├── data/                       # [Persistence Layer] JSON Databases
+│   ├── activity_log.json       # System Event & Hardware Diagnostic Logs
+│   ├── cash_inventory.json     # Coin & Banknote Quantities & Capacities
+│   ├── members.json            # Loyalty Member Accounts & Active Statuses
+│   ├── payment_config.json     # Gateway Configurations & Payment Method Toggles
+│   ├── products.json           # Product Catalogue, Pricing, Weight & Dimensions
+│   └── transactions.json       # Order & Transaction Audit Receipts
 │
-└── assets/                     # [Static Assets] รูปภาพสินค้าความละเอียดสูงและโลโก้
-    ├── edge_hill_logo.png      # ตราสัญลักษณ์มหาวิทยาลัย Edge Hill
-    └── *.jpg / *.png / *.avif  # รูปภาพเครื่องดื่มประจำตู้
+└── assets/                     # [Static Assets] High-Resolution Product Photos & Logos
+    ├── edge_hill_logo.png      # Official Edge Hill University Crest
+    └── *.jpg / *.png / *.avif  # Beverage Artwork Assets
 ```
 
 ---
 
-## 📄 8. เอกสารประกอบระบบ (Associated Documentation)
+## 📄 8. Associated Documentation
 
-เอกสารการวิเคราะห์และออกแบบระบบเชิงวิศวกรรมซอฟต์แวร์ (OOAD) เพิ่มเติม:
-* **UML Diagrams:** [uml-diagrams.md](file:///Users/chatchawanjiamprasut/.gemini/antigravity/brain/13fa5075-f274-4566-ad65-387b625d3b6f/uml-diagrams.md) — แผนภาพ Class Diagram ฉบับเต็ม, Sequence Diagrams 2 รูปแบบ, State Machine และ Package Diagram
-* **System Flowcharts:** [system-flowcharts.md](file:///Users/chatchawanjiamprasut/.gemini/antigravity/brain/13fa5075-f274-4566-ad65-387b625d3b6f/system-flowcharts.md) — แผนภาพการไหลของระบบ 4 กระบวนการหลัก
-* **Software Test Plan:** [Software_Test_Plan_Smart_Vending_Machine.docx](file:///Users/chatchawanjiamprasut/Desktop/Year%203/Software%20Engineering/CW1_Group_Assignment/VendingMachine/Software_Test_Plan_Smart_Vending_Machine.docx) — เอกสารแผนการทดสอบระบบมาตรฐาน IEEE 829 ในรูปแบบไฟล์ Microsoft Word
+Complete Software Engineering (OOAD) documentation suite for this system:
+* **UML Design Specifications:** [uml-diagrams.md](file:///Users/chatchawanjiamprasut/.gemini/antigravity/brain/13fa5075-f274-4566-ad65-387b625d3b6f/uml-diagrams.md) — Comprehensive UML Class Diagram, 2 Sequence Diagrams, State Machine Statechart, and Package Architecture.
+* **System Process Flowcharts:** [system-flowcharts.md](file:///Users/chatchawanjiamprasut/.gemini/antigravity/brain/13fa5075-f274-4566-ad65-387b625d3b6f/system-flowcharts.md) — 4 operational flowcharts (Customer Journey, Cash Validation & Greedy Change, Stripe QR Lifecycle, and Maintenance Dashboard Workflow).
+* **Software Test Plan (IEEE 829 Standard):** [Software_Test_Plan_Smart_Vending_Machine.docx](file:///Users/chatchawanjiamprasut/Desktop/Year%203/Software%20Engineering/CW1_Group_Assignment/VendingMachine/Software_Test_Plan_Smart_Vending_Machine.docx) — Formal Word document covering 7 test suites across 40+ test cases.
 
 ---
 
-## 👥 9. ผู้จัดทำ (Project Credits & Team)
+## 👥 9. Project Credits
 * **Institution:** Edge Hill University — Department of Computer Science
 * **Course:** Software Engineering (Year 3) — Group Assignment (CW1)
 * **Academic Year:** 2026
