@@ -15,9 +15,6 @@ import sys
 import time
 import json
 import base64
-import urllib.request
-import urllib.parse
-import urllib.error
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Any, Dict, List, Optional, Tuple
@@ -110,7 +107,6 @@ def generate_stripe_qr_image(url: str, size: int = 300) -> Optional[Any]:
 
 # System Model Imports
 import threading
-import webbrowser
 
 # Ensure project root is in sys.path so 'src' package imports resolve anywhere
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -119,9 +115,6 @@ if _PROJECT_ROOT not in sys.path:
 
 from src.controllers.controller import (
     VendingController,
-    MachineState,
-    load_products,
-    save_products,
     load_members,
     save_members,
     load_cash_inventory,
@@ -133,26 +126,17 @@ from src.controllers.controller import (
     log_activity,
     DATA_DIR,
     PRODUCTS_FILE,
-    CASH_FILE,
-    PAYMENT_CONFIG_FILE,
-    TRANSACTIONS_FILE,
-    MEMBERS_FILE,
 )
 from src.models.inventory import Drink, DrinkDispenser, LoyaltyScanner, LoyaltyAccount, StockSensor
 from src.models.payment import (
     PaymentModule,
     CashReceiver,
     CardReader,
-    PaymentResult,
     CashReceiverState,
-    StripeBankService,
-    PayPalBankService,
-    CustomRestBankService,
     create_bank_service,
-    DEFAULT_STRIPE_PUBLISHABLE_KEY,
 )
 from src.models.bank import MockBankService
-from src.utils.logger import Logger, TransactionRecord
+from src.utils.logger import Logger
 from src.utils.timer import TransactionTimer
 
 
@@ -172,13 +156,6 @@ BG_CARD        = CLR_DEEP_PURPLE  # Product cards & right panel background (#3A0
 BG_SCREEN      = CLR_DARK_GREEN   # Digital display screen background (#12372E)
 BTN_BG         = CLR_LIME         # Buttons background (#BAEF2D)
 BTN_FG         = CLR_DEEP_PURPLE  # Buttons text color (#3A0C51)
-ACCENT_PRIMARY = CLR_LIME         # Primary highlight / CTA (#BAEF2D)
-ACCENT_SECOND  = CLR_LILAC        # Secondary highlight / accent (#D883FF)
-TEXT_PRIMARY   = CLR_WHITE        # Main title & body text (#FFFFFF)
-TEXT_ACCENT    = CLR_LIME         # Price & badge text (#BAEF2D)
-TEXT_MUTED     = CLR_LILAC        # Subtitle & secondary text (#D883FF)
-BTN_KEYPAD_BG  = CLR_DARK_GREEN   # Numpad button background (#12372E)
-BTN_KEYPAD_FG  = CLR_WHITE        # Numpad button text (#FFFFFF)
 
 # Assets Directory Path
 def _resolve_assets_dir() -> str:
@@ -722,10 +699,6 @@ class CustomerVendingApp:
         """
         self.catalogue = load_catalogue_data()
         self.slot_map = {item["slot_num"]: item for item in self.catalogue}
-
-    def _sync_products_from_file(self, animate: bool = False) -> None:
-        """Alias for sync_products_from_json for backward compatibility."""
-        self.sync_products_from_json(animate=animate)
 
         # Synchronize dispenser slots with catalogue
         if hasattr(self, "dispenser"):
