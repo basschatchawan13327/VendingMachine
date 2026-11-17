@@ -5226,7 +5226,7 @@ class CustomerVendingApp:
         tk.Label(
             cash_box,
             text="💵 Press 1 to pay with cash",
-            font=("Helvetica", 16, "bold"),
+            font=("Helvetica", 18, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
         ).pack(anchor="center", pady=(0, 10))
@@ -5299,25 +5299,45 @@ class CustomerVendingApp:
         tk.Label(
             card_box,
             text="Press 2 to pay with credit/debit card",
-            font=("Helvetica", 16, "bold"),
+            font=("Helvetica", 18, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
-        ).pack(anchor="center", pady=(0, 12))
+        ).pack(anchor="center", pady=(0, 10))
 
-        self.card_btn = tk.Button(
-            card_box,
-            text="[ 2 ] 💳 PAY WITH CARD / QR",
-            font=("Helvetica", 17, "bold"),
-            bg=BTN_BG,
-            fg=BTN_FG,
-            activebackground=CLR_WHITE,
-            activeforeground=BTN_FG,
-            relief=tk.FLAT,
-            pady=16,
-            cursor="hand2",
-            command=self._on_choose_card,
-        )
-        self.card_btn.pack(fill=tk.X, pady=(0, 16))
+        # Load and render credit-card-payment image for card button
+        self._card_btn_image = None
+        card_img_path = os.path.join(ASSETS_DIR, "credit-card-payment.webp")
+        if not os.path.exists(card_img_path):
+            card_img_path = os.path.join(ASSETS_DIR, "credit-card-payment.png")
+        if not os.path.exists(card_img_path):
+            card_img_path = os.path.join(ASSETS_DIR, "credit-card-payment.jpg")
+
+        if os.path.exists(card_img_path) and HAS_PIL and Image is not None and ImageTk is not None:
+            try:
+                raw_card = Image.open(card_img_path).convert("RGB")
+                card_resized = raw_card.resize((360, 90), Image.Resampling.LANCZOS)
+                self._card_btn_image = ImageTk.PhotoImage(card_resized)
+            except Exception:
+                self._card_btn_image = None
+
+        card_btn_kwargs = {
+            "text": "💳 PAY WITH CARD / QR",
+            "font": ("Helvetica", 16, "bold"),
+            "bg": BTN_BG,
+            "fg": BTN_FG,
+            "activebackground": CLR_WHITE,
+            "activeforeground": BTN_FG,
+            "relief": tk.FLAT,
+            "pady": 10,
+            "cursor": "hand2",
+            "command": self._on_choose_card,
+        }
+        if self._card_btn_image is not None:
+            card_btn_kwargs["image"] = self._card_btn_image
+            card_btn_kwargs["compound"] = tk.TOP
+
+        self.card_btn = tk.Button(card_box, **card_btn_kwargs)
+        self.card_btn.pack(fill=tk.X, pady=(0, 14))
         self._attach_button_animation(self.card_btn)
 
         card_info = tk.Frame(card_box, bg=BG_SCREEN)
@@ -5325,8 +5345,8 @@ class CustomerVendingApp:
 
         tk.Label(
             card_info,
-            text="• Scan QR Code with smartphone camera\n• Visa, Mastercard, American Express\n• Apple Pay & Google Pay supported\n• Instant secure online transaction",
-            font=("Helvetica", 13),
+            text="• Scan QR Code with smartphone camera\n• Visa, Mastercard, Apple Pay & Google Pay",
+            font=("Helvetica", 14),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
             justify=tk.LEFT,
@@ -5437,7 +5457,7 @@ class CustomerVendingApp:
             cash_img = getattr(self, "_cash_btn_image", None)
             if getattr(self, "cash_enabled", True):
                 cfg = {
-                    "text": "[ 1 ] 💵 PAY WITH CASH",
+                    "text": "💵 PAY WITH CASH",
                     "state": tk.NORMAL,
                     "bg": BTN_BG,
                     "fg": BTN_FG,
@@ -5461,24 +5481,33 @@ class CustomerVendingApp:
                 self.cash_btn.config(**cfg)
 
         if hasattr(self, "card_btn") and self.card_btn.winfo_exists():
+            card_img = getattr(self, "_card_btn_image", None)
             if getattr(self, "card_enabled", True):
                 gw = getattr(self, "active_gateway_name", "stripe").upper()
                 gw_lbl = "CARD / QR" if gw == "STRIPE" else f"CARD / {gw}"
-                self.card_btn.config(
-                    text=f"[ 2 ] 💳 PAY WITH {gw_lbl}",
-                    state=tk.NORMAL,
-                    bg=BTN_BG,
-                    fg=BTN_FG,
-                    cursor="hand2",
-                )
+                cfg = {
+                    "text": f"💳 PAY WITH {gw_lbl}",
+                    "state": tk.NORMAL,
+                    "bg": BTN_BG,
+                    "fg": BTN_FG,
+                    "cursor": "hand2",
+                }
+                if card_img is not None:
+                    cfg["image"] = card_img
+                    cfg["compound"] = tk.TOP
+                self.card_btn.config(**cfg)
             else:
-                self.card_btn.config(
-                    text="[ 2 ] 💳 CARD / QR (UNAVAILABLE)",
-                    state=tk.DISABLED,
-                    bg="#444444",
-                    fg="#888888",
-                    cursor="arrow",
-                )
+                cfg = {
+                    "text": "💳 CARD / QR (UNAVAILABLE)",
+                    "state": tk.DISABLED,
+                    "bg": "#444444",
+                    "fg": "#888888",
+                    "cursor": "arrow",
+                }
+                if card_img is not None:
+                    cfg["image"] = card_img
+                    cfg["compound"] = tk.TOP
+                self.card_btn.config(**cfg)
 
     def _on_cancel_payment(self) -> None:
         """Cancels payment and slides back to catalogue with reverse motion."""
