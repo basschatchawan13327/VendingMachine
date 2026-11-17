@@ -5174,7 +5174,7 @@ class CustomerVendingApp:
             highlightthickness=2,
             highlightbackground=CLR_LIME,
         )
-        pay_card.pack(fill=tk.BOTH, expand=True)
+        pay_card.pack(fill=tk.X)
 
         pay_hdr = tk.Frame(pay_card, bg=BG_CARD)
         pay_hdr.pack(fill=tk.X, pady=(0, 6))
@@ -5208,10 +5208,9 @@ class CustomerVendingApp:
 
         # Side-by-side Payment Choice Cards
         btn_container = tk.Frame(pay_card, bg=BG_CARD)
-        btn_container.pack(fill=tk.BOTH, expand=True)
+        btn_container.pack(fill=tk.X)
         btn_container.columnconfigure(0, weight=1, uniform="pay")
         btn_container.columnconfigure(1, weight=1, uniform="pay")
-        btn_container.rowconfigure(0, weight=1)
 
         # 1. Cash Payment Card (Column 0)
         cash_box = tk.Frame(
@@ -5284,7 +5283,7 @@ class CustomerVendingApp:
         tk.Label(
             cash_info,
             text="• Accepts Coins: £2, £1, 50p, 20p, 10p\n• Accepts Banknotes: £5, £10, £20",
-            font=("Helvetica", 14),
+            font=("Helvetica", 16),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
             justify=tk.LEFT,
@@ -5355,7 +5354,7 @@ class CustomerVendingApp:
         tk.Label(
             card_info,
             text="• Scan QR Code with smartphone camera\n• Visa, Mastercard, Apple Pay & Google Pay",
-            font=("Helvetica", 14),
+            font=("Helvetica", 16),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
             justify=tk.LEFT,
