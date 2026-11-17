@@ -775,7 +775,7 @@ class CustomerVendingApp:
         if hasattr(self, "instr_step1_lbl") and self.instr_step1_lbl.winfo_exists():
             max_s = len(self.catalogue) if self.catalogue else 4
             self.instr_step1_lbl.config(
-                text=f"Type 1-digit slot (1-{max_s}) on your keyboard to preview beverage & stock."
+                text=f"Type slot (1-{max_s}) on keyboard to select drink."
             )
 
         # Reactive update for options dialog live summary if open
@@ -1476,39 +1476,33 @@ class CustomerVendingApp:
             parent,
             bg=BG_SCREEN,
             padx=12,
-            pady=10,
+            pady=8,
             relief=tk.RIDGE,
             bd=1,
             highlightthickness=1,
             highlightbackground=CLR_LILAC,
         )
-        self.instruction_frame.pack(fill=tk.BOTH, expand=True, pady=(10, 0))
-
-        # Instructions Header
-        instr_hdr = tk.Frame(self.instruction_frame, bg=BG_SCREEN)
-        instr_hdr.pack(fill=tk.X, pady=(0, 6))
+        self.instruction_frame.pack(fill=tk.X, pady=(10, 0))
 
         tk.Label(
-            instr_hdr,
-            text="📋 HOW TO OPERATE THIS KIOSK",
+            self.instruction_frame,
+            text="💡 HOW TO ORDER",
             font=("Helvetica", 10, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
-        ).pack(side=tk.LEFT)
+        ).pack(anchor="w", pady=(0, 6))
 
         max_slot = len(self.catalogue) if getattr(self, "catalogue", None) else 4
         steps = [
-            ("1", "Select Drink", f"Type 1-digit slot (1-{max_slot}) on your keyboard to preview beverage & stock.", True),
-            ("2", "Confirm Order", "Press [Enter] key or click 'CONFIRM SELECTION' to proceed to checkout.", False),
-            ("3", "Reset / Change", "Press [Esc] key or click 'CLEAR SELECTION' to reset your slot choice.", False),
-            ("4", "Admin / Options", "Press [O] key or click 'Option' at bottom-left for maintenance & stock.", False),
+            ("1", f"Type slot (1-{max_slot}) on keyboard to select drink.", True),
+            ("2", "Press [Enter] to confirm and proceed to payment.", False),
+            ("3", "Press [Esc] to clear and re-enter selection.", False),
         ]
 
-        for num, title, detail, is_step1 in steps:
+        for num, text, is_step1 in steps:
             step_row = tk.Frame(self.instruction_frame, bg=BG_SCREEN)
-            step_row.pack(fill=tk.X, pady=(0, 5))
+            step_row.pack(fill=tk.X, pady=2)
 
-            # Number badge
             badge = tk.Label(
                 step_row,
                 text=num,
@@ -1519,33 +1513,21 @@ class CustomerVendingApp:
                 padx=1,
                 pady=1,
             )
-            badge.pack(side=tk.LEFT, anchor="n", padx=(0, 8), pady=(1, 0))
+            badge.pack(side=tk.LEFT, anchor="center", padx=(0, 8))
 
-            text_box = tk.Frame(step_row, bg=BG_SCREEN)
-            text_box.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
-            tk.Label(
-                text_box,
-                text=title,
-                font=("Helvetica", 9, "bold"),
+            lbl = tk.Label(
+                step_row,
+                text=text,
+                font=("Helvetica", 9),
                 fg=CLR_WHITE,
                 bg=BG_SCREEN,
                 anchor="w",
-            ).pack(fill=tk.X)
-
-            detail_lbl = tk.Label(
-                text_box,
-                text=detail,
-                font=("Helvetica", 8),
-                fg=CLR_LILAC,
-                bg=BG_SCREEN,
-                anchor="w",
                 justify=tk.LEFT,
-                wraplength=245,
+                wraplength=250,
             )
-            detail_lbl.pack(fill=tk.X)
+            lbl.pack(side=tk.LEFT, fill=tk.X, expand=True)
             if is_step1:
-                self.instr_step1_lbl = detail_lbl
+                self.instr_step1_lbl = lbl
 
     # =======================================================================
     # Keyboard Event Binding & Handlers
