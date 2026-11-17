@@ -1627,19 +1627,13 @@ class CustomerVendingApp:
 
         # Keypad Control on Page 3 (Payment Page)
         if active_page == "payment":
-            if key in ("Escape", "KP_4") or char in ("4", "c", "C"):
+            if key in ("Escape", "BackSpace", "KP_4") or char in ("4", "c", "C"):
                 if hasattr(self, "back_btn") and self.back_btn.winfo_exists():
                     self.back_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
-                    self.root.after(120, lambda: self._safe_config(self.back_btn, bg=BTN_BG, relief=tk.FLAT))
+                    self.root.after(120, lambda: self._safe_config(self.back_btn, bg="#4A0E4E", relief=tk.FLAT))
                 self.root.after(130, self._on_cancel_payment)
                 return
             elif char == "1" or key in ("KP_1", "1"):
-                if hasattr(self, "scan_loyalty_btn") and self.scan_loyalty_btn.winfo_exists():
-                    self.scan_loyalty_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
-                    self.root.after(120, lambda: self._safe_config(self.scan_loyalty_btn, bg=BTN_BG, relief=tk.FLAT))
-                self.root.after(130, lambda: self.transition_to_page("loyalty", direction="right"))
-                return
-            elif char == "2" or key in ("KP_2", "2"):
                 if not getattr(self, "cash_enabled", True):
                     return
                 if hasattr(self, "cash_btn") and self.cash_btn.winfo_exists():
@@ -1647,7 +1641,7 @@ class CustomerVendingApp:
                     self.root.after(120, lambda: self._safe_config(self.cash_btn, bg=BTN_BG, relief=tk.FLAT))
                 self.root.after(130, self._on_choose_cash)
                 return
-            elif char == "3" or key in ("KP_3", "3"):
+            elif char in ("2", "3") or key in ("KP_2", "2", "KP_3", "3"):
                 if not getattr(self, "card_enabled", True):
                     return
                 if hasattr(self, "card_btn") and self.card_btn.winfo_exists():
@@ -4913,13 +4907,21 @@ class CustomerVendingApp:
         content_split = tk.Frame(page2_inner, bg=BG_MIDDLE)
         content_split.pack(fill=tk.BOTH, expand=True, padx=20, pady=12)
 
-        # Left Column: Order Summary Card (Width: ~350px)
-        left_summary = tk.Frame(content_split, bg=BG_CARD, width=350, padx=16, pady=12)
+        # Left Column: Order Summary Card (Width: ~380px)
+        left_summary = tk.Frame(
+            content_split,
+            bg=BG_CARD,
+            width=380,
+            padx=16,
+            pady=12,
+            highlightthickness=2,
+            highlightbackground=CLR_LIME,
+        )
         left_summary.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=(0, 14))
         left_summary.pack_propagate(False)
         self._build_order_summary_panel(left_summary)
 
-        # Right Column: Loyalty Membership & Payment Method Selection
+        # Right Column: Payment Method Selection (Cash & Card)
         right_panel = tk.Frame(content_split, bg=BG_MIDDLE)
         right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self._build_payment_options_panel(right_panel)
@@ -5066,17 +5068,26 @@ class CustomerVendingApp:
         # Back to catalogue button (at the very bottom)
         self.back_btn = tk.Button(
             parent,
-            text="[ 4 ] ← Change Drink / Cancel (Esc)",
+            text="[ ❌ Cancel Order / Change Drink (Esc) ]",
             font=("Helvetica", 13, "bold"),
-            bg=BTN_BG,
-            fg=BTN_FG,
+            bg="#4A0E4E",
+            fg=CLR_WHITE,
+            activebackground=CLR_WHITE,
+            activeforeground=CLR_DEEP_PURPLE,
             relief=tk.FLAT,
             padx=12,
-            pady=7,
+            pady=9,
+            cursor="hand2",
             command=self._on_cancel_payment,
         )
         self.back_btn.pack(side=tk.BOTTOM, fill=tk.X)
-        self._attach_button_animation(self.back_btn)
+        self._attach_button_animation(
+            self.back_btn,
+            normal_bg="#4A0E4E",
+            normal_fg=CLR_WHITE,
+            hover_bg=CLR_WHITE,
+            hover_fg=CLR_DEEP_PURPLE,
+        )
 
         # Member Information Box (In bottom-left area, right above back button)
         self.member_info_box = tk.Frame(
@@ -5154,177 +5165,166 @@ class CustomerVendingApp:
         self.summary_member_card_lbl.pack(side=tk.RIGHT, fill=tk.X, expand=True)
 
     def _build_payment_options_panel(self, parent: tk.Frame) -> None:
-        """Right panel on Page 2 with Loyalty Card scan and Cash / Card payment choices."""
-        # --- Section 1: Loyalty Membership Card ---
-        loyalty_card = tk.Frame(
-            parent,
-            bg=BG_CARD,
-            padx=16,
-            pady=12,
-            highlightthickness=1,
-            highlightbackground=CLR_LIME,
-        )
-        loyalty_card.pack(fill=tk.X, pady=(0, 10))
-
-        hdr_row = tk.Frame(loyalty_card, bg=BG_CARD)
-        hdr_row.pack(fill=tk.X, pady=(0, 4))
-
-        tk.Label(
-            hdr_row,
-            text="⭐ EDGE HILL LOYALTY CLUB",
-            font=("Helvetica", 16, "bold"),
-            fg=CLR_LIME,
-            bg=BG_CARD,
-        ).pack(side=tk.LEFT)
-
-        discount_badge = tk.Label(
-            hdr_row,
-            text="10% OFF DISCOUNT",
-            font=("Helvetica", 12, "bold"),
-            fg=BTN_FG,
-            bg=BTN_BG,
-            padx=8,
-            pady=3,
-        )
-        discount_badge.pack(side=tk.RIGHT)
-
-        tk.Label(
-            loyalty_card,
-            text="Scan your Edge Hill University membership or student card to apply an instant 10% discount.",
-            font=("Helvetica", 13),
-            fg=CLR_WHITE,
-            bg=BG_CARD,
-            wraplength=480,
-            justify=tk.LEFT,
-        ).pack(anchor="w", pady=(0, 6))
-
-        # Status box
-        status_box = tk.Frame(loyalty_card, bg=BG_SCREEN, padx=10, pady=6)
-        status_box.pack(fill=tk.X, pady=(0, 8))
-
-        self.loyalty_status_lbl = tk.Label(
-            status_box,
-            text="💳 Status: No Membership Card Scanned",
-            font=("Helvetica", 13, "bold"),
-            fg=CLR_LILAC,
-            bg=BG_SCREEN,
-        )
-        self.loyalty_status_lbl.pack(anchor="w")
-
-        # Scan / Change button
-        self.scan_loyalty_btn = tk.Button(
-            loyalty_card,
-            text="[ 1 ] 📷 Scan / Change Loyalty Card (-10% Off)",
-            font=("Helvetica", 13, "bold"),
-            bg=BTN_BG,
-            fg=BTN_FG,
-            relief=tk.FLAT,
-            padx=14,
-            pady=8,
-            command=lambda: self.transition_to_page("loyalty", direction="right"),
-        )
-        self.scan_loyalty_btn.pack(fill=tk.X)
-        self._attach_button_animation(self.scan_loyalty_btn)
-
-        # --- Section 2: Choose Payment Method ---
+        """Right panel on Page 3 with Cash and Credit Card / QR payment choices."""
         pay_card = tk.Frame(
             parent,
             bg=BG_CARD,
-            padx=16,
-            pady=12,
-            highlightthickness=1,
-            highlightbackground=CLR_WHITE,
+            padx=20,
+            pady=18,
+            highlightthickness=2,
+            highlightbackground=CLR_LIME,
         )
         pay_card.pack(fill=tk.BOTH, expand=True)
 
         pay_hdr = tk.Frame(pay_card, bg=BG_CARD)
-        pay_hdr.pack(fill=tk.X, pady=(0, 4))
+        pay_hdr.pack(fill=tk.X, pady=(0, 6))
 
         tk.Label(
             pay_hdr,
             text="💳 SELECT PAYMENT METHOD",
-            font=("Helvetica", 16, "bold"),
+            font=("Helvetica", 18, "bold"),
             fg=CLR_LIME,
             bg=BG_CARD,
         ).pack(side=tk.LEFT)
 
+        channel_badge = tk.Label(
+            pay_hdr,
+            text="INSTANT CHECKOUT",
+            font=("Helvetica", 11, "bold"),
+            fg=BTN_FG,
+            bg=BTN_BG,
+            padx=10,
+            pady=3,
+        )
+        channel_badge.pack(side=tk.RIGHT)
+
         tk.Label(
             pay_card,
-            text="Choose your preferred payment method below to complete your purchase:",
-            font=("Helvetica", 13),
+            text="Choose your preferred payment method below to complete your order:",
+            font=("Helvetica", 14),
             fg=CLR_WHITE,
             bg=BG_CARD,
-        ).pack(anchor="w", pady=(0, 8))
+        ).pack(anchor="w", pady=(0, 16))
 
-        # Side-by-side Buttons Container (Responsive Grid)
+        # Side-by-side Payment Choice Cards
         btn_container = tk.Frame(pay_card, bg=BG_CARD)
         btn_container.pack(fill=tk.BOTH, expand=True)
         btn_container.columnconfigure(0, weight=1, uniform="pay")
         btn_container.columnconfigure(1, weight=1, uniform="pay")
 
-        # 1. Cash Button Box (Column 0)
-        cash_box = tk.Frame(btn_container, bg=BG_CARD, padx=5)
-        cash_box.grid(row=0, column=0, sticky="nsew")
+        # 1. Cash Payment Card (Column 0)
+        cash_box = tk.Frame(
+            btn_container,
+            bg=BG_SCREEN,
+            padx=18,
+            pady=20,
+            highlightthickness=1,
+            highlightbackground=CLR_LILAC,
+        )
+        cash_box.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+
+        tk.Label(
+            cash_box,
+            text="💵 CASH PAYMENT",
+            font=("Helvetica", 16, "bold"),
+            fg=CLR_LIME,
+            bg=BG_SCREEN,
+        ).pack(anchor="center", pady=(0, 12))
 
         self.cash_btn = tk.Button(
             cash_box,
-            text="[ 2 ] 💵 PAY WITH CASH",
-            font=("Helvetica", 16, "bold"),
+            text="[ 1 ] 💵 PAY WITH CASH",
+            font=("Helvetica", 17, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
+            activebackground=CLR_WHITE,
+            activeforeground=BTN_FG,
             relief=tk.FLAT,
-            pady=12,
+            pady=16,
+            cursor="hand2",
             command=self._on_choose_cash,
         )
-        self.cash_btn.pack(fill=tk.X)
+        self.cash_btn.pack(fill=tk.X, pady=(0, 16))
         self._attach_button_animation(self.cash_btn)
 
-        tk.Label(
-            cash_box,
-            text="Accepts £2, £1, 50p, 20p, 10p & notes\nAutomatic change return",
-            font=("Helvetica", 12),
-            fg=CLR_LILAC,
-            bg=BG_CARD,
-            justify=tk.CENTER,
-        ).pack(pady=(4, 0))
+        cash_info = tk.Frame(cash_box, bg=BG_SCREEN)
+        cash_info.pack(fill=tk.X)
 
-        # 2. Card Button Box (Column 1)
-        card_box = tk.Frame(btn_container, bg=BG_CARD, padx=5)
-        card_box.grid(row=0, column=1, sticky="nsew")
+        tk.Label(
+            cash_info,
+            text="• Accepts Coins: £2, £1, 50p, 20p, 10p\n• Accepts Banknotes: £5, £10, £20\n• Automatic coin change return\n• Real-time payment counter",
+            font=("Helvetica", 13),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+            justify=tk.LEFT,
+        ).pack(anchor="w", padx=8)
+
+        # 2. Card / Credit Card Payment Card (Column 1)
+        card_box = tk.Frame(
+            btn_container,
+            bg=BG_SCREEN,
+            padx=18,
+            pady=20,
+            highlightthickness=1,
+            highlightbackground=CLR_LILAC,
+        )
+        card_box.grid(row=0, column=1, sticky="nsew", padx=(12, 0))
+
+        tk.Label(
+            card_box,
+            text="💳 CREDIT CARD / DIGITAL",
+            font=("Helvetica", 16, "bold"),
+            fg=CLR_LIME,
+            bg=BG_SCREEN,
+        ).pack(anchor="center", pady=(0, 12))
 
         self.card_btn = tk.Button(
             card_box,
-            text="[ 3 ] 💳 PAY WITH CARD / QR",
-            font=("Helvetica", 16, "bold"),
+            text="[ 2 ] 💳 PAY WITH CARD / QR",
+            font=("Helvetica", 17, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
+            activebackground=CLR_WHITE,
+            activeforeground=BTN_FG,
             relief=tk.FLAT,
-            pady=12,
+            pady=16,
+            cursor="hand2",
             command=self._on_choose_card,
         )
-        self.card_btn.pack(fill=tk.X)
+        self.card_btn.pack(fill=tk.X, pady=(0, 16))
         self._attach_button_animation(self.card_btn)
 
+        card_info = tk.Frame(card_box, bg=BG_SCREEN)
+        card_info.pack(fill=tk.X)
+
         tk.Label(
-            card_box,
-            text="Scan QR Code with phone to checkout\nApple Pay, Google Pay & Cards supported",
-            font=("Helvetica", 12),
-            fg=CLR_LILAC,
-            bg=BG_CARD,
-            justify=tk.CENTER,
-        ).pack(pady=(4, 0))
+            card_info,
+            text="• Scan QR Code with smartphone camera\n• Visa, Mastercard, American Express\n• Apple Pay & Google Pay supported\n• Instant secure online transaction",
+            font=("Helvetica", 13),
+            fg=CLR_WHITE,
+            bg=BG_SCREEN,
+            justify=tk.LEFT,
+        ).pack(anchor="w", padx=8)
 
     def _build_payment_footer(self, parent: tk.Frame) -> None:
-        """Bottom status bar for Page 2 (Background: #3A0C51)."""
+        """Bottom status bar for Page 3 (Background: #3A0C51)."""
         footer = tk.Frame(parent, bg=BG_APP, height=40, padx=20)
         footer.pack(fill=tk.X, side=tk.BOTTOM)
         footer.pack_propagate(False)
 
         tk.Label(
             footer,
-            text="Press keypad 1, 2, 3 or Esc / 4 to control payment terminal",
-            font=("Helvetica", 12, "bold"),
+            text="💡 Choose Cash or Credit Card to complete your purchase.",
+            font=("Helvetica", 11),
             fg=CLR_WHITE,
+            bg=BG_APP,
+        ).pack(side=tk.LEFT, pady=10)
+
+        tk.Label(
+            footer,
+            text="Press keypad [ 1 ] for Cash    •    [ 2 ] for Card    •    [ Esc ] to Cancel",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LIME,
             bg=BG_APP,
         ).pack(side=tk.RIGHT, pady=10)
 
@@ -5383,27 +5383,20 @@ class CustomerVendingApp:
             if hasattr(self, "summary_member_card_lbl"):
                 self.summary_member_card_lbl.config(text=card_id, fg=CLR_LIME)
             if hasattr(self, "summary_member_badge"):
-                self.summary_member_badge.config(text="VERIFIED", fg=BTN_FG, bg=CLR_LIME)
+                self.summary_member_badge.config(text="VERIFIED (-10%)", fg=BTN_FG, bg=CLR_LIME)
             if hasattr(self, "member_info_box"):
                 self.member_info_box.config(highlightbackground=CLR_LIME, highlightthickness=2)
-            if hasattr(self, "scan_loyalty_btn"):
-                self.scan_loyalty_btn.config(text="[ 1 ] 🔄 Change / Re-scan Loyalty Card")
         else:
             amount_due = base_pence
-            discount_text = "£0.00 (No Card Scanned)"
+            discount_text = "£0.00 (Standard Price)"
             discount_color = CLR_LILAC
-            status_text = "💳 Status: No Membership Card Scanned (Standard Price)"
-            status_color = CLR_LILAC
-
-            if hasattr(self, "scan_loyalty_btn"):
-                self.scan_loyalty_btn.config(text="[ 1 ] 📷 Add Loyalty Card (-10% Discount)")
 
             if hasattr(self, "summary_member_name_lbl"):
-                self.summary_member_name_lbl.config(text="No Card Scanned", fg=CLR_LILAC)
+                self.summary_member_name_lbl.config(text="Standard Customer", fg=CLR_LILAC)
             if hasattr(self, "summary_member_card_lbl"):
-                self.summary_member_card_lbl.config(text="------", fg=CLR_LILAC)
+                self.summary_member_card_lbl.config(text="No Card Scanned", fg=CLR_LILAC)
             if hasattr(self, "summary_member_badge"):
-                self.summary_member_badge.config(text="NOT SCANNED", fg=CLR_LILAC, bg=BG_CARD)
+                self.summary_member_badge.config(text="STANDARD", fg=CLR_LILAC, bg=BG_CARD)
             if hasattr(self, "member_info_box"):
                 self.member_info_box.config(highlightbackground=CLR_LILAC, highlightthickness=1)
 
@@ -5413,14 +5406,11 @@ class CustomerVendingApp:
         if hasattr(self, "summary_total_lbl"):
             self.summary_total_lbl.config(text=f"£{amount_due / 100:.2f} ({amount_due}p)")
 
-        if hasattr(self, "loyalty_status_lbl"):
-            self.loyalty_status_lbl.config(text=status_text, fg=status_color)
-
-        # 5. Update Cash & Card Channel Availability on Page 2
+        # 5. Update Cash & Card Channel Availability on Page 3
         if hasattr(self, "cash_btn") and self.cash_btn.winfo_exists():
             if getattr(self, "cash_enabled", True):
                 self.cash_btn.config(
-                    text="[ 2 ] 💵 PAY WITH CASH",
+                    text="[ 1 ] 💵 PAY WITH CASH",
                     state=tk.NORMAL,
                     bg=BTN_BG,
                     fg=BTN_FG,
@@ -5428,7 +5418,7 @@ class CustomerVendingApp:
                 )
             else:
                 self.cash_btn.config(
-                    text="[ 2 ] 💵 CASH (UNAVAILABLE)",
+                    text="[ 1 ] 💵 CASH (UNAVAILABLE)",
                     state=tk.DISABLED,
                     bg="#444444",
                     fg="#888888",
@@ -5440,7 +5430,7 @@ class CustomerVendingApp:
                 gw = getattr(self, "active_gateway_name", "stripe").upper()
                 gw_lbl = "CARD / QR" if gw == "STRIPE" else f"CARD / {gw}"
                 self.card_btn.config(
-                    text=f"[ 3 ] 💳 PAY WITH {gw_lbl}",
+                    text=f"[ 2 ] 💳 PAY WITH {gw_lbl}",
                     state=tk.NORMAL,
                     bg=BTN_BG,
                     fg=BTN_FG,
@@ -5448,7 +5438,7 @@ class CustomerVendingApp:
                 )
             else:
                 self.card_btn.config(
-                    text="[ 3 ] 💳 CARD / QR (UNAVAILABLE)",
+                    text="[ 2 ] 💳 CARD / QR (UNAVAILABLE)",
                     state=tk.DISABLED,
                     bg="#444444",
                     fg="#888888",
