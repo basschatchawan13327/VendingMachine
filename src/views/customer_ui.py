@@ -6731,12 +6731,12 @@ class CustomerVendingApp:
         card = tk.Frame(
             center_wrap,
             bg=BG_CARD,
-            padx=28,
-            pady=20,
+            padx=32,
+            pady=24,
             highlightthickness=3,
             highlightbackground=CLR_LIME,
         )
-        card.pack(expand=True, fill=tk.Y, pady=4)
+        card.pack(expand=True, pady=4)
 
         # Large Green Checkmark
         tk.Label(
@@ -6760,7 +6760,7 @@ class CustomerVendingApp:
         tk.Label(
             card,
             text="Please collect your item from the slot below.",
-            font=("Helvetica", 14),
+            font=("Helvetica", 16),
             fg=CLR_WHITE,
             bg=BG_CARD,
         ).pack(anchor="center", pady=(0, 14))
