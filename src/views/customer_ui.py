@@ -1923,7 +1923,7 @@ class CustomerVendingApp:
 
         # Keypad Control on Page 2 (Loyalty Card Scan Page)
         if active_page == "loyalty":
-            if key in ("Escape", "BackSpace") or char in ("c", "C"):
+            if key in ("Escape", "BackSpace", "Delete") or char in ("c", "C"):
                 if hasattr(self, "loyalty_cancel_btn") and self.loyalty_cancel_btn.winfo_exists():
                     self.loyalty_cancel_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.loyalty_cancel_btn, bg=CLR_WHITE, relief=tk.FLAT))
@@ -1939,7 +1939,7 @@ class CustomerVendingApp:
 
         # Keypad Control on Page 3 (Payment Page)
         if active_page == "payment":
-            if key in ("Escape", "BackSpace", "KP_4") or char in ("4", "c", "C"):
+            if key in ("Escape", "BackSpace", "Delete", "KP_4") or char in ("4", "c", "C"):
                 if hasattr(self, "back_btn") and self.back_btn.winfo_exists():
                     self.back_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.back_btn, bg=CLR_WHITE, relief=tk.FLAT))
@@ -4764,7 +4764,7 @@ class CustomerVendingApp:
         # 1. Cancel Order Button (Back to Catalogue Menu)
         self.loyalty_cancel_btn = tk.Button(
             action_btn_row,
-            text="[ ❌ Cancel Order (Esc) ]",
+            text="[ ❌ Cancel Order (Backspace) ]",
             font=("Helvetica", 15, "bold"),
             bg=CLR_WHITE,
             fg="#4A0E4E",
@@ -4875,7 +4875,7 @@ class CustomerVendingApp:
 
         tk.Label(
             footer,
-            text="Press [ Enter ] to Skip / Continue    •    [ Esc ] to Cancel Order",
+            text="Press [ Enter ] to Skip / Continue    •    [ Backspace ] to Cancel Order",
             font=("Helvetica", 11, "bold"),
             fg=CLR_LIME,
             bg=BG_APP,
@@ -5383,7 +5383,7 @@ class CustomerVendingApp:
         # Back to catalogue button (at the very bottom)
         self.back_btn = tk.Button(
             parent,
-            text="[ ❌ Cancel Order / Change Drink (Esc) ]",
+            text="[ ❌ Cancel Order / Change Drink (Backspace) ]",
             font=("Helvetica", 13, "bold"),
             bg=CLR_WHITE,
             fg="#4A0E4E",
@@ -5541,7 +5541,7 @@ class CustomerVendingApp:
 
         tk.Label(
             cash_box,
-            text="💵 Press 1 to pay with cash",
+            text="Press 1 to pay with cash",
             font=("Helvetica", 18, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
@@ -5692,7 +5692,7 @@ class CustomerVendingApp:
 
         tk.Label(
             footer,
-            text="Press keypad [ 1 ] for Cash    •    [ 2 ] for Card    •    [ Esc ] to Cancel",
+            text="Press keypad [ 1 ] for Cash    •    [ 2 ] for Card    •    [ Backspace ] to Cancel",
             font=("Helvetica", 11, "bold"),
             fg=CLR_LIME,
             bg=BG_APP,
@@ -5965,7 +5965,7 @@ class CustomerVendingApp:
 
         cam_cancel_btn = tk.Button(
             cam_btn_row,
-            text="[ Esc ] Cancel",
+            text="[ Backspace ] Cancel",
             font=("Helvetica", 12, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -6420,7 +6420,7 @@ class CustomerVendingApp:
 
         cancel_btn = tk.Button(
             body,
-            text="[ Esc ] Cancel Cash Payment",
+            text="[ Backspace ] Cancel Cash Payment",
             font=("Helvetica", 11, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -6438,7 +6438,7 @@ class CustomerVendingApp:
         def on_cash_key(event: tk.Event):
             k = event.keysym
             ch = event.char
-            if k == "Escape" or ch in ("c", "C"):
+            if k in ("Escape", "BackSpace", "Delete") or ch in ("c", "C"):
                 on_cancel()
                 return "break"
             key_map = {
@@ -6626,7 +6626,7 @@ class CustomerVendingApp:
         # Pack Cancel button at bottom FIRST to guarantee it is never squeezed
         cancel_btn = tk.Button(
             body,
-            text="[ Esc ] Cancel Transaction",
+            text="[ Backspace ] Cancel Transaction",
             font=("Helvetica", 11, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -6855,7 +6855,7 @@ class CustomerVendingApp:
         def on_card_key(event: tk.Event):
             k = event.keysym
             ch = event.char
-            if k in ("Escape", "KP_4") or ch in ("c", "C", "4"):
+            if k in ("Escape", "BackSpace", "Delete", "KP_4") or ch in ("c", "C", "4"):
                 on_cancel()
             elif k in ("Return", "KP_Enter", "KP_1", "1") or ch == "1":
                 if retry_btn.winfo_ismapped() and retry_btn.cget("state") != tk.DISABLED:
