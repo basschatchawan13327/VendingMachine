@@ -1456,7 +1456,7 @@ class CustomerVendingApp:
         # Clear Button (Button color: #BAEF2D)
         self.clear_btn = tk.Button(
             parent,
-            text="🗑️ CLEAR SELECTION (Esc)",
+            text="🗑️ CLEAR SELECTION (Backspace)",
             font=("Helvetica", 12, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -1496,7 +1496,7 @@ class CustomerVendingApp:
         steps = [
             ("1", f"Type slot (1-{max_slot}) on keyboard to select drink.", True),
             ("2", "Press [Enter] to confirm and proceed to payment.", False),
-            ("3", "Press [Esc] to clear and re-enter selection.", False),
+            ("3", "Press [Backspace] to clear and re-enter selection.", False),
         ]
 
         for num, text, is_step1 in steps:
@@ -1626,9 +1626,7 @@ class CustomerVendingApp:
         elif key in ("KP_0", "KP_1", "KP_2", "KP_3", "KP_4", "KP_5", "KP_6", "KP_7", "KP_8", "KP_9"):
             digit = key.replace("KP_", "")
             self._handle_digit_input(digit)
-        elif key in ("BackSpace", "Delete"):
-            self._handle_backspace()
-        elif key == "Escape":
+        elif key in ("BackSpace", "Delete", "Escape"):
             self._handle_clear()
         elif key in ("Return", "KP_Enter"):
             # Animate confirm button on Enter keypress
@@ -1667,19 +1665,11 @@ class CustomerVendingApp:
         self._update_preview(new_val)
 
     def _handle_backspace(self) -> None:
-        """Removes the last digit on BackSpace with tactile feedback."""
-        curr = self.entered_slot.get().replace("-", "").strip()
-        if len(curr) > 1:
-            new_val = curr[:-1]
-            self.entered_slot.set(new_val)
-            self._highlight_active_card(new_val)
-            self._animate_lcd_pulse()
-            self._update_preview(new_val)
-        else:
-            self._handle_clear()
+        """Clears all entered numbers on BackSpace with tactile feedback."""
+        self._handle_clear()
 
     def _handle_clear(self) -> None:
-        """Clears slot selection back to default on Esc key with button animation."""
+        """Clears slot selection back to default on BackSpace or Esc key with button animation."""
         self._dispense_banner_active = False
         if hasattr(self, "clear_btn") and self.clear_btn.winfo_exists():
             self.clear_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
