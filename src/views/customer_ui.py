@@ -5211,6 +5211,7 @@ class CustomerVendingApp:
         btn_container.pack(fill=tk.BOTH, expand=True)
         btn_container.columnconfigure(0, weight=1, uniform="pay")
         btn_container.columnconfigure(1, weight=1, uniform="pay")
+        btn_container.rowconfigure(0, weight=1)
 
         # 1. Cash Payment Card (Column 0)
         cash_box = tk.Frame(
@@ -5254,14 +5255,14 @@ class CustomerVendingApp:
                     self._cash_btn_image = None
 
         cash_btn_kwargs = {
-            "text": "[ 1 ] 💵 PAY WITH CASH",
+            "text": "💵 PAY WITH CASH",
             "font": ("Helvetica", 16, "bold"),
             "bg": BTN_BG,
             "fg": BTN_FG,
             "activebackground": CLR_WHITE,
             "activeforeground": BTN_FG,
             "relief": tk.FLAT,
-            "pady": 10,
+            "pady": 8,
             "cursor": "hand2",
             "command": self._on_choose_cash,
         }
@@ -5269,8 +5270,12 @@ class CustomerVendingApp:
             cash_btn_kwargs["image"] = self._cash_btn_image
             cash_btn_kwargs["compound"] = tk.TOP
 
-        self.cash_btn = tk.Button(cash_box, **cash_btn_kwargs)
-        self.cash_btn.pack(fill=tk.X, pady=(0, 14))
+        cash_btn_frame = tk.Frame(cash_box, bg=BG_SCREEN, height=185)
+        cash_btn_frame.pack_propagate(False)
+        cash_btn_frame.pack(fill=tk.X, pady=(0, 14))
+
+        self.cash_btn = tk.Button(cash_btn_frame, **cash_btn_kwargs)
+        self.cash_btn.pack(fill=tk.BOTH, expand=True)
         self._attach_button_animation(self.cash_btn)
 
         cash_info = tk.Frame(cash_box, bg=BG_SCREEN)
@@ -5328,7 +5333,7 @@ class CustomerVendingApp:
             "activebackground": CLR_WHITE,
             "activeforeground": BTN_FG,
             "relief": tk.FLAT,
-            "pady": 10,
+            "pady": 8,
             "cursor": "hand2",
             "command": self._on_choose_card,
         }
@@ -5336,8 +5341,12 @@ class CustomerVendingApp:
             card_btn_kwargs["image"] = self._card_btn_image
             card_btn_kwargs["compound"] = tk.TOP
 
-        self.card_btn = tk.Button(card_box, **card_btn_kwargs)
-        self.card_btn.pack(fill=tk.X, pady=(0, 14))
+        card_btn_frame = tk.Frame(card_box, bg=BG_SCREEN, height=185)
+        card_btn_frame.pack_propagate(False)
+        card_btn_frame.pack(fill=tk.X, pady=(0, 14))
+
+        self.card_btn = tk.Button(card_btn_frame, **card_btn_kwargs)
+        self.card_btn.pack(fill=tk.BOTH, expand=True)
         self._attach_button_animation(self.card_btn)
 
         card_info = tk.Frame(card_box, bg=BG_SCREEN)
@@ -5469,7 +5478,7 @@ class CustomerVendingApp:
                 self.cash_btn.config(**cfg)
             else:
                 cfg = {
-                    "text": "[ 1 ] 💵 CASH (UNAVAILABLE)",
+                    "text": "💵 CASH (UNAVAILABLE)",
                     "state": tk.DISABLED,
                     "bg": "#444444",
                     "fg": "#888888",
