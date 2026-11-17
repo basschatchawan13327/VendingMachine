@@ -4416,27 +4416,26 @@ class CustomerVendingApp:
             bg=BG_CARD,
         ).pack(anchor="w", pady=(0, 10))
 
-        # Camera Display Frame (Sized snugly to fit camera feed without large empty space)
+        # Camera Display Frame (Sized to fit expanded 860x484 video feed cleanly)
         cam_container = tk.Frame(
             scanner_card,
-            bg=BG_CARD,
-            padx=0,
-            pady=0,
+            bg=BG_SCREEN,
+            width=864,
+            height=488,
             highlightthickness=2,
             highlightbackground=CLR_LIME,
         )
-        cam_container.pack(anchor="center", pady=(0, 10))
+        cam_container.pack_propagate(False)
+        cam_container.pack(anchor="center", pady=(0, 8))
 
         self.loyalty_video_lbl = tk.Label(
             cam_container,
             bg=BG_SCREEN,
-            text="[ 📷 CAMERA PREVIEW AREA ]\nPosition Code 128 barcode in front of camera",
-            font=("Helvetica", 13, "bold"),
+            text="[ 📷 CAMERA PREVIEW AREA ]\n\nPlease scan your loyal member card\nPosition Code 128 barcode inside the green box",
+            font=("Helvetica", 14, "bold"),
             fg=CLR_LILAC,
-            width=54,
-            height=16,
         )
-        self.loyalty_video_lbl.pack(anchor="center")
+        self.loyalty_video_lbl.pack(fill=tk.BOTH, expand=True)
 
         # Instruction & Status line directly below camera
         self.loyalty_cam_status_lbl = tk.Label(
@@ -4446,7 +4445,7 @@ class CustomerVendingApp:
             fg=CLR_LIME,
             bg=BG_CARD,
         )
-        self.loyalty_cam_status_lbl.pack(fill=tk.X, pady=(0, 14))
+        self.loyalty_cam_status_lbl.pack(fill=tk.X, pady=(0, 10))
 
         # Action Buttons Row (ONLY Cancel Order & Skip/Continue)
         action_btn_row = tk.Frame(scanner_card, bg=BG_CARD)
@@ -4647,6 +4646,18 @@ class CustomerVendingApp:
             frame = cv2.flip(frame, 1)
             h, w, _ = frame.shape
 
+            # Standardize aspect ratio to 16:9 widescreen without distortion
+            if (w / h) < 1.7:
+                crop_h = int(w * 9.0 / 16.0)
+                y_off = max(0, (h - crop_h) // 2)
+                frame = frame[y_off : y_off + crop_h, 0 : w]
+                h, w, _ = frame.shape
+            elif (w / h) > 1.85:
+                crop_w = int(h * 16.0 / 9.0)
+                x_off = max(0, (w - crop_w) // 2)
+                frame = frame[0 : h, x_off : x_off + crop_w]
+                h, w, _ = frame.shape
+
             box_w = int(w * 0.76)
             box_h = int(h * 0.38)
             x1 = (w - box_w) // 2
@@ -4661,9 +4672,9 @@ class CustomerVendingApp:
             cv2.putText(
                 frame,
                 "SCAN MEMBER CARD BARCODE HERE",
-                (x1 + 10, max(20, y1 - 8)),
+                (x1 + 10, max(24, y1 - 8)),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
+                0.6 if w >= 800 else 0.5,
                 (45, 239, 186),
                 2,
             )
@@ -4695,12 +4706,12 @@ class CustomerVendingApp:
                 self._apply_loyalty_card(detected_card_id)
                 return
 
-            render_w = 640
-            render_h = 360
+            render_w = 860
+            render_h = 484
             if HAS_PIL and Image is not None and ImageTk is not None:
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 pil_img = Image.fromarray(rgb_frame)
-                pil_img = pil_img.resize((render_w, render_h), Image.Resampling.LANCZOS)
+                pil_img = pil_img.resize((render_w, render_h), Image.Resampling.BILINEAR)
                 self._loyalty_cam_state["photo_ref"] = ImageTk.PhotoImage(image=pil_img)
             else:
                 resized = cv2.resize(frame, (render_w, render_h))
@@ -4735,6 +4746,13 @@ class CustomerVendingApp:
             except Exception:
                 pass
             self._loyalty_cam_state["cap"] = None
+        self._loyalty_cam_state["photo_ref"] = None
+
+        if hasattr(self, "loyalty_video_lbl") and self.loyalty_video_lbl.winfo_exists():
+            self.loyalty_video_lbl.config(
+                image="",
+                text="[ 📷 CAMERA PREVIEW AREA ]\n\nPlease scan your loyal member card\nPosition Code 128 barcode inside the green box",
+            )
 
     def _apply_loyalty_card(self, card_id: str) -> None:
         """Validates and applies the loyalty membership discount."""
