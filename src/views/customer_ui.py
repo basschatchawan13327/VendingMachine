@@ -17,7 +17,7 @@ import json
 import base64
 import tkinter as tk
 from tkinter import ttk, messagebox
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Safe OpenCV (cv2) import with graceful error handling
 try:
@@ -156,6 +156,260 @@ BG_CARD        = CLR_DEEP_PURPLE  # Product cards & right panel background (#3A0
 BG_SCREEN      = CLR_DARK_GREEN   # Digital display screen background (#12372E)
 BTN_BG         = CLR_LIME         # Buttons background (#BAEF2D)
 BTN_FG         = CLR_DEEP_PURPLE  # Buttons text color (#3A0C51)
+
+
+# ===========================================================================
+# Cross-Platform Custom-Styled Button (Prevents OS Native Theme Overriding)
+# ===========================================================================
+class CustomButton(tk.Label):
+    """
+    Custom-styled button widget replacing OS native button themes across the entire application.
+    Renders pure custom design colors (#BAEF2D, #3A0C51, #4A0E4E, etc.) consistently on macOS,
+    Windows, and Linux without native Aqua or system bezel overrides.
+    Maintains exact button layout, dimensions, typography, and interactive state styling.
+    """
+
+    def __init__(
+        self,
+        master: Optional[tk.Widget] = None,
+        text: str = "",
+        command: Optional[Callable[[], Any]] = None,
+        font: Optional[Any] = None,
+        bg: Optional[str] = None,
+        fg: Optional[str] = None,
+        activebackground: Optional[str] = None,
+        activeforeground: Optional[str] = None,
+        disabledforeground: str = "#888888",
+        disabledbackground: str = "#444444",
+        relief: str = tk.FLAT,
+        bd: int = 0,
+        padx: Optional[int] = None,
+        pady: Optional[int] = None,
+        cursor: str = "hand2",
+        state: str = tk.NORMAL,
+        image: Optional[Any] = None,
+        compound: Optional[str] = None,
+        anchor: str = tk.CENTER,
+        justify: str = tk.CENTER,
+        wraplength: int = 0,
+        **kwargs: Any,
+    ):
+        # Resolve background, foreground and border synonyms
+        bg = kwargs.pop("background", bg)
+        fg = kwargs.pop("foreground", fg)
+        bd = kwargs.pop("borderwidth", bd)
+        for k in ("highlightbackground", "highlightthickness"):
+            kwargs.pop(k, None)
+
+        self._command = command
+        self._state = state
+        self._cursor = cursor
+        self._normal_bg = bg if bg is not None else BTN_BG
+        self._normal_fg = fg if fg is not None else BTN_FG
+
+        if activebackground is not None:
+            self._active_bg = activebackground
+        else:
+            self._active_bg = CLR_WHITE
+
+        if activeforeground is not None:
+            self._active_fg = activeforeground
+        else:
+            self._active_fg = CLR_DEEP_PURPLE
+
+        self._press_bg = self._active_bg
+        self._disabled_bg = disabledbackground
+        self._disabled_fg = disabledforeground
+        self._is_pressed = False
+        self._is_hovered = False
+
+        init_bg = self._disabled_bg if state == tk.DISABLED else self._normal_bg
+        init_fg = self._disabled_fg if state == tk.DISABLED else self._normal_fg
+        init_cursor = "arrow" if state == tk.DISABLED else self._cursor
+
+        label_kwargs: Dict[str, Any] = {
+            "text": text,
+            "font": font,
+            "bg": init_bg,
+            "fg": init_fg,
+            "relief": relief,
+            "bd": bd,
+            "cursor": init_cursor,
+            "anchor": anchor,
+            "justify": justify,
+            "wraplength": wraplength,
+            "takefocus": 1,
+        }
+        if padx is not None:
+            label_kwargs["padx"] = padx
+        if pady is not None:
+            label_kwargs["pady"] = pady
+        if image is not None:
+            label_kwargs["image"] = image
+        if compound is not None:
+            label_kwargs["compound"] = compound
+
+        label_kwargs.update(kwargs)
+        super().__init__(master, **label_kwargs)
+
+        self.bind("<Enter>", self._on_enter, add="+")
+        self.bind("<Leave>", self._on_leave, add="+")
+        self.bind("<ButtonPress-1>", self._on_press, add="+")
+        self.bind("<ButtonRelease-1>", self._on_release, add="+")
+        self.bind("<B1-Motion>", self._on_motion, add="+")
+        self.bind("<Return>", self._on_key_activate, add="+")
+        self.bind("<space>", self._on_key_activate, add="+")
+        self.bind("<FocusIn>", self._on_focus_in, add="+")
+        self.bind("<FocusOut>", self._on_focus_out, add="+")
+
+    def set_animation_colors(
+        self,
+        normal_bg: Optional[str] = None,
+        normal_fg: Optional[str] = None,
+        hover_bg: Optional[str] = None,
+        hover_fg: Optional[str] = None,
+        press_bg: Optional[str] = None,
+    ) -> None:
+        """Sets custom interactive state colors for hover, normal, and pressed feedback."""
+        if normal_bg is not None:
+            self._normal_bg = normal_bg
+        if normal_fg is not None:
+            self._normal_fg = normal_fg
+        if hover_bg is not None:
+            self._active_bg = hover_bg
+        if hover_fg is not None:
+            self._active_fg = hover_fg
+        if press_bg is not None:
+            self._press_bg = press_bg
+        if self._state != tk.DISABLED:
+            super().config(bg=self._normal_bg, fg=self._normal_fg)
+
+    def _on_enter(self, event: Optional[tk.Event] = None) -> None:
+        if self._state != tk.DISABLED and not self._is_pressed:
+            self._is_hovered = True
+            super().config(bg=self._active_bg, fg=self._active_fg)
+
+    def _on_leave(self, event: Optional[tk.Event] = None) -> None:
+        if self._state != tk.DISABLED:
+            self._is_hovered = False
+            self._is_pressed = False
+            super().config(bg=self._normal_bg, fg=self._normal_fg, relief=tk.FLAT)
+
+    def _on_press(self, event: Optional[tk.Event] = None) -> None:
+        if self._state != tk.DISABLED:
+            self._is_pressed = True
+            try:
+                self.focus_set()
+            except Exception:
+                pass
+            super().config(bg=self._press_bg, relief=tk.SUNKEN)
+
+    def _on_motion(self, event: Optional[tk.Event] = None) -> None:
+        if self._state != tk.DISABLED and self._is_pressed and event is not None:
+            x, y = event.x, event.y
+            w, h = self.winfo_width(), self.winfo_height()
+            if 0 <= x <= w and 0 <= y <= h:
+                super().config(bg=self._press_bg, relief=tk.SUNKEN)
+            else:
+                super().config(bg=self._normal_bg, relief=tk.FLAT)
+
+    def _on_release(self, event: Optional[tk.Event] = None) -> None:
+        if self._state != tk.DISABLED and self._is_pressed:
+            self._is_pressed = False
+            if event is not None:
+                x, y = event.x, event.y
+                w, h = self.winfo_width(), self.winfo_height()
+                if 0 <= x <= w and 0 <= y <= h:
+                    super().config(bg=self._active_bg if self._is_hovered else self._normal_bg, relief=tk.FLAT)
+                    self.invoke()
+                else:
+                    super().config(bg=self._normal_bg, relief=tk.FLAT)
+            else:
+                super().config(bg=self._normal_bg, relief=tk.FLAT)
+                self.invoke()
+
+    def _on_key_activate(self, event: Optional[tk.Event] = None) -> None:
+        if self._state != tk.DISABLED:
+            super().config(bg=self._press_bg, relief=tk.SUNKEN)
+            self.after(100, self._restore_normal)
+            self.invoke()
+
+    def _restore_normal(self) -> None:
+        try:
+            if self.winfo_exists() and self._state != tk.DISABLED:
+                super().config(bg=self._normal_bg, relief=tk.FLAT)
+        except Exception:
+            pass
+
+    def _on_focus_in(self, event: Optional[tk.Event] = None) -> None:
+        if self._state != tk.DISABLED and not self._is_hovered:
+            super().config(highlightthickness=1, highlightbackground=self._active_fg)
+
+    def _on_focus_out(self, event: Optional[tk.Event] = None) -> None:
+        super().config(highlightthickness=0)
+
+    def invoke(self) -> Any:
+        if self._state != tk.DISABLED and self._command:
+            return self._command()
+        return None
+
+    def config(self, **kwargs: Any) -> Any:
+        if not kwargs:
+            return super().config()
+        if "command" in kwargs:
+            self._command = kwargs.pop("command")
+        if "bg" in kwargs or "background" in kwargs:
+            new_bg = kwargs.pop("bg", kwargs.pop("background", None))
+            if new_bg is not None:
+                self._normal_bg = new_bg
+                if self._state != tk.DISABLED:
+                    kwargs["bg"] = new_bg
+        if "fg" in kwargs or "foreground" in kwargs:
+            new_fg = kwargs.pop("fg", kwargs.pop("foreground", None))
+            if new_fg is not None:
+                self._normal_fg = new_fg
+                if self._state != tk.DISABLED:
+                    kwargs["fg"] = new_fg
+        if "activebackground" in kwargs:
+            self._active_bg = kwargs.pop("activebackground")
+            self._press_bg = self._active_bg
+        if "activeforeground" in kwargs:
+            self._active_fg = kwargs.pop("activeforeground")
+        if "state" in kwargs:
+            new_state = kwargs.pop("state")
+            self._state = new_state
+            if new_state == tk.DISABLED:
+                kwargs["bg"] = self._disabled_bg
+                kwargs["fg"] = self._disabled_fg
+                kwargs["cursor"] = "arrow"
+            else:
+                kwargs["bg"] = self._normal_bg
+                kwargs["fg"] = self._normal_fg
+                kwargs["cursor"] = self._cursor
+        for k in ("highlightbackground", "highlightthickness"):
+            if k in kwargs and self._state == tk.DISABLED:
+                kwargs.pop(k, None)
+        return super().config(**kwargs)
+
+    configure = config
+
+    def cget(self, key: str) -> Any:
+        if key == "state":
+            return self._state
+        if key == "command":
+            return self._command
+        return super().cget(key)
+
+    def __getitem__(self, key: str) -> Any:
+        return self.cget(key)
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self.config(**{key: value})
+
+
+# Replace native tk.Button with CustomButton across the entire application
+tk.Button = CustomButton
+Button = CustomButton
 
 # Assets Directory Path
 def _resolve_assets_dir() -> str:
@@ -509,6 +763,42 @@ class CustomerVendingApp:
         self.root.geometry(f"{target_w}x{target_h}+{pos_x}+{pos_y}")
         self.root.minsize(1100, 750)
         self.root.configure(bg=BG_APP)
+
+        # Configure cross-platform ttk theme and styles to remove OS native button overrides
+        self.style = ttk.Style()
+        if "clam" in self.style.theme_names():
+            self.style.theme_use("clam")
+        elif "default" in self.style.theme_names():
+            self.style.theme_use("default")
+
+        self.style.configure(
+            "TButton",
+            background=BTN_BG,
+            foreground=BTN_FG,
+            font=("Helvetica", 12, "bold"),
+            relief="flat",
+            borderwidth=0,
+            focuscolor=BTN_FG,
+        )
+        self.style.map(
+            "TButton",
+            background=[("disabled", "#444444"), ("pressed", CLR_WHITE), ("active", CLR_WHITE)],
+            foreground=[("disabled", "#888888"), ("pressed", BTN_FG), ("active", BTN_FG)],
+            relief=[("pressed", "sunken"), ("!pressed", "flat")],
+        )
+        self.style.configure(
+            "Cancel.TButton",
+            background="#4A0E4E",
+            foreground=CLR_WHITE,
+            font=("Helvetica", 12, "bold"),
+            relief="flat",
+            borderwidth=0,
+        )
+        self.style.map(
+            "Cancel.TButton",
+            background=[("disabled", "#444444"), ("pressed", CLR_WHITE), ("active", CLR_WHITE)],
+            foreground=[("disabled", "#888888"), ("pressed", CLR_DEEP_PURPLE), ("active", CLR_DEEP_PURPLE)],
+        )
 
         # Initialize Backend Components
         self._init_backend()
@@ -960,7 +1250,7 @@ class CustomerVendingApp:
 
     def _attach_button_animation(
         self,
-        btn: tk.Button,
+        btn: Any,
         normal_bg: str = BTN_BG,
         normal_fg: str = BTN_FG,
         hover_bg: str = CLR_WHITE,
@@ -968,6 +1258,16 @@ class CustomerVendingApp:
         press_bg: str = CLR_WHITE,
     ) -> None:
         """Attaches buttery-smooth hover illumination and tactile press feedback."""
+        if hasattr(btn, "set_animation_colors"):
+            btn.set_animation_colors(
+                normal_bg=normal_bg,
+                normal_fg=normal_fg,
+                hover_bg=hover_bg,
+                hover_fg=hover_fg,
+                press_bg=press_bg,
+            )
+            return
+
         def on_enter(e):
             if btn.cget("state") != tk.DISABLED:
                 btn.config(bg=hover_bg, fg=hover_fg)
