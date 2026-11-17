@@ -542,16 +542,27 @@ class CustomerVendingApp:
         self.pages: Dict[str, tk.Frame] = {}
         self._is_transitioning: bool = False
 
+        # Camera state for Page 2 Dedicated Loyalty Scanner
+        self._loyalty_cam_state: Dict[str, Any] = {
+            "cap": None,
+            "running": False,
+            "photo_ref": None,
+            "after_id": None,
+        }
+
         # Build Page 1: Product Selection Catalogue
         self._build_page1_catalogue()
 
-        # Build Page 2: Payment & Loyalty Selection
+        # Build Page 2: Dedicated Loyalty Card Scanner
+        self._build_page_loyalty()
+
+        # Build Page 3: Payment & Selection
         self._build_page2_payment()
 
-        # Build Page 3: Order Success & Dispense Confirmation
+        # Build Page 4: Order Success & Dispense Confirmation
         self._build_page3_success()
 
-        # Build Page 4: Order Cancelled & Refund Confirmation
+        # Build Page 5: Order Cancelled & Refund Confirmation
         self._build_page_cancelled()
 
         # Bind Physical Keyboard Events (No on-screen keyboard)
@@ -571,6 +582,8 @@ class CustomerVendingApp:
 
     def on_close(self) -> None:
         """Gracefully cancels recurring timers and tears down the UI."""
+        if hasattr(self, "_cleanup_loyalty_camera"):
+            self._cleanup_loyalty_camera()
         for attr in (
             "_watcher_after_id",
             "_heartbeat_after_id",
@@ -776,7 +789,7 @@ class CustomerVendingApp:
             all_s = [int(str(p.get("slot_num")).strip()) for p in self.catalogue if str(p.get("slot_num", "")).strip().isdigit()]
             max_s = max(all_s) if all_s else (len(self.catalogue) if self.catalogue else 4)
             self.instr_step1_lbl.config(
-                text=f"Type slot (1-{max_s}) on keyboard to select drink."
+                text=f"Type item number (1-{max_s}) on keyboard to select drink."
             )
 
         # Reactive update for options dialog live summary if open
@@ -801,18 +814,31 @@ class CustomerVendingApp:
             self.sync_products_from_json(animate=False)
             if hasattr(self, "_unbind_page2_mousewheel"):
                 self._unbind_page2_mousewheel()
+            if hasattr(self, "_cleanup_loyalty_camera"):
+                self._cleanup_loyalty_camera()
+        elif page_name == "loyalty":
+            self._refresh_loyalty_page()
+            self._start_loyalty_camera()
+            if hasattr(self, "_unbind_page2_mousewheel"):
+                self._unbind_page2_mousewheel()
         elif page_name == "payment":
+            if hasattr(self, "_cleanup_loyalty_camera"):
+                self._cleanup_loyalty_camera()
             self._refresh_payment_page()
             if hasattr(self, "_bind_page2_mousewheel"):
                 self._bind_page2_mousewheel()
             if hasattr(self, "_update_page2_scrollregion"):
                 self.root.after(50, self._update_page2_scrollregion)
         elif page_name == "success":
+            if hasattr(self, "_cleanup_loyalty_camera"):
+                self._cleanup_loyalty_camera()
             self._refresh_success_page()
             self._start_success_countdown()
             if hasattr(self, "_unbind_page2_mousewheel"):
                 self._unbind_page2_mousewheel()
         else:
+            if hasattr(self, "_cleanup_loyalty_camera"):
+                self._cleanup_loyalty_camera()
             if hasattr(self, "_unbind_page2_mousewheel"):
                 self._unbind_page2_mousewheel()
 
@@ -843,7 +869,9 @@ class CustomerVendingApp:
         self.target_page = target_page
 
         # Pre-render target page content before sliding
-        if target_page == "payment":
+        if target_page == "loyalty":
+            self._refresh_loyalty_page()
+        elif target_page == "payment":
             self._refresh_payment_page()
         elif target_page == "catalogue":
             self.sync_products_from_json(animate=False)
@@ -882,10 +910,16 @@ class CustomerVendingApp:
                 current_frame.place_forget()
                 self.current_page = target_page
                 self._is_transitioning = False
+                if current_frame == self.pages.get("loyalty") and target_page != "loyalty":
+                    self._cleanup_loyalty_camera()
                 if target_page == "catalogue":
                     self.root.focus_force()
                     self.root.focus_set()
                     self.root.after(60, lambda: (self.root.focus_force(), self.root.focus_set()))
+                elif target_page == "loyalty":
+                    self.root.focus_force()
+                    self.root.focus_set()
+                    self._start_loyalty_camera()
                 elif target_page == "success":
                     self.root.focus_force()
                     self.root.focus_set()
@@ -1575,7 +1609,33 @@ class CustomerVendingApp:
         # Active page resolution (if sliding back to catalogue, accept catalogue inputs immediately)
         active_page = getattr(self, "target_page", "catalogue") if getattr(self, "_is_transitioning", False) else getattr(self, "current_page", "catalogue")
 
-        # Keypad Control on Page 2 (Payment Page)
+        # Keypad Control on Page 2 (Loyalty Card Scan Page)
+        if active_page == "loyalty":
+            if key in ("Escape", "BackSpace") or char in ("c", "C"):
+                if hasattr(self, "loyalty_cancel_btn") and self.loyalty_cancel_btn.winfo_exists():
+                    self.loyalty_cancel_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    self.root.after(120, lambda: self._safe_config(self.loyalty_cancel_btn, bg="#4A0E4E", relief=tk.FLAT))
+                self.root.after(130, self._on_cancel_loyalty)
+                return
+            elif key in ("Return", "KP_Enter", "space") or char in ("s", "S"):
+                if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
+                    self.loyalty_skip_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    self.root.after(120, lambda: self._safe_config(self.loyalty_skip_btn, bg=BTN_BG, relief=tk.FLAT))
+                self.root.after(130, self._on_skip_loyalty)
+                return
+            elif char in ("1", "2", "3") or key in ("KP_1", "KP_2", "KP_3"):
+                idx = 0 if char == "1" or key in ("1", "KP_1") else (1 if char == "2" or key in ("2", "KP_2") else 2)
+                accounts = getattr(self.loyalty_scanner, "accounts", [])
+                if idx < len(accounts):
+                    self._apply_loyalty_card(accounts[idx].card_id)
+                else:
+                    fallback_cards = ["247480103B001", "247480103B002", "247340101B010"]
+                    if idx < len(fallback_cards):
+                        self._apply_loyalty_card(fallback_cards[idx])
+                return
+            return
+
+        # Keypad Control on Page 3 (Payment Page)
         if active_page == "payment":
             if key in ("Escape", "KP_4") or char in ("4", "c", "C"):
                 if hasattr(self, "back_btn") and self.back_btn.winfo_exists():
@@ -1587,7 +1647,7 @@ class CustomerVendingApp:
                 if hasattr(self, "scan_loyalty_btn") and self.scan_loyalty_btn.winfo_exists():
                     self.scan_loyalty_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.scan_loyalty_btn, bg=BTN_BG, relief=tk.FLAT))
-                self.root.after(130, self._open_loyalty_scan_dialog)
+                self.root.after(130, lambda: self.transition_to_page("loyalty", direction="right"))
                 return
             elif char == "2" or key in ("KP_2", "2"):
                 if not getattr(self, "cash_enabled", True):
@@ -1828,8 +1888,8 @@ class CustomerVendingApp:
         if hasattr(self, "loyalty_scanner"):
             self.loyalty_scanner._last_scanned = None
 
-        # Trigger smooth slide to left transition to Page 2 (old page slides left until out of screen)
-        self.transition_to_page("payment", direction="left")
+        # Trigger smooth slide to left transition to Page 2 (Dedicated Loyalty Barcode Scanner)
+        self.transition_to_page("loyalty", direction="left")
 
     def _build_footer(self, parent: tk.Frame) -> None:
         """Bottom status and instruction bar (Background: #3A0C51)."""
@@ -4305,10 +4365,758 @@ class CustomerVendingApp:
         select_tab("products")
 
     # =======================================================================
-    # Page 2: Payment Method & Loyalty Membership Selection
+    # Page 2: Dedicated Loyalty Card Scanning Screen
+    # =======================================================================
+    def _build_page_loyalty(self) -> None:
+        """Page 2: Dedicated Edge Hill Loyalty Card Barcode Scanning Screen."""
+        page = tk.Frame(self.container, bg=BG_APP)
+        self.pages["loyalty"] = page
+
+        # 1. Header (Color #3A0C51)
+        self._build_loyalty_header(page)
+
+        # 2. Footer (Color #3A0C51)
+        self._build_loyalty_footer(page)
+
+        # 3. Middle Area (Color #D883FF)
+        middle_area = tk.Frame(page, bg=BG_MIDDLE)
+        middle_area.pack(fill=tk.BOTH, expand=True)
+
+        content_split = tk.Frame(middle_area, bg=BG_MIDDLE)
+        content_split.pack(fill=tk.BOTH, expand=True, padx=20, pady=12)
+
+        # Left Column: Selected Drink & Price Details (Width: 380px)
+        left_panel = tk.Frame(content_split, bg=BG_CARD, width=380, padx=16, pady=12)
+        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=(0, 14))
+        left_panel.pack_propagate(False)
+
+        tk.Label(
+            left_panel,
+            text="🛒 SELECTED DRINK",
+            font=("Helvetica", 16, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(anchor="w", pady=(0, 4))
+
+        # Drink Artwork Canvas
+        self.loyalty_drink_canvas = tk.Canvas(
+            left_panel,
+            width=120,
+            height=72,
+            bg=CLR_WHITE,
+            highlightthickness=1,
+            highlightbackground=CLR_LILAC,
+        )
+        self.loyalty_drink_canvas.pack(pady=4)
+
+        # Drink Name Label
+        self.loyalty_drink_name_lbl = tk.Label(
+            left_panel,
+            text="Selected Drink",
+            font=("Helvetica", 16, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+        )
+        self.loyalty_drink_name_lbl.pack(fill=tk.X, pady=(2, 1))
+
+        # Drink Description Label
+        self.loyalty_drink_desc_lbl = tk.Label(
+            left_panel,
+            text="",
+            font=("Helvetica", 12),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+            wraplength=340,
+            justify=tk.CENTER,
+        )
+        self.loyalty_drink_desc_lbl.pack(fill=tk.X, pady=(0, 4))
+
+        # Thin divider
+        tk.Frame(left_panel, bg=CLR_LILAC, height=1).pack(fill=tk.X, pady=(2, 6))
+
+        # Price Breakdown Frame
+        prices_frame = tk.Frame(left_panel, bg=BG_CARD)
+        prices_frame.pack(fill=tk.X, pady=(0, 4))
+
+        row1 = tk.Frame(prices_frame, bg=BG_CARD)
+        row1.pack(fill=tk.X, pady=2)
+        tk.Label(row1, text="Regular Price:", font=("Helvetica", 12, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT)
+        self.loyalty_base_price_lbl = tk.Label(row1, text="£0.00", font=("Menlo", 13, "bold"), fg=CLR_WHITE, bg=BG_CARD)
+        self.loyalty_base_price_lbl.pack(side=tk.RIGHT)
+
+        row2 = tk.Frame(prices_frame, bg=BG_CARD)
+        row2.pack(fill=tk.X, pady=2)
+        tk.Label(row2, text="Loyalty Price (-10%):", font=("Helvetica", 12, "bold"), fg=CLR_LIME, bg=BG_CARD).pack(side=tk.LEFT)
+        self.loyalty_discount_price_lbl = tk.Label(row2, text="£0.00", font=("Menlo", 13, "bold"), fg=CLR_LIME, bg=BG_CARD)
+        self.loyalty_discount_price_lbl.pack(side=tk.RIGHT)
+
+        # Savings Badge
+        self.loyalty_save_badge = tk.Label(
+            left_panel,
+            text="💰 Save 10% with Edge Hill Loyalty Card!",
+            font=("Helvetica", 11, "bold"),
+            fg=BTN_FG,
+            bg=BTN_BG,
+            padx=8,
+            pady=4,
+        )
+        self.loyalty_save_badge.pack(fill=tk.X, pady=(4, 8))
+
+        # Member Status Card Box
+        self.loyalty_member_status_card = tk.Frame(
+            left_panel,
+            bg=BG_SCREEN,
+            padx=10,
+            pady=8,
+            highlightbackground=CLR_LILAC,
+            highlightthickness=1,
+        )
+        self.loyalty_member_status_card.pack(fill=tk.X, pady=(4, 0))
+
+        mem_hdr = tk.Frame(self.loyalty_member_status_card, bg=BG_SCREEN)
+        mem_hdr.pack(fill=tk.X, pady=(0, 4))
+
+        tk.Label(
+            mem_hdr,
+            text="👤 MEMBER PROFILE",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LIME,
+            bg=BG_SCREEN,
+        ).pack(side=tk.LEFT)
+
+        self.loyalty_member_badge = tk.Label(
+            mem_hdr,
+            text="NOT SCANNED",
+            font=("Helvetica", 9, "bold"),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+            padx=6,
+            pady=1,
+        )
+        self.loyalty_member_badge.pack(side=tk.RIGHT)
+
+        mem_name_row = tk.Frame(self.loyalty_member_status_card, bg=BG_SCREEN)
+        mem_name_row.pack(fill=tk.X, pady=2)
+        tk.Label(mem_name_row, text="Name:", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_SCREEN).pack(side=tk.LEFT)
+        self.loyalty_member_name_lbl = tk.Label(mem_name_row, text="No Card Scanned", font=("Helvetica", 11, "bold"), fg=CLR_LILAC, bg=BG_SCREEN, anchor="e")
+        self.loyalty_member_name_lbl.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+
+        mem_card_row = tk.Frame(self.loyalty_member_status_card, bg=BG_SCREEN)
+        mem_card_row.pack(fill=tk.X, pady=2)
+        tk.Label(mem_card_row, text="Card ID:", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_SCREEN).pack(side=tk.LEFT)
+        self.loyalty_member_id_lbl = tk.Label(mem_card_row, text="------", font=("Menlo", 11, "bold"), fg=CLR_LILAC, bg=BG_SCREEN, anchor="e")
+        self.loyalty_member_id_lbl.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+
+        # Bottom Tip inside Left Panel
+        tk.Label(
+            left_panel,
+            text="💡 Don't have a loyalty card?\nPress [ Skip Loyalty Card ] to continue.",
+            font=("Helvetica", 11),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+            justify=tk.CENTER,
+        ).pack(side=tk.BOTTOM, pady=(8, 0))
+
+        # Right Column: Dedicated Camera & Barcode Scanner Console
+        right_panel = tk.Frame(
+            content_split,
+            bg=BG_CARD,
+            padx=18,
+            pady=12,
+            highlightthickness=1,
+            highlightbackground=CLR_LIME,
+        )
+        right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
+        # Header Row
+        hdr_row = tk.Frame(right_panel, bg=BG_CARD)
+        hdr_row.pack(fill=tk.X, pady=(0, 4))
+
+        tk.Label(
+            hdr_row,
+            text="⭐ EDGE HILL LOYALTY CLUB",
+            font=("Helvetica", 16, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(side=tk.LEFT)
+
+        discount_badge = tk.Label(
+            hdr_row,
+            text="10% OFF DISCOUNT",
+            font=("Helvetica", 12, "bold"),
+            fg=BTN_FG,
+            bg=BTN_BG,
+            padx=10,
+            pady=3,
+        )
+        discount_badge.pack(side=tk.RIGHT)
+
+        tk.Label(
+            right_panel,
+            text="Present your Edge Hill University ID card barcode in front of the camera below:",
+            font=("Helvetica", 13),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+        ).pack(anchor="w", pady=(0, 6))
+
+        # Camera Display Frame
+        cam_container = tk.Frame(
+            right_panel,
+            bg=BG_SCREEN,
+            padx=6,
+            pady=6,
+            highlightthickness=1,
+            highlightbackground=CLR_LILAC,
+        )
+        cam_container.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+
+        self.loyalty_video_lbl = tk.Label(
+            cam_container,
+            bg=BG_SCREEN,
+            text="[ 📷 CAMERA PREVIEW AREA ]\nPosition Code 128 barcode or select sample card below",
+            font=("Helvetica", 12, "bold"),
+            fg=CLR_LILAC,
+        )
+        self.loyalty_video_lbl.pack(fill=tk.BOTH, expand=True)
+
+        self.loyalty_cam_status_lbl = tk.Label(
+            cam_container,
+            text="📷 Initializing camera scanner...",
+            font=("Helvetica", 12, "bold"),
+            fg=CLR_LIME,
+            bg=BG_SCREEN,
+        )
+        self.loyalty_cam_status_lbl.pack(fill=tk.X, pady=(4, 0))
+
+        # Quick Sample Cards & Manual Barcode Input Frame
+        quick_frame = tk.Frame(right_panel, bg=BG_CARD)
+        quick_frame.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            quick_frame,
+            text="Quick Test Sample Cards & Manual Barcode Entry:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LILAC,
+            bg=BG_CARD,
+        ).pack(anchor="w", pady=(0, 3))
+
+        # Sample Cards Row (Click to instantly scan/apply)
+        sample_btn_row = tk.Frame(quick_frame, bg=BG_CARD)
+        sample_btn_row.pack(fill=tk.X, pady=(0, 4))
+        self.loyalty_sample_btn_row = sample_btn_row
+        self._populate_loyalty_sample_buttons()
+
+        # Manual Card ID Entry Row
+        manual_row = tk.Frame(quick_frame, bg=BG_CARD)
+        manual_row.pack(fill=tk.X)
+
+        tk.Label(
+            manual_row,
+            text="Or Enter Card ID:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+        ).pack(side=tk.LEFT, padx=(0, 6))
+
+        self.loyalty_manual_entry = tk.Entry(
+            manual_row,
+            font=("Menlo", 12, "bold"),
+            bg=BG_SCREEN,
+            fg=CLR_WHITE,
+            insertbackground=CLR_LIME,
+            relief=tk.FLAT,
+            highlightthickness=1,
+            highlightbackground=CLR_LILAC,
+            width=20,
+        )
+        self.loyalty_manual_entry.pack(side=tk.LEFT, padx=(0, 8), ipady=3)
+        self.loyalty_manual_entry.bind("<Return>", lambda e: self._on_apply_manual_card())
+
+        manual_apply_btn = tk.Button(
+            manual_row,
+            text="[ 🔍 Apply Barcode ]",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            padx=12,
+            pady=3,
+            cursor="hand2",
+            command=self._on_apply_manual_card,
+        )
+        manual_apply_btn.pack(side=tk.LEFT)
+        self._attach_button_animation(manual_apply_btn)
+
+        # Action Buttons Row (Cancel Order & Skip/Continue)
+        action_btn_row = tk.Frame(right_panel, bg=BG_CARD)
+        action_btn_row.pack(side=tk.BOTTOM, fill=tk.X, pady=(4, 0))
+        action_btn_row.columnconfigure(0, weight=1, uniform="act")
+        action_btn_row.columnconfigure(1, weight=1, uniform="act")
+
+        # 1. Cancel Order Button (Back to Catalogue Menu)
+        self.loyalty_cancel_btn = tk.Button(
+            action_btn_row,
+            text="[ ❌ Cancel Order (Esc) ]",
+            font=("Helvetica", 14, "bold"),
+            bg="#4A0E4E",
+            fg=CLR_WHITE,
+            activebackground=CLR_WHITE,
+            activeforeground=CLR_DEEP_PURPLE,
+            relief=tk.FLAT,
+            padx=16,
+            pady=12,
+            cursor="hand2",
+            command=self._on_cancel_loyalty,
+        )
+        self.loyalty_cancel_btn.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        self._attach_button_animation(
+            self.loyalty_cancel_btn,
+            normal_bg="#4A0E4E",
+            normal_fg=CLR_WHITE,
+            hover_bg=CLR_WHITE,
+            hover_fg=CLR_DEEP_PURPLE,
+        )
+
+        # 2. Skip Loyalty Card / Continue to Payment Button
+        self.loyalty_skip_btn = tk.Button(
+            action_btn_row,
+            text="[ ⏭️ Skip Loyalty Card (Enter) ]",
+            font=("Helvetica", 15, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            activebackground=CLR_WHITE,
+            activeforeground=BTN_FG,
+            relief=tk.FLAT,
+            padx=16,
+            pady=12,
+            cursor="hand2",
+            command=self._on_skip_loyalty,
+        )
+        self.loyalty_skip_btn.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+        self._attach_button_animation(
+            self.loyalty_skip_btn,
+            normal_bg=BTN_BG,
+            normal_fg=BTN_FG,
+            hover_bg=CLR_WHITE,
+            hover_fg=BTN_FG,
+        )
+
+    def _build_loyalty_header(self, parent: tk.Frame) -> None:
+        """Top banner for Page 2: Loyalty Card Scan (Background: #3A0C51)."""
+        header = tk.Frame(parent, bg=BG_APP, height=60, padx=20)
+        header.pack(fill=tk.X)
+        header.pack_propagate(False)
+
+        brand_frame = tk.Frame(header, bg=BG_APP)
+        brand_frame.pack(side=tk.LEFT, fill=tk.Y)
+
+        logo_path = os.path.join(ASSETS_DIR, "edge_hill_logo.png")
+        if not hasattr(self, "header_logo") or self.header_logo is None:
+            if os.path.exists(logo_path):
+                self.header_logo = tk.PhotoImage(file=logo_path)
+        if hasattr(self, "header_logo") and self.header_logo is not None:
+            logo_lbl = tk.Label(
+                brand_frame,
+                image=self.header_logo,
+                bg=BG_APP,
+            )
+            logo_lbl.pack(side=tk.LEFT, pady=8)
+        else:
+            tk.Label(
+                brand_frame,
+                text="Edge Hill University",
+                font=("Georgia", 16, "bold"),
+                fg=CLR_WHITE,
+                bg=BG_APP,
+            ).pack(side=tk.LEFT, pady=14)
+
+        tk.Label(
+            brand_frame,
+            text="• Campus Vending Machine",
+            font=("Helvetica", 14, "bold"),
+            fg=CLR_LILAC,
+            bg=BG_APP,
+        ).pack(side=tk.LEFT, padx=14, pady=16)
+
+        # Step Indicator Badge
+        step_badge = tk.Label(
+            header,
+            text="STEP 2 OF 3: SCAN LOYALTY CARD",
+            font=("Helvetica", 11, "bold"),
+            fg=BTN_FG,
+            bg=BTN_BG,
+            padx=12,
+            pady=4,
+        )
+        step_badge.pack(side=tk.RIGHT, pady=13)
+
+    def _build_loyalty_footer(self, parent: tk.Frame) -> None:
+        """Bottom status bar for Page 2 (Background: #3A0C51)."""
+        footer = tk.Frame(parent, bg=BG_APP, height=40, padx=20)
+        footer.pack(fill=tk.X, side=tk.BOTTOM)
+        footer.pack_propagate(False)
+
+        tk.Label(
+            footer,
+            text="💡 Tip: Scan your Edge Hill Loyalty Barcode to enjoy 10% off, or press Skip to proceed.",
+            font=("Helvetica", 11),
+            fg=CLR_WHITE,
+            bg=BG_APP,
+        ).pack(side=tk.LEFT, pady=10)
+
+        tk.Label(
+            footer,
+            text="Press [ Enter ] to Skip / Continue    •    [ Esc ] to Cancel Order",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LIME,
+            bg=BG_APP,
+        ).pack(side=tk.RIGHT, pady=10)
+
+    def _populate_loyalty_sample_buttons(self) -> None:
+        """Populates quick test sample card buttons on the loyalty scan page."""
+        if not hasattr(self, "loyalty_sample_btn_row") or not self.loyalty_sample_btn_row.winfo_exists():
+            return
+        for child in self.loyalty_sample_btn_row.winfo_children():
+            child.destroy()
+
+        accounts = getattr(self.loyalty_scanner, "accounts", [])
+        if not accounts:
+            sample_data = [
+                ("Chatchawan Jiamprasut", "247480103B001"),
+                ("Tran Thi Thuy An", "247340101B019"),
+                ("Nguyen Trieu Vy", "247340101B010"),
+            ]
+        else:
+            sample_data = [(acc.member_name, acc.card_id) for acc in accounts[:3]]
+
+        for idx, (name, cid) in enumerate(sample_data, start=1):
+            short_name = name.split()[0] if name else "Member"
+            btn = tk.Button(
+                self.loyalty_sample_btn_row,
+                text=f"[ {idx} ] 🎓 {short_name} ({cid})",
+                font=("Helvetica", 10, "bold"),
+                bg=BTN_BG,
+                fg=BTN_FG,
+                activebackground=CLR_WHITE,
+                activeforeground=BTN_FG,
+                relief=tk.FLAT,
+                padx=8,
+                pady=4,
+                cursor="hand2",
+                command=lambda c=cid: self._apply_loyalty_card(c),
+            )
+            btn.pack(side=tk.LEFT, padx=(0, 6), expand=True, fill=tk.X)
+            self._attach_button_animation(btn)
+
+    def _refresh_loyalty_page(self) -> None:
+        """Refreshes selected drink preview and loyalty state when entering Page 2."""
+        if not self.selected_product:
+            return
+
+        prod = self.selected_product
+        # 1. Update Canvas Artwork / Product Photo
+        if hasattr(self, "loyalty_drink_canvas"):
+            render_product_artwork(
+                canvas=self.loyalty_drink_canvas,
+                prod=prod,
+                width=120,
+                height=72,
+                photo_cache=self._product_images,
+                default_bg=CLR_WHITE,
+                fallback_bg=BG_CARD,
+            )
+
+        # 2. Update Name & Desc
+        disp_num = int(prod["slot_num"]) if str(prod["slot_num"]).isdigit() else prod["slot_num"]
+        if hasattr(self, "loyalty_drink_name_lbl"):
+            self.loyalty_drink_name_lbl.config(text=f"{prod['name']} (No. {disp_num})")
+        if hasattr(self, "loyalty_drink_desc_lbl"):
+            self.loyalty_drink_desc_lbl.config(text=prod.get("desc", ""))
+
+        # 3. Update Prices
+        base_pence = prod["price"]
+        loyalty_pence = int(round(base_pence * 0.90))
+        save_pence = base_pence - loyalty_pence
+
+        if hasattr(self, "loyalty_base_price_lbl"):
+            self.loyalty_base_price_lbl.config(text=f"£{base_pence / 100:.2f} ({base_pence}p)")
+        if hasattr(self, "loyalty_discount_price_lbl"):
+            self.loyalty_discount_price_lbl.config(text=f"£{loyalty_pence / 100:.2f} ({loyalty_pence}p)")
+        if hasattr(self, "loyalty_save_badge"):
+            self.loyalty_save_badge.config(text=f"💰 Save £{save_pence / 100:.2f} (10% OFF) with Edge Hill Loyalty Card!")
+
+        # 4. Check if already applied or fresh
+        if self.controller.loyaltyApplied:
+            account = getattr(self.loyalty_scanner, "_last_scanned", None)
+            member_name = getattr(account, "member_name", "Verified Member") if account else "Verified Member"
+            card_id = getattr(account, "card_id", "------") if account else "------"
+            if hasattr(self, "scanned_member") and self.scanned_member:
+                member_name = self.scanned_member.get("name", member_name)
+                card_id = self.scanned_member.get("card_id", card_id)
+
+            if hasattr(self, "loyalty_member_badge"):
+                self.loyalty_member_badge.config(text="VERIFIED", fg=BTN_FG, bg=CLR_LIME)
+            if hasattr(self, "loyalty_member_name_lbl"):
+                self.loyalty_member_name_lbl.config(text=member_name, fg=CLR_LIME)
+            if hasattr(self, "loyalty_member_id_lbl"):
+                self.loyalty_member_id_lbl.config(text=card_id, fg=CLR_LIME)
+            if hasattr(self, "loyalty_member_status_card"):
+                self.loyalty_member_status_card.config(highlightbackground=CLR_LIME, highlightthickness=2)
+            if hasattr(self, "loyalty_skip_btn"):
+                self.loyalty_skip_btn.config(text="[ ✅ Continue to Payment (Enter) ]", bg=CLR_LIME, fg=BTN_FG)
+            if hasattr(self, "loyalty_cam_status_lbl"):
+                self.loyalty_cam_status_lbl.config(text=f"🎉 Card Verified: {member_name} — 10% Discount Applied!", fg=CLR_LIME)
+        else:
+            if hasattr(self, "loyalty_member_badge"):
+                self.loyalty_member_badge.config(text="NOT SCANNED", fg=CLR_LILAC, bg=BG_CARD)
+            if hasattr(self, "loyalty_member_name_lbl"):
+                self.loyalty_member_name_lbl.config(text="No Card Scanned", fg=CLR_LILAC)
+            if hasattr(self, "loyalty_member_id_lbl"):
+                self.loyalty_member_id_lbl.config(text="------", fg=CLR_LILAC)
+            if hasattr(self, "loyalty_member_status_card"):
+                self.loyalty_member_status_card.config(highlightbackground=CLR_LILAC, highlightthickness=1)
+            if hasattr(self, "loyalty_skip_btn"):
+                self.loyalty_skip_btn.config(text="[ ⏭️ Skip Loyalty Card (Enter) ]", bg=BTN_BG, fg=BTN_FG)
+            if hasattr(self, "loyalty_cam_status_lbl"):
+                self.loyalty_cam_status_lbl.config(text="📷 Camera ready. Align Code 128 barcode inside the green box.", fg=CLR_LIME)
+
+        # Clear manual entry
+        if hasattr(self, "loyalty_manual_entry"):
+            self.loyalty_manual_entry.delete(0, tk.END)
+
+        # Refresh sample buttons
+        self._populate_loyalty_sample_buttons()
+
+    def _start_loyalty_camera(self) -> None:
+        """Starts the webcam feed and Code 128 barcode scanner for Page 2."""
+        if getattr(self, "current_page", "") != "loyalty" and getattr(self, "target_page", "") != "loyalty":
+            return
+        if self._loyalty_cam_state.get("running"):
+            return
+
+        if not HAS_CV2 or cv2 is None:
+            if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
+                self.loyalty_cam_status_lbl.config(
+                    text="⚠️ Camera scanner offline. Click a sample card below or enter Card ID manually.",
+                    fg=CLR_LILAC,
+                )
+            return
+
+        try:
+            cap = cv2.VideoCapture(0)
+            if not cap.isOpened():
+                if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
+                    self.loyalty_cam_status_lbl.config(
+                        text="⚠️ Camera device unavailable. Click a sample card below or enter Card ID manually.",
+                        fg=CLR_LILAC,
+                    )
+                return
+            self._loyalty_cam_state["cap"] = cap
+            self._loyalty_cam_state["running"] = True
+            if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
+                self.loyalty_cam_status_lbl.config(
+                    text="📷 Camera active. Align Code 128 barcode inside the green box.",
+                    fg=CLR_LIME,
+                )
+            self._update_loyalty_camera()
+        except Exception:
+            self._loyalty_cam_state["cap"] = None
+            self._loyalty_cam_state["running"] = False
+            if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
+                self.loyalty_cam_status_lbl.config(
+                    text="⚠️ Camera device unavailable. Click a sample card below or enter Card ID manually.",
+                    fg=CLR_LILAC,
+                )
+
+    def _update_loyalty_camera(self) -> None:
+        """Continuous camera streaming frame loop with Code 128 barcode detection."""
+        if not self._loyalty_cam_state.get("running"):
+            return
+        if getattr(self, "current_page", "") != "loyalty":
+            return
+        cap = self._loyalty_cam_state.get("cap")
+        if cap is None:
+            return
+
+        ret, frame = cap.read()
+        if ret and frame is not None:
+            frame = cv2.flip(frame, 1)
+            h, w, _ = frame.shape
+
+            box_w = int(w * 0.76)
+            box_h = int(h * 0.38)
+            x1 = (w - box_w) // 2
+            y1 = (h - box_h) // 2
+            x2 = x1 + box_w
+            y2 = y1 + box_h
+
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (45, 239, 186), 2)
+            mid_y = y1 + (box_h // 2)
+            cv2.line(frame, (x1 + 10, mid_y), (x2 - 10, mid_y), (255, 131, 216), 1)
+
+            cv2.putText(
+                frame,
+                "SCAN MEMBER CARD BARCODE HERE",
+                (x1 + 10, max(20, y1 - 8)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (45, 239, 186),
+                2,
+            )
+
+            detected_card_id = None
+            if HAS_ZXING and zxingcpp is not None:
+                try:
+                    results = zxingcpp.read_barcodes(frame, formats=zxingcpp.BarcodeFormat.Code128)
+                    for r in results:
+                        if r.text and r.text.strip():
+                            detected_card_id = r.text.strip()
+                            break
+                except Exception:
+                    pass
+
+            if not detected_card_id and hasattr(cv2, "barcode"):
+                try:
+                    bd = cv2.barcode.BarcodeDetector()
+                    ok, decoded_info, _, _ = bd.detectAndDecode(frame)
+                    if ok:
+                        if isinstance(decoded_info, (list, tuple)) and decoded_info:
+                            detected_card_id = decoded_info[0].strip()
+                        elif isinstance(decoded_info, str) and decoded_info.strip():
+                            detected_card_id = decoded_info.strip()
+                except Exception:
+                    pass
+
+            if detected_card_id:
+                self._apply_loyalty_card(detected_card_id)
+                return
+
+            render_w = 520
+            render_h = 260
+            if HAS_PIL and Image is not None and ImageTk is not None:
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                pil_img = Image.fromarray(rgb_frame)
+                pil_img = pil_img.resize((render_w, render_h), Image.Resampling.LANCZOS)
+                self._loyalty_cam_state["photo_ref"] = ImageTk.PhotoImage(image=pil_img)
+            else:
+                resized = cv2.resize(frame, (render_w, render_h))
+                ret_enc, buf = cv2.imencode(".png", resized)
+                if ret_enc:
+                    b64 = base64.b64encode(buf).decode("ascii")
+                    self._loyalty_cam_state["photo_ref"] = tk.PhotoImage(data=b64)
+                else:
+                    self._loyalty_cam_state["photo_ref"] = None
+
+            if self._loyalty_cam_state["photo_ref"] and hasattr(self, "loyalty_video_lbl") and self.loyalty_video_lbl.winfo_exists():
+                self.loyalty_video_lbl.config(image=self._loyalty_cam_state["photo_ref"])
+
+        if self._loyalty_cam_state.get("running"):
+            self._loyalty_cam_state["after_id"] = self.root.after(30, self._update_loyalty_camera)
+
+    def _cleanup_loyalty_camera(self) -> None:
+        """Safely stops the loyalty scanner camera stream and releases the video capture."""
+        self._loyalty_cam_state["running"] = False
+        after_id = self._loyalty_cam_state.get("after_id")
+        if after_id:
+            try:
+                self.root.after_cancel(after_id)
+            except Exception:
+                pass
+            self._loyalty_cam_state["after_id"] = None
+
+        cap = self._loyalty_cam_state.get("cap")
+        if cap is not None:
+            try:
+                cap.release()
+            except Exception:
+                pass
+            self._loyalty_cam_state["cap"] = None
+
+    def _apply_loyalty_card(self, card_id: str) -> None:
+        """Validates and applies the loyalty membership discount."""
+        card_id = str(card_id).strip()
+        if not card_id:
+            return
+
+        success = self.controller.scanLoyalty(card_id)
+        if success:
+            self._cleanup_loyalty_camera()
+            account = getattr(self.loyalty_scanner, "_last_scanned", None)
+            member_name = getattr(account, "member_name", "Verified Member") if account else "Verified Member"
+            self.scanned_member = {
+                "name": member_name,
+                "card_id": card_id,
+            }
+
+            if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
+                self.loyalty_cam_status_lbl.config(
+                    text=f"🎉 Card Verified: {member_name} — 10% Discount Applied!",
+                    fg=CLR_LIME,
+                )
+            if hasattr(self, "loyalty_member_badge") and self.loyalty_member_badge.winfo_exists():
+                self.loyalty_member_badge.config(text="VERIFIED", fg=BTN_FG, bg=CLR_LIME)
+            if hasattr(self, "loyalty_member_name_lbl") and self.loyalty_member_name_lbl.winfo_exists():
+                self.loyalty_member_name_lbl.config(text=member_name, fg=CLR_LIME)
+            if hasattr(self, "loyalty_member_id_lbl") and self.loyalty_member_id_lbl.winfo_exists():
+                self.loyalty_member_id_lbl.config(text=card_id, fg=CLR_LIME)
+            if hasattr(self, "loyalty_member_status_card") and self.loyalty_member_status_card.winfo_exists():
+                self.loyalty_member_status_card.config(highlightbackground=CLR_LIME, highlightthickness=2)
+            if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
+                self.loyalty_skip_btn.config(
+                    text="[ ✅ Continue to Payment (Enter) ]",
+                    bg=CLR_LIME,
+                    fg=BTN_FG,
+                )
+
+            # Auto-advance to payment page after 850ms
+            self.root.after(850, self._on_skip_loyalty)
+        else:
+            if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
+                self.loyalty_cam_status_lbl.config(
+                    text=f"❌ Card '{card_id}' is invalid or inactive. Please try another card.",
+                    fg=CLR_LILAC,
+                )
+
+    def _on_apply_manual_card(self) -> None:
+        """Handles manual entry of loyalty card barcode."""
+        if hasattr(self, "loyalty_manual_entry") and self.loyalty_manual_entry.winfo_exists():
+            cid = self.loyalty_manual_entry.get().strip()
+            if cid:
+                self._apply_loyalty_card(cid)
+            else:
+                if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
+                    self.loyalty_cam_status_lbl.config(
+                        text="⚠️ Please type a Card ID first.",
+                        fg=CLR_LILAC,
+                    )
+
+    def _on_skip_loyalty(self) -> None:
+        """Proceeds to Page 3 (Payment Page) directly, stopping the camera scanner."""
+        self._cleanup_loyalty_camera()
+        self.transition_to_page("payment", direction="left")
+
+    def _on_cancel_loyalty(self) -> None:
+        """Cancels the current order selection and returns to Page 1 (Catalogue Menu)."""
+        self._cleanup_loyalty_camera()
+        self.controller.cancel()
+        if hasattr(self, "loyalty_scanner"):
+            self.loyalty_scanner._last_scanned = None
+        self.scanned_member = None
+        self.entered_slot.set("--")
+        self.selected_product = None
+        self._highlight_active_card(None)
+        self._update_preview(None)
+        self.root.focus_force()
+        self.root.focus_set()
+        self.root.after(50, lambda: (self.root.focus_force(), self.root.focus_set()))
+        self.transition_to_page("catalogue", direction="right")
+        self.root.after(300, lambda: (self.root.focus_force(), self.root.focus_set()))
+
+    # =======================================================================
+    # Page 3: Payment Method & Selection Screen
     # =======================================================================
     def _build_page2_payment(self) -> None:
-        """Page 2: Payment Method & Loyalty Membership Selection Screen."""
+        """Page 3: Payment Method & Selection Screen."""
         page = tk.Frame(self.container, bg=BG_APP)
         self.pages["payment"] = page
 
@@ -4455,7 +5263,7 @@ class CustomerVendingApp:
         # Step Indicator Badge
         step_badge = tk.Label(
             header,
-            text="STEP 2: PAYMENT & LOYALTY",
+            text="STEP 3 OF 3: PAYMENT METHOD",
             font=("Helvetica", 11, "bold"),
             fg=BTN_FG,
             bg=BTN_BG,
@@ -4557,7 +5365,7 @@ class CustomerVendingApp:
         # Back to catalogue button (at the very bottom)
         self.back_btn = tk.Button(
             parent,
-            text="[ 4 ] ← Change Drink / Back (Esc)",
+            text="[ 4 ] ← Change Drink / Cancel (Esc)",
             font=("Helvetica", 13, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -4702,17 +5510,17 @@ class CustomerVendingApp:
         )
         self.loyalty_status_lbl.pack(anchor="w")
 
-        # Scan button
+        # Scan / Change button
         self.scan_loyalty_btn = tk.Button(
             loyalty_card,
-            text="[ 1 ] 📷 Scan Member Card",
-            font=("Helvetica", 14, "bold"),
+            text="[ 1 ] 📷 Scan / Change Loyalty Card (-10% Off)",
+            font=("Helvetica", 13, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             relief=tk.FLAT,
             padx=14,
             pady=8,
-            command=self._open_loyalty_scan_dialog,
+            command=lambda: self.transition_to_page("loyalty", direction="right"),
         )
         self.scan_loyalty_btn.pack(fill=tk.X)
         self._attach_button_animation(self.scan_loyalty_btn)
@@ -4877,12 +5685,17 @@ class CustomerVendingApp:
                 self.summary_member_badge.config(text="VERIFIED", fg=BTN_FG, bg=CLR_LIME)
             if hasattr(self, "member_info_box"):
                 self.member_info_box.config(highlightbackground=CLR_LIME, highlightthickness=2)
+            if hasattr(self, "scan_loyalty_btn"):
+                self.scan_loyalty_btn.config(text="[ 1 ] 🔄 Change / Re-scan Loyalty Card")
         else:
             amount_due = base_pence
             discount_text = "£0.00 (No Card Scanned)"
             discount_color = CLR_LILAC
-            status_text = "💳 Status: No Membership Card Scanned"
+            status_text = "💳 Status: No Membership Card Scanned (Standard Price)"
             status_color = CLR_LILAC
+
+            if hasattr(self, "scan_loyalty_btn"):
+                self.scan_loyalty_btn.config(text="[ 1 ] 📷 Add Loyalty Card (-10% Discount)")
 
             if hasattr(self, "summary_member_name_lbl"):
                 self.summary_member_name_lbl.config(text="No Card Scanned", fg=CLR_LILAC)
