@@ -4373,17 +4373,17 @@ class CustomerVendingApp:
         middle_area.pack(fill=tk.BOTH, expand=True)
 
         center_wrap = tk.Frame(middle_area, bg=BG_MIDDLE)
-        center_wrap.pack(expand=True, fill=tk.BOTH, padx=40, pady=16)
+        center_wrap.pack(expand=True, fill=tk.BOTH, padx=20, pady=12)
 
         scanner_card = tk.Frame(
             center_wrap,
             bg=BG_CARD,
-            padx=28,
+            padx=24,
             pady=18,
             highlightthickness=2,
             highlightbackground=CLR_LIME,
         )
-        scanner_card.pack(expand=True, fill=tk.BOTH)
+        scanner_card.pack(anchor="center", expand=True)
 
         # Header Row
         hdr_row = tk.Frame(scanner_card, bg=BG_CARD)
@@ -4392,7 +4392,7 @@ class CustomerVendingApp:
         tk.Label(
             hdr_row,
             text="⭐ EDGE HILL LOYALTY CLUB",
-            font=("Helvetica", 18, "bold"),
+            font=("Helvetica", 17, "bold"),
             fg=CLR_LIME,
             bg=BG_CARD,
         ).pack(side=tk.LEFT)
@@ -4404,50 +4404,53 @@ class CustomerVendingApp:
             fg=BTN_FG,
             bg=BTN_BG,
             padx=12,
-            pady=4,
+            pady=3,
         )
         discount_badge.pack(side=tk.RIGHT)
 
         tk.Label(
             scanner_card,
             text="Present your Edge Hill University ID card barcode in front of the camera below to scan:",
-            font=("Helvetica", 14),
+            font=("Helvetica", 13),
             fg=CLR_WHITE,
             bg=BG_CARD,
         ).pack(anchor="w", pady=(0, 10))
 
-        # Camera Display Frame
+        # Camera Display Frame (Sized snugly to fit camera feed without large empty space)
         cam_container = tk.Frame(
             scanner_card,
-            bg=BG_SCREEN,
-            padx=8,
-            pady=8,
+            bg=BG_CARD,
+            padx=0,
+            pady=0,
             highlightthickness=2,
-            highlightbackground=CLR_LILAC,
+            highlightbackground=CLR_LIME,
         )
-        cam_container.pack(fill=tk.BOTH, expand=True, pady=(0, 16))
+        cam_container.pack(anchor="center", pady=(0, 10))
 
         self.loyalty_video_lbl = tk.Label(
             cam_container,
             bg=BG_SCREEN,
             text="[ 📷 CAMERA PREVIEW AREA ]\nPosition Code 128 barcode in front of camera",
-            font=("Helvetica", 14, "bold"),
-            fg=CLR_LILAC,
-        )
-        self.loyalty_video_lbl.pack(fill=tk.BOTH, expand=True)
-
-        self.loyalty_cam_status_lbl = tk.Label(
-            cam_container,
-            text="📷 Initializing camera scanner...",
             font=("Helvetica", 13, "bold"),
-            fg=CLR_LIME,
-            bg=BG_SCREEN,
+            fg=CLR_LILAC,
+            width=54,
+            height=16,
         )
-        self.loyalty_cam_status_lbl.pack(fill=tk.X, pady=(6, 2))
+        self.loyalty_video_lbl.pack(anchor="center")
+
+        # Instruction & Status line directly below camera
+        self.loyalty_cam_status_lbl = tk.Label(
+            scanner_card,
+            text="Please scan your loyal member card",
+            font=("Helvetica", 14, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        )
+        self.loyalty_cam_status_lbl.pack(fill=tk.X, pady=(0, 14))
 
         # Action Buttons Row (ONLY Cancel Order & Skip/Continue)
         action_btn_row = tk.Frame(scanner_card, bg=BG_CARD)
-        action_btn_row.pack(side=tk.BOTTOM, fill=tk.X, pady=(4, 0))
+        action_btn_row.pack(side=tk.BOTTOM, fill=tk.X, pady=(2, 0))
         action_btn_row.columnconfigure(0, weight=1, uniform="act")
         action_btn_row.columnconfigure(1, weight=1, uniform="act")
 
@@ -4586,7 +4589,7 @@ class CustomerVendingApp:
             if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
                 self.loyalty_skip_btn.config(text="[ ⏭️ Skip Loyalty Card (Enter) ]", bg=BTN_BG, fg=BTN_FG)
             if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
-                self.loyalty_cam_status_lbl.config(text="📷 Camera ready. Align Code 128 barcode inside the green box.", fg=CLR_LIME)
+                self.loyalty_cam_status_lbl.config(text="Please scan your loyal member card", fg=CLR_LIME)
 
     def _start_loyalty_camera(self) -> None:
         """Starts the webcam feed and Code 128 barcode scanner for Page 2."""
@@ -4598,7 +4601,7 @@ class CustomerVendingApp:
         if not HAS_CV2 or cv2 is None:
             if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
                 self.loyalty_cam_status_lbl.config(
-                    text="⚠️ Camera scanner offline. Press Skip to continue to payment.",
+                    text="Please scan your loyal member card (Camera offline • Press Skip)",
                     fg=CLR_LILAC,
                 )
             return
@@ -4608,7 +4611,7 @@ class CustomerVendingApp:
             if not cap.isOpened():
                 if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
                     self.loyalty_cam_status_lbl.config(
-                        text="⚠️ Camera device unavailable. Press Skip to continue to payment.",
+                        text="Please scan your loyal member card (Camera unavailable • Press Skip)",
                         fg=CLR_LILAC,
                     )
                 return
@@ -4616,7 +4619,7 @@ class CustomerVendingApp:
             self._loyalty_cam_state["running"] = True
             if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
                 self.loyalty_cam_status_lbl.config(
-                    text="📷 Camera active. Align Code 128 barcode inside the green box.",
+                    text="Please scan your loyal member card",
                     fg=CLR_LIME,
                 )
             self._update_loyalty_camera()
@@ -4625,7 +4628,7 @@ class CustomerVendingApp:
             self._loyalty_cam_state["running"] = False
             if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
                 self.loyalty_cam_status_lbl.config(
-                    text="⚠️ Camera device unavailable. Press Skip to continue to payment.",
+                    text="Please scan your loyal member card (Camera unavailable • Press Skip)",
                     fg=CLR_LILAC,
                 )
 
@@ -4692,7 +4695,7 @@ class CustomerVendingApp:
                 self._apply_loyalty_card(detected_card_id)
                 return
 
-            render_w = 680
+            render_w = 640
             render_h = 360
             if HAS_PIL and Image is not None and ImageTk is not None:
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
