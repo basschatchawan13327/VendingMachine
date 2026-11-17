@@ -212,7 +212,7 @@ def load_catalogue_data(file_path: str = PRODUCTS_FILE) -> List[Dict]:
                 s = item.get("slot_num")
                 if s is not None and str(s).strip():
                     try:
-                        normalized = f"{int(str(s).strip()):02d}"
+                        normalized = str(int(str(s).strip()))
                     except (ValueError, TypeError):
                         normalized = str(s).strip()
                     item["slot_num"] = normalized
@@ -222,9 +222,9 @@ def load_catalogue_data(file_path: str = PRODUCTS_FILE) -> List[Dict]:
             next_num = 1
             for item in data:
                 if not item.get("slot_num"):
-                    while f"{next_num:02d}" in assigned_slots:
+                    while str(next_num) in assigned_slots:
                         next_num += 1
-                    auto_slot = f"{next_num:02d}"
+                    auto_slot = str(next_num)
                     item["slot_num"] = auto_slot
                     assigned_slots.add(auto_slot)
                     next_num += 1
@@ -650,7 +650,19 @@ class CustomerVendingApp:
         )
 
         # Quick lookup map: slot_num -> product metadata
-        self.slot_map: Dict[str, Dict] = {item["slot_num"]: item for item in self.catalogue}
+        self.slot_map: Dict[str, Dict] = self._build_slot_map()
+
+    def _build_slot_map(self) -> Dict[str, Dict]:
+        """Builds multi-format lookup map supporting both single-digit ('1') and 2-digit ('01') slot queries."""
+        m: Dict[str, Dict] = {}
+        for item in self.catalogue:
+            raw = str(item.get("slot_num", "")).strip()
+            if raw:
+                m[raw] = item
+                if raw.isdigit():
+                    m[str(int(raw))] = item
+                    m[f"{int(raw):02d}"] = item
+        return m
 
     def _init_file_watcher_fingerprint(self) -> None:
         """Records initial products.json modification stamp and size."""
@@ -698,7 +710,7 @@ class CustomerVendingApp:
         5. Validates current slot selection (clears if deleted).
         """
         self.catalogue = load_catalogue_data()
-        self.slot_map = {item["slot_num"]: item for item in self.catalogue}
+        self.slot_map = self._build_slot_map()
 
         # Synchronize dispenser slots with catalogue
         if hasattr(self, "dispenser"):
@@ -741,18 +753,19 @@ class CustomerVendingApp:
 
         # Validate currently entered slot
         curr = self.entered_slot.get().replace("-", "").strip()
-        if len(curr) >= 2:
-            if curr not in self.slot_map:
+        if len(curr) >= 1:
+            prod = self.slot_map.get(curr) or (self.slot_map.get(str(int(curr))) if curr.isdigit() else None)
+            if not prod:
                 self.entered_slot.set("--")
                 self.selected_product = None
                 self._update_preview(None)
             else:
-                self.selected_product = self.slot_map[curr]
+                self.selected_product = prod
                 self._update_preview(curr)
         else:
             self.selected_product = None
             if not getattr(self, "_dispense_banner_active", False):
-                self._update_preview(curr if curr else None)
+                self._update_preview(None)
 
         # Refresh cards on screen
         if hasattr(self, "cards_inner_frame") and self.cards_inner_frame.winfo_exists():
@@ -951,10 +964,15 @@ class CustomerVendingApp:
             self.root.after(200, lambda: self._safe_config(self.typing_badge, fg=CLR_LIME))
 
     def _highlight_active_card(self, active_slot: Optional[str]) -> None:
-        """Smoothly shifts active glowing border to the currently typed slot card (Only when full 2 digits typed)."""
-        normalized = active_slot if (active_slot and len(active_slot) >= 2) else ""
+        """Smoothly shifts active glowing border to the currently typed slot card."""
+        normalized = active_slot.strip() if active_slot else ""
         for slot, card in list(self.card_widgets.items()):
-            if slot == normalized:
+            matches = bool(normalized) and (
+                slot == normalized or (
+                    slot.isdigit() and normalized.isdigit() and int(slot) == int(normalized)
+                )
+            )
+            if matches:
                 # Active flash pulse on card
                 self._safe_config(card, highlightbackground=CLR_WHITE, highlightthickness=3)
                 self.root.after(90, lambda c=card: self._safe_config(c, highlightbackground=CLR_LIME, highlightthickness=3))
@@ -1083,7 +1101,7 @@ class CustomerVendingApp:
         fresh_catalogue = load_catalogue_data()
         if fresh_catalogue is not None:
             self.catalogue = fresh_catalogue
-            self.slot_map = {item["slot_num"]: item for item in self.catalogue}
+            self.slot_map = self._build_slot_map()
 
         for widget in self.cards_inner_frame.winfo_children():
             widget.destroy()
@@ -1159,7 +1177,13 @@ class CustomerVendingApp:
         in_stock = stock > 0
         slot_num = prod["slot_num"]
         curr_entered = self.entered_slot.get().replace("-", "").strip()
-        is_selected = (len(curr_entered) >= 2 and curr_entered == slot_num)
+        is_selected = (
+            bool(curr_entered) and (
+                curr_entered == slot_num or (
+                    curr_entered.isdigit() and str(slot_num).isdigit() and int(curr_entered) == int(slot_num)
+                )
+            )
+        )
 
         # Outer card frame (Display showcase box - Background: #3A0C51)
         card = tk.Frame(
@@ -1179,9 +1203,10 @@ class CustomerVendingApp:
         top_row.pack(side=tk.TOP, fill=tk.X, pady=(2, 3))
 
         # Prominent Product Number Badge (Button color: #BAEF2D)
+        badge_num = int(prod["slot_num"]) if str(prod["slot_num"]).isdigit() else prod["slot_num"]
         slot_badge = tk.Label(
             top_row,
-            text=f"No. {prod['slot_num']}",
+            text=f"No. {badge_num}",
             font=("Menlo", 13, "bold"),
             fg=BTN_FG,
             bg=BTN_BG,
@@ -1564,11 +1589,12 @@ class CustomerVendingApp:
             self._dispense_restore_after_id = None
 
         curr = self.entered_slot.get().replace("-", "").strip()
-        # If already 2 digits or empty, start fresh with new digit
-        if len(curr) >= 2 or not curr:
-            new_val = digit
-        else:
+        # If the concatenated value forms an existing slot in slot_map, allow appending (e.g. "0" + "1" -> "01")
+        # Otherwise, treat the new digit as a fresh 1-digit slot selection
+        if curr and (curr + digit) in self.slot_map:
             new_val = curr + digit
+        else:
+            new_val = digit
 
         self.entered_slot.set(new_val)
         self._highlight_active_card(new_val)
@@ -1599,7 +1625,7 @@ class CustomerVendingApp:
         self._update_preview(None)
 
     def _update_preview(self, slot_num: Optional[str]) -> None:
-        """Updates the preview display with animated feedback (Requires full 2-digit slot)."""
+        """Updates the preview display with animated feedback for single or multi-digit slot selection."""
         if not slot_num or slot_num == "--":
             self.selected_product = None
             if hasattr(self, "preview_canvas"):
@@ -1610,19 +1636,13 @@ class CustomerVendingApp:
             self.preview_stock_lbl.config(text="")
             return
 
-        # If user has only typed 1 digit so far, do NOT display the product yet
-        if len(slot_num) < 2:
-            self.selected_product = None
-            if hasattr(self, "preview_canvas"):
-                self.preview_canvas.delete("all")
-                self.preview_canvas.config(bg=BG_SCREEN, highlightthickness=0)
-            self.preview_name_lbl.config(text="Typing Slot Number...", fg=CLR_WHITE)
-            self.preview_price_lbl.config(text="Type 2nd digit to complete (e.g. 01)", fg=CLR_LILAC)
-            self.preview_stock_lbl.config(text="")
-            return
+        prod = self.slot_map.get(slot_num)
+        if not prod and slot_num.isdigit():
+            prod = self.slot_map.get(str(int(slot_num)))
+        if not prod and slot_num.isdigit():
+            prod = self.slot_map.get(f"{int(slot_num):02d}")
 
-        if slot_num in self.slot_map:
-            prod = self.slot_map[slot_num]
+        if prod:
             self.selected_product = prod
             drink_obj = self.dispenser.getDrink(prod["drink_id"])
             stock = drink_obj.stock if drink_obj else 0
@@ -1644,9 +1664,10 @@ class CustomerVendingApp:
                     fallback_bg=BG_SCREEN,
                 )
 
+            disp_num = int(prod["slot_num"]) if str(prod["slot_num"]).isdigit() else prod["slot_num"]
             if stock > 0:
                 self.preview_name_lbl.config(
-                    text=f"✅ {prod['name']} (No. {prod['slot_num']})",
+                    text=f"✅ {prod['name']} (No. {disp_num})",
                     fg=CLR_LIME,
                 )
                 self.preview_price_lbl.config(
@@ -1702,20 +1723,20 @@ class CustomerVendingApp:
             self.root.after(120, lambda: self._safe_config(self.confirm_btn, bg=BTN_BG, relief=tk.FLAT))
         slot_text = self.entered_slot.get().replace("-", "").strip()
         if not slot_text:
-            max_slot = f"{len(self.catalogue):02d}" if self.catalogue else "09"
-            self._flash_input_notice(f"Please type a slot number (01-{max_slot}) first.")
+            max_slot = str(len(self.catalogue)) if self.catalogue else "4"
+            self._flash_input_notice(f"Please type a slot number (1-{max_slot}) first.")
             return
 
-        if len(slot_text) < 2:
-            max_slot = f"{len(self.catalogue):02d}" if self.catalogue else "09"
-            self._flash_input_notice(f"Please type full 2-digit slot number (01-{max_slot}).")
-            return
+        prod = self.slot_map.get(slot_text)
+        if not prod and slot_text.isdigit():
+            prod = self.slot_map.get(str(int(slot_text)))
+        if not prod and slot_text.isdigit():
+            prod = self.slot_map.get(f"{int(slot_text):02d}")
 
-        if slot_text not in self.slot_map:
+        if not prod:
             self._flash_input_notice(f"Slot '{slot_text}' not found. Check product card.")
             return
 
-        prod = self.slot_map[slot_text]
         drink_id = prod["drink_id"]
 
         if not self.dispenser.isAvailable(drink_id):
@@ -2313,7 +2334,7 @@ class CustomerVendingApp:
         edit_row.pack(fill=tk.X, pady=(4, 0))
 
         tk.Label(edit_row, text="Edit Slot:", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT, padx=(0, 4))
-        edit_slot_var = tk.StringVar(value="01")
+        edit_slot_var = tk.StringVar(value="1")
         ent_slot = tk.Entry(edit_row, textvariable=edit_slot_var, width=4, font=("Helvetica", 11))
         ent_slot.pack(side=tk.LEFT, padx=(0, 8))
 
@@ -2345,7 +2366,8 @@ class CustomerVendingApp:
             catalogue = load_catalogue_data()
             matched = False
             for item in catalogue:
-                if str(item.get("slot_num", "")).strip() == slot_target:
+                curr_s = str(item.get("slot_num", "")).strip()
+                if curr_s == slot_target or (curr_s.isdigit() and slot_target.isdigit() and int(curr_s) == int(slot_target)):
                     item["price"] = new_p
                     item["stock"] = new_s
                     item["unit_weight"] = new_w
@@ -2356,7 +2378,8 @@ class CustomerVendingApp:
                 save_catalogue_data(catalogue)
                 if hasattr(self, "dispenser") and hasattr(self.dispenser, "_slots"):
                     for d in self.dispenser._slots:
-                        if getattr(d, "slot_num", "") == slot_target:
+                        d_slot = str(getattr(d, "slot_num", "")).strip()
+                        if d_slot == slot_target or (d_slot.isdigit() and slot_target.isdigit() and int(d_slot) == int(slot_target)):
                             d.price = new_p
                             d.stock = new_s
                             d.unit_weight = new_w
@@ -4736,8 +4759,9 @@ class CustomerVendingApp:
             )
 
         # 2. Update Name & Desc
+        disp_num = int(prod["slot_num"]) if str(prod["slot_num"]).isdigit() else prod["slot_num"]
         if hasattr(self, "summary_name_lbl"):
-            self.summary_name_lbl.config(text=f"{prod['name']} (No. {prod['slot_num']})")
+            self.summary_name_lbl.config(text=f"{prod['name']} (No. {disp_num})")
         if hasattr(self, "summary_desc_lbl"):
             self.summary_desc_lbl.config(text=prod.get("desc", ""))
 
@@ -5972,9 +5996,9 @@ class CustomerVendingApp:
                 fg=CLR_WHITE,
             )
         if hasattr(self, "footer_tip_lbl") and self.footer_tip_lbl.winfo_exists():
-            max_slot = f"{len(self.catalogue):02d}" if self.catalogue else "09"
+            max_slot = str(len(self.catalogue)) if self.catalogue else "4"
             self.footer_tip_lbl.config(
-                text=f"🎉 Enjoy your {drink_name}! Ready for next order — type slot number (01-{max_slot}) on keypad.",
+                text=f"🎉 Enjoy your {drink_name}! Ready for next order — type slot number (1-{max_slot}) on keypad.",
                 fg=CLR_LIME,
             )
 
