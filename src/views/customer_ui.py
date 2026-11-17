@@ -773,7 +773,8 @@ class CustomerVendingApp:
 
         # Reactive update for instruction step 1 label
         if hasattr(self, "instr_step1_lbl") and self.instr_step1_lbl.winfo_exists():
-            max_s = len(self.catalogue) if self.catalogue else 4
+            all_s = [int(str(p.get("slot_num")).strip()) for p in self.catalogue if str(p.get("slot_num", "")).strip().isdigit()]
+            max_s = max(all_s) if all_s else (len(self.catalogue) if self.catalogue else 4)
             self.instr_step1_lbl.config(
                 text=f"Type slot (1-{max_s}) on keyboard to select drink."
             )
@@ -1492,7 +1493,8 @@ class CustomerVendingApp:
             bg=BG_SCREEN,
         ).pack(anchor="w", pady=(0, 6))
 
-        max_slot = len(self.catalogue) if getattr(self, "catalogue", None) else 4
+        all_slots = [int(str(p.get("slot_num")).strip()) for p in getattr(self, "catalogue", []) if str(p.get("slot_num", "")).strip().isdigit()]
+        max_slot = max(all_slots) if all_slots else (len(self.catalogue) if getattr(self, "catalogue", None) else 4)
         steps = [
             ("1", f"Type slot (1-{max_slot}) on keyboard to select drink.", True),
             ("2", "Press [Enter] to confirm and proceed to payment.", False),
@@ -1652,12 +1654,20 @@ class CustomerVendingApp:
             self._dispense_restore_after_id = None
 
         curr = self.entered_slot.get().replace("-", "").strip()
-        # If the concatenated value forms an existing slot in slot_map, allow appending (e.g. "0" + "1" -> "01")
-        # Otherwise, treat the new digit as a fresh 1-digit slot selection
-        if curr and (curr + digit) in self.slot_map:
-            new_val = curr + digit
-        else:
+
+        # Determine maximum slot digit length (default 2 for slots 1-99)
+        max_digits = 2
+        for item in getattr(self, "catalogue", []):
+            s = str(item.get("slot_num", "")).strip()
+            if len(s) > max_digits:
+                max_digits = len(s)
+
+        # If empty or already at max digits, start fresh with new digit
+        # Otherwise append new digit so user can type 10-99 (or multi-digit slots) without needing leading 0
+        if not curr or len(curr) >= max_digits:
             new_val = digit
+        else:
+            new_val = curr + digit
 
         self.entered_slot.set(new_val)
         self._highlight_active_card(new_val)
@@ -1778,7 +1788,8 @@ class CustomerVendingApp:
             self.root.after(120, lambda: self._safe_config(self.confirm_btn, bg=BTN_BG, relief=tk.FLAT))
         slot_text = self.entered_slot.get().replace("-", "").strip()
         if not slot_text:
-            max_slot = str(len(self.catalogue)) if self.catalogue else "4"
+            all_s = [int(str(p.get("slot_num")).strip()) for p in self.catalogue if str(p.get("slot_num", "")).strip().isdigit()]
+            max_slot = str(max(all_s)) if all_s else (str(len(self.catalogue)) if self.catalogue else "4")
             self._flash_input_notice(f"Please type a slot number (1-{max_slot}) first.")
             return
 
