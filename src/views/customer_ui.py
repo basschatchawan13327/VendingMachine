@@ -498,16 +498,16 @@ class CustomerVendingApp:
         screen_w = self.root.winfo_screenwidth()
         screen_h = self.root.winfo_screenheight()
 
-        # Target 80-84% of screen size, comfortably bounded so it never clips title bar or dock
-        target_w = min(1120, max(940, int(screen_w * 0.84)))
-        target_h = min(720, max(620, int(screen_h * 0.82)))
+        # Responsive window sizing based on current display resolution (Expansive layout so all text displays completely)
+        target_w = min(1440, max(1200, int(screen_w * 0.90)))
+        target_h = min(920, max(800, int(screen_h * 0.88)))
 
         # Center the window on the user's screen
         pos_x = max(0, (screen_w - target_w) // 2)
         pos_y = max(0, (screen_h - target_h) // 2 - 25)
 
         self.root.geometry(f"{target_w}x{target_h}+{pos_x}+{pos_y}")
-        self.root.minsize(860, 560)
+        self.root.minsize(1100, 750)
         self.root.configure(bg=BG_APP)
 
         # Initialize Backend Components
@@ -1027,7 +1027,7 @@ class CustomerVendingApp:
         self._build_product_grid(left_box)
 
         # Right Column: Selection Console Panel (Physical Keyboard Input)
-        right_panel = tk.Frame(content_split, bg=BG_CARD, width=340, padx=14, pady=10)
+        right_panel = tk.Frame(content_split, bg=BG_CARD, width=420, padx=16, pady=12)
         right_panel.pack(side=tk.RIGHT, fill=tk.Y)
         right_panel.pack_propagate(False)
 
@@ -1501,6 +1501,7 @@ class CustomerVendingApp:
             ("3", "Press [Backspace] to clear and re-enter selection.", False),
         ]
 
+        self._instr_labels: List[tk.Label] = []
         for num, text, is_step1 in steps:
             step_row = tk.Frame(self.instruction_frame, bg=BG_SCREEN)
             step_row.pack(fill=tk.X, pady=4)
@@ -1525,11 +1526,23 @@ class CustomerVendingApp:
                 bg=BG_SCREEN,
                 anchor="w",
                 justify=tk.LEFT,
-                wraplength=255,
+                wraplength=340,
             )
             lbl.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            self._instr_labels.append(lbl)
             if is_step1:
                 self.instr_step1_lbl = lbl
+
+        def _on_instr_configure(event):
+            avail_w = max(260, event.width - 45)
+            for l in getattr(self, "_instr_labels", []):
+                try:
+                    if l.winfo_exists():
+                        l.config(wraplength=avail_w)
+                except Exception:
+                    pass
+
+        self.instruction_frame.bind("<Configure>", _on_instr_configure)
 
     # =======================================================================
     # Keyboard Event Binding & Handlers
