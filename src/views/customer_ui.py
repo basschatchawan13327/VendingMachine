@@ -4769,7 +4769,7 @@ class CustomerVendingApp:
         # 1. Cancel Order Button (Back to Catalogue Menu)
         self.loyalty_cancel_btn = tk.Button(
             action_btn_row,
-            text="[ ❌ Cancel Order [ Backspace ] ]",
+            text=" ❌ Cancel Order [ Backspace ] ",
             font=("Helvetica", 15, "bold"),
             bg=CLR_WHITE,
             fg="#4A0E4E",
@@ -4794,7 +4794,7 @@ class CustomerVendingApp:
         # 2. Skip Loyalty Card / Continue to Payment Button
         self.loyalty_skip_btn = tk.Button(
             action_btn_row,
-            text="[ ⏭️ Skip Loyalty Card [ Enter ] ]",
+            text=" ⏭️ Skip Loyalty Card [ Enter ] ",
             font=("Helvetica", 16, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -4895,12 +4895,12 @@ class CustomerVendingApp:
                 member_name = self.scanned_member.get("name", member_name)
 
             if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
-                self.loyalty_skip_btn.config(text="[ ✅ Continue to Payment [ Enter ] ]", bg=CLR_WHITE, fg=BTN_FG)
+                self.loyalty_skip_btn.config(text=" ✅ Continue to Payment [ Enter ] ", bg=CLR_WHITE, fg=BTN_FG)
             if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
                 self.loyalty_cam_status_lbl.config(text=f"🎉 Card Verified: {member_name} — 10% Discount Applied!", fg=CLR_LIME)
         else:
             if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
-                self.loyalty_skip_btn.config(text="[ ⏭️ Skip Loyalty Card [ Enter ] ]", bg=BTN_BG, fg=BTN_FG)
+                self.loyalty_skip_btn.config(text=" ⏭️ Skip Loyalty Card [ Enter ] ", bg=BTN_BG, fg=BTN_FG)
             if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
                 self.loyalty_cam_status_lbl.config(text="Please scan your loyalty card", fg=CLR_LIME)
 
@@ -5091,7 +5091,7 @@ class CustomerVendingApp:
                 )
             if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
                 self.loyalty_skip_btn.config(
-                    text="[ ✅ Continue to Payment [ Enter ] ]",
+                    text=" ✅ Continue to Payment [ Enter ] ",
                     bg=CLR_WHITE,
                     fg=BTN_FG,
                 )
@@ -5464,7 +5464,7 @@ class CustomerVendingApp:
         # 3. CANCEL ORDER / CHANGE DRINK BUTTON (Directly below Member Profile at bottom of sidebar)
         self.back_btn = tk.Button(
             parent,
-            text="[ ❌ Cancel Order / Change Drink [ Backspace ] ]",
+            text=" ❌ Cancel Order / Change Drink [ Backspace ] ",
             font=("Helvetica", 15, "bold"),
             bg=CLR_WHITE,
             fg="#4A0E4E",
@@ -5971,7 +5971,7 @@ class CustomerVendingApp:
 
         cam_cancel_btn = tk.Button(
             cam_btn_row,
-            text="[ ❌ Cancel [ Backspace ] ]",
+            text=" ❌ Cancel [ Backspace ] ",
             font=("Helvetica", 12, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -6426,7 +6426,7 @@ class CustomerVendingApp:
 
         cancel_btn = tk.Button(
             body,
-            text="[ ❌ Cancel Cash Payment [ Backspace ] ]",
+            text=" ❌ Cancel Cash Payment [ Backspace ] ",
             font=("Helvetica", 11, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -6632,7 +6632,7 @@ class CustomerVendingApp:
         # Pack Cancel button at bottom FIRST to guarantee it is never squeezed
         cancel_btn = tk.Button(
             body,
-            text="[ ❌ Cancel Transaction [ Backspace ] ]",
+            text=" ❌ Cancel Transaction [ Backspace ] ",
             font=("Helvetica", 11, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
