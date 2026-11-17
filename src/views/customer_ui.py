@@ -5292,82 +5292,83 @@ class CustomerVendingApp:
         step_badge.pack(side=tk.RIGHT, pady=13)
 
     def _build_order_summary_panel(self, parent: tk.Frame) -> None:
-        """Left panel on Page 2 detailing the selected beverage, discount, and total due."""
+        """Left panel detailing the selected beverage, discount, total due, member profile, and cancel button."""
+        # 1. ORDER SUMMARY SECTION
         tk.Label(
             parent,
             text="🛒 ORDER SUMMARY",
-            font=("Helvetica", 16, "bold"),
+            font=("Helvetica", 17, "bold"),
             fg=CLR_LIME,
             bg=BG_CARD,
-        ).pack(anchor="w", pady=(0, 4))
+        ).pack(anchor="w", pady=(0, 6))
 
         # Drink Graphic Canvas / Showcase Box
         self.summary_canvas = tk.Canvas(
             parent,
-            width=120,
-            height=72,
+            width=140,
+            height=84,
             bg=CLR_WHITE,
             highlightthickness=1,
             highlightbackground=CLR_LILAC,
         )
-        self.summary_canvas.pack(pady=3)
+        self.summary_canvas.pack(pady=4)
 
-        # Drink Name
+        # Drink Name - Prominent and easy to identify
         self.summary_name_lbl = tk.Label(
             parent,
             text="Selected Drink",
-            font=("Helvetica", 16, "bold"),
+            font=("Helvetica", 20, "bold"),
             fg=CLR_WHITE,
             bg=BG_CARD,
         )
-        self.summary_name_lbl.pack(fill=tk.X, pady=(2, 1))
+        self.summary_name_lbl.pack(fill=tk.X, pady=(4, 2))
 
-        # Drink Description
+        # Drink Description - Larger font for readability
         self.summary_desc_lbl = tk.Label(
             parent,
             text="",
-            font=("Helvetica", 12),
+            font=("Helvetica", 14),
             fg=CLR_LILAC,
             bg=BG_CARD,
-            wraplength=320,
+            wraplength=340,
             justify=tk.CENTER,
         )
-        self.summary_desc_lbl.pack(fill=tk.X, pady=(0, 4))
+        self.summary_desc_lbl.pack(fill=tk.X, pady=(0, 6))
 
         # Thin divider
-        tk.Frame(parent, bg=CLR_LILAC, height=1).pack(fill=tk.X, pady=(2, 6))
+        tk.Frame(parent, bg=CLR_LILAC, height=1).pack(fill=tk.X, pady=(4, 8))
 
-        # Price Breakdown
+        # Price Breakdown - Regular Price and Discount enlarged for readability
         prices_frame = tk.Frame(parent, bg=BG_CARD)
-        prices_frame.pack(fill=tk.X, pady=(0, 4))
+        prices_frame.pack(fill=tk.X, pady=(0, 6))
 
         row1 = tk.Frame(prices_frame, bg=BG_CARD)
-        row1.pack(fill=tk.X, pady=2)
-        tk.Label(row1, text="Drink Regular Price:", font=("Helvetica", 12, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT)
-        self.summary_base_price_lbl = tk.Label(row1, text="£0.00", font=("Menlo", 13, "bold"), fg=CLR_WHITE, bg=BG_CARD)
+        row1.pack(fill=tk.X, pady=3)
+        tk.Label(row1, text="Drink Regular Price:", font=("Helvetica", 14, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT)
+        self.summary_base_price_lbl = tk.Label(row1, text="£0.00", font=("Menlo", 15, "bold"), fg=CLR_WHITE, bg=BG_CARD)
         self.summary_base_price_lbl.pack(side=tk.RIGHT)
 
         row2 = tk.Frame(prices_frame, bg=BG_CARD)
-        row2.pack(fill=tk.X, pady=2)
-        tk.Label(row2, text="Membership Discount:", font=("Helvetica", 12, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT)
-        self.summary_discount_lbl = tk.Label(row2, text="£0.00", font=("Menlo", 13, "bold"), fg=CLR_LILAC, bg=BG_CARD)
+        row2.pack(fill=tk.X, pady=3)
+        tk.Label(row2, text="Membership Discount:", font=("Helvetica", 14, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT)
+        self.summary_discount_lbl = tk.Label(row2, text="£0.00", font=("Menlo", 15, "bold"), fg=CLR_LILAC, bg=BG_CARD)
         self.summary_discount_lbl.pack(side=tk.RIGHT)
 
-        # Total Amount Due Screen Box
+        # Total Amount Due Screen Box - Highest visual prominence
         screen_frame = tk.Frame(
             parent,
             bg=BG_SCREEN,
-            padx=12,
-            pady=8,
+            padx=14,
+            pady=10,
             highlightbackground=CLR_LIME,
             highlightthickness=2,
         )
-        screen_frame.pack(fill=tk.X, pady=(6, 10))
+        screen_frame.pack(fill=tk.X, pady=(6, 12))
 
         tk.Label(
             screen_frame,
             text="TOTAL AMOUNT DUE",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 13, "bold"),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
         ).pack(anchor="w")
@@ -5375,47 +5376,22 @@ class CustomerVendingApp:
         self.summary_total_lbl = tk.Label(
             screen_frame,
             text="£0.00",
-            font=("Menlo", 26, "bold"),
+            font=("Menlo", 34, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
         )
         self.summary_total_lbl.pack(anchor="e", pady=(2, 0))
 
-        # Back to catalogue button (at the very bottom)
-        self.back_btn = tk.Button(
-            parent,
-            text="[ ❌ Cancel Order / Change Drink (Backspace) ]",
-            font=("Helvetica", 13, "bold"),
-            bg=CLR_WHITE,
-            fg="#4A0E4E",
-            activebackground=CLR_LIME,
-            activeforeground=CLR_DEEP_PURPLE,
-            relief=tk.FLAT,
-            padx=12,
-            pady=9,
-            cursor="hand2",
-            command=self._on_cancel_payment,
-        )
-        self.back_btn.pack(side=tk.BOTTOM, fill=tk.X)
-        self._attach_button_animation(
-            self.back_btn,
-            normal_bg=CLR_WHITE,
-            normal_fg="#4A0E4E",
-            hover_bg=CLR_LIME,
-            hover_fg=CLR_DEEP_PURPLE,
-            press_bg=CLR_LIME,
-        )
-
-        # Member Information Box (In bottom-left area, right above back button)
+        # 2. MEMBER PROFILE SECTION (Directly below Order Summary)
         self.member_info_box = tk.Frame(
             parent,
             bg=BG_SCREEN,
-            padx=10,
-            pady=8,
+            padx=12,
+            pady=10,
             highlightbackground=CLR_LILAC,
             highlightthickness=1,
         )
-        self.member_info_box.pack(side=tk.BOTTOM, fill=tk.X, pady=(0, 10))
+        self.member_info_box.pack(side=tk.TOP, fill=tk.X, pady=(0, 14))
 
         mem_hdr = tk.Frame(self.member_info_box, bg=BG_SCREEN)
         mem_hdr.pack(fill=tk.X, pady=(0, 4))
@@ -5423,7 +5399,7 @@ class CustomerVendingApp:
         tk.Label(
             mem_hdr,
             text="👤 MEMBER PROFILE",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 12, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
         ).pack(side=tk.LEFT)
@@ -5431,11 +5407,11 @@ class CustomerVendingApp:
         self.summary_member_badge = tk.Label(
             mem_hdr,
             text="NOT SCANNED",
-            font=("Helvetica", 9, "bold"),
+            font=("Helvetica", 10, "bold"),
             fg=CLR_LILAC,
             bg=BG_CARD,
-            padx=6,
-            pady=1,
+            padx=8,
+            pady=2,
         )
         self.summary_member_badge.pack(side=tk.RIGHT)
 
@@ -5445,7 +5421,7 @@ class CustomerVendingApp:
         tk.Label(
             mem_name_row,
             text="Name:",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 12, "bold"),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
         ).pack(side=tk.LEFT)
@@ -5453,7 +5429,7 @@ class CustomerVendingApp:
         self.summary_member_name_lbl = tk.Label(
             mem_name_row,
             text="No Card Scanned",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 12, "bold"),
             fg=CLR_LILAC,
             bg=BG_SCREEN,
             anchor="e",
@@ -5466,7 +5442,7 @@ class CustomerVendingApp:
         tk.Label(
             mem_card_row,
             text="Card ID:",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 12, "bold"),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
         ).pack(side=tk.LEFT)
@@ -5474,12 +5450,37 @@ class CustomerVendingApp:
         self.summary_member_card_lbl = tk.Label(
             mem_card_row,
             text="------",
-            font=("Menlo", 11, "bold"),
+            font=("Menlo", 12, "bold"),
             fg=CLR_LILAC,
             bg=BG_SCREEN,
             anchor="e",
         )
         self.summary_member_card_lbl.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+
+        # 3. CANCEL ORDER / CHANGE DRINK BUTTON (Directly below Member Profile at bottom of sidebar)
+        self.back_btn = tk.Button(
+            parent,
+            text="[ ❌ Cancel Order / Change Drink (Backspace) ]",
+            font=("Helvetica", 15, "bold"),
+            bg=CLR_WHITE,
+            fg="#4A0E4E",
+            activebackground=CLR_LIME,
+            activeforeground=CLR_DEEP_PURPLE,
+            relief=tk.FLAT,
+            padx=16,
+            pady=16,
+            cursor="hand2",
+            command=self._on_cancel_payment,
+        )
+        self.back_btn.pack(side=tk.TOP, fill=tk.X, pady=(0, 6))
+        self._attach_button_animation(
+            self.back_btn,
+            normal_bg=CLR_WHITE,
+            normal_fg="#4A0E4E",
+            hover_bg=CLR_LIME,
+            hover_fg=CLR_DEEP_PURPLE,
+            press_bg=CLR_LIME,
+        )
 
     def _build_payment_options_panel(self, parent: tk.Frame) -> None:
         """Right panel on Page 3 with Cash and Credit Card / QR payment choices."""
@@ -5710,8 +5711,8 @@ class CustomerVendingApp:
             render_product_artwork(
                 canvas=self.summary_canvas,
                 prod=prod,
-                width=120,
-                height=72,
+                width=140,
+                height=84,
                 photo_cache=self._product_images,
                 default_bg=CLR_WHITE,
                 fallback_bg=BG_CARD,
