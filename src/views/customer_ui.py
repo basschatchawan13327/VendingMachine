@@ -154,7 +154,7 @@ BG_APP         = CLR_DEEP_PURPLE  # Overall window background, header & footer (
 BG_MIDDLE      = CLR_LILAC        # Middle background area between top & bottom bar (#D883FF)
 BG_CARD        = CLR_DEEP_PURPLE  # Product cards & right panel background (#3A0C51)
 BG_SCREEN      = CLR_DARK_GREEN   # Digital display screen background (#12372E)
-BTN_BG         = CLR_LIME         # Buttons background (#BAEF2D)
+BTN_BG         = CLR_WHITE        # Buttons background (#FFFFFF)
 BTN_FG         = CLR_DEEP_PURPLE  # Buttons text color (#3A0C51)
 
 
@@ -207,10 +207,10 @@ class CustomButton(tk.Label):
         self._normal_bg = bg if bg is not None else BTN_BG
         self._normal_fg = fg if fg is not None else BTN_FG
 
-        if activebackground is not None:
+        if activebackground is not None and activebackground != CLR_WHITE:
             self._active_bg = activebackground
         else:
-            self._active_bg = CLR_WHITE
+            self._active_bg = CLR_LIME
 
         if activeforeground is not None:
             self._active_fg = activeforeground
@@ -276,11 +276,11 @@ class CustomButton(tk.Label):
         if normal_fg is not None:
             self._normal_fg = normal_fg
         if hover_bg is not None:
-            self._active_bg = hover_bg
+            self._active_bg = hover_bg if hover_bg != CLR_WHITE else CLR_LIME
         if hover_fg is not None:
             self._active_fg = hover_fg
         if press_bg is not None:
-            self._press_bg = press_bg
+            self._press_bg = press_bg if press_bg != CLR_WHITE else CLR_LIME
         if self._state != tk.DISABLED:
             super().config(bg=self._normal_bg, fg=self._normal_fg)
 
@@ -773,7 +773,7 @@ class CustomerVendingApp:
 
         self.style.configure(
             "TButton",
-            background=BTN_BG,
+            background=CLR_WHITE,
             foreground=BTN_FG,
             font=("Helvetica", 12, "bold"),
             relief="flat",
@@ -782,21 +782,21 @@ class CustomerVendingApp:
         )
         self.style.map(
             "TButton",
-            background=[("disabled", "#444444"), ("pressed", CLR_WHITE), ("active", CLR_WHITE)],
+            background=[("disabled", "#444444"), ("pressed", CLR_LIME), ("active", CLR_LIME)],
             foreground=[("disabled", "#888888"), ("pressed", BTN_FG), ("active", BTN_FG)],
             relief=[("pressed", "sunken"), ("!pressed", "flat")],
         )
         self.style.configure(
             "Cancel.TButton",
-            background="#4A0E4E",
-            foreground=CLR_WHITE,
+            background=CLR_WHITE,
+            foreground="#4A0E4E",
             font=("Helvetica", 12, "bold"),
             relief="flat",
             borderwidth=0,
         )
         self.style.map(
             "Cancel.TButton",
-            background=[("disabled", "#444444"), ("pressed", CLR_WHITE), ("active", CLR_WHITE)],
+            background=[("disabled", "#444444"), ("pressed", CLR_LIME), ("active", CLR_LIME)],
             foreground=[("disabled", "#888888"), ("pressed", CLR_DEEP_PURPLE), ("active", CLR_DEEP_PURPLE)],
         )
 
@@ -1253,9 +1253,9 @@ class CustomerVendingApp:
         btn: Any,
         normal_bg: str = BTN_BG,
         normal_fg: str = BTN_FG,
-        hover_bg: str = CLR_WHITE,
+        hover_bg: str = CLR_LIME,
         hover_fg: str = CLR_DEEP_PURPLE,
-        press_bg: str = CLR_WHITE,
+        press_bg: str = CLR_LIME,
     ) -> None:
         """Attaches buttery-smooth hover illumination and tactile press feedback."""
         if hasattr(btn, "set_animation_colors"):
@@ -1913,13 +1913,13 @@ class CustomerVendingApp:
         if active_page == "loyalty":
             if key in ("Escape", "BackSpace") or char in ("c", "C"):
                 if hasattr(self, "loyalty_cancel_btn") and self.loyalty_cancel_btn.winfo_exists():
-                    self.loyalty_cancel_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
-                    self.root.after(120, lambda: self._safe_config(self.loyalty_cancel_btn, bg="#4A0E4E", relief=tk.FLAT))
+                    self.loyalty_cancel_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
+                    self.root.after(120, lambda: self._safe_config(self.loyalty_cancel_btn, bg=CLR_WHITE, relief=tk.FLAT))
                 self.root.after(130, self._on_cancel_loyalty)
                 return
             elif key in ("Return", "KP_Enter", "space") or char in ("s", "S"):
                 if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
-                    self.loyalty_skip_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    self.loyalty_skip_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.loyalty_skip_btn, bg=BTN_BG, relief=tk.FLAT))
                 self.root.after(130, self._on_skip_loyalty)
                 return
@@ -1929,15 +1929,15 @@ class CustomerVendingApp:
         if active_page == "payment":
             if key in ("Escape", "BackSpace", "KP_4") or char in ("4", "c", "C"):
                 if hasattr(self, "back_btn") and self.back_btn.winfo_exists():
-                    self.back_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
-                    self.root.after(120, lambda: self._safe_config(self.back_btn, bg="#4A0E4E", relief=tk.FLAT))
+                    self.back_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
+                    self.root.after(120, lambda: self._safe_config(self.back_btn, bg=CLR_WHITE, relief=tk.FLAT))
                 self.root.after(130, self._on_cancel_payment)
                 return
             elif char == "1" or key in ("KP_1", "1"):
                 if not getattr(self, "cash_enabled", True):
                     return
                 if hasattr(self, "cash_btn") and self.cash_btn.winfo_exists():
-                    self.cash_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    self.cash_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.cash_btn, bg=BTN_BG, relief=tk.FLAT))
                 self.root.after(130, self._on_choose_cash)
                 return
@@ -1945,7 +1945,7 @@ class CustomerVendingApp:
                 if not getattr(self, "card_enabled", True):
                     return
                 if hasattr(self, "card_btn") and self.card_btn.winfo_exists():
-                    self.card_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    self.card_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.card_btn, bg=BTN_BG, relief=tk.FLAT))
                 self.root.after(130, self._on_choose_card)
                 return
@@ -1955,7 +1955,7 @@ class CustomerVendingApp:
         if active_page == "success":
             if key in ("Return", "KP_Enter", "Escape", "space", "KP_1", "1") or char in ("1", "c", "C"):
                 if hasattr(self, "return_home_btn") and self.return_home_btn.winfo_exists():
-                    self.return_home_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    self.return_home_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.return_home_btn, bg=BTN_BG, relief=tk.FLAT))
                 self.root.after(130, self._return_to_catalogue)
                 return
@@ -1972,7 +1972,7 @@ class CustomerVendingApp:
         if active_page == "cancelled":
             if key in ("Return", "KP_Enter", "Escape", "space") or char in ("c", "C"):
                 if hasattr(self, "cancelled_home_btn") and self.cancelled_home_btn.winfo_exists():
-                    self.cancelled_home_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    self.cancelled_home_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.cancelled_home_btn, bg=BTN_BG, relief=tk.FLAT))
                 self.root.after(130, self._return_to_catalogue_from_cancelled)
                 return
@@ -1990,12 +1990,12 @@ class CustomerVendingApp:
         elif key in ("Return", "KP_Enter"):
             # Animate confirm button on Enter keypress
             if hasattr(self, "confirm_btn"):
-                self.confirm_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                self.confirm_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                 self.root.after(120, lambda: self._safe_config(self.confirm_btn, bg=BTN_BG, relief=tk.FLAT))
             self.root.after(130, self._on_confirm_selection)
         elif char in ("o", "O"):
             if hasattr(self, "option_btn") and self.option_btn.winfo_exists():
-                self.option_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                self.option_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                 self.root.after(120, lambda: self._safe_config(self.option_btn, bg=BTN_BG, relief=tk.FLAT))
             self.root.after(130, self._open_options_dialog)
 
@@ -2039,7 +2039,7 @@ class CustomerVendingApp:
         """Clears slot selection back to default on BackSpace or Esc key with button animation."""
         self._dispense_banner_active = False
         if hasattr(self, "clear_btn") and self.clear_btn.winfo_exists():
-            self.clear_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+            self.clear_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
             self.root.after(120, lambda: self._safe_config(self.clear_btn, bg=BTN_BG, relief=tk.FLAT))
         self.entered_slot.set("--")
         self._highlight_active_card(None)
@@ -2141,7 +2141,7 @@ class CustomerVendingApp:
     def _on_confirm_selection(self) -> None:
         """Validates selection and proceeds to payment with button press animation."""
         if hasattr(self, "confirm_btn"):
-            self.confirm_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+            self.confirm_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
             self.root.after(120, lambda: self._safe_config(self.confirm_btn, bg=BTN_BG, relief=tk.FLAT))
         slot_text = self.entered_slot.get().replace("-", "").strip()
         if not slot_text:
@@ -3211,20 +3211,20 @@ class CustomerVendingApp:
         def update_channels_ui():
             if self.cash_enabled:
                 cash_status_lbl.config(text="STATUS: [ ENABLED ]", fg=CLR_LIME)
-                btn_toggle_cash.config(text="⛔ Disable Cash Payment", bg=CLR_DEEP_PURPLE, fg=CLR_WHITE)
+                btn_toggle_cash.config(text="⛔ Disable Cash Payment", bg=CLR_WHITE, fg=CLR_DEEP_PURPLE)
                 cash_chan_frame.config(highlightbackground=CLR_LIME)
             else:
                 cash_status_lbl.config(text="STATUS: [ DISABLED ]", fg="#FF6B6B")
-                btn_toggle_cash.config(text="✅ Enable Cash Payment", bg=BTN_BG, fg=BTN_FG)
+                btn_toggle_cash.config(text="✅ Enable Cash Payment", bg=CLR_WHITE, fg=CLR_DEEP_PURPLE)
                 cash_chan_frame.config(highlightbackground="#FF6B6B")
 
             if self.card_enabled:
                 card_status_lbl.config(text="STATUS: [ ENABLED ]", fg=CLR_LIME)
-                btn_toggle_card.config(text="⛔ Disable Card Payment", bg=CLR_DEEP_PURPLE, fg=CLR_WHITE)
+                btn_toggle_card.config(text="⛔ Disable Card Payment", bg=CLR_WHITE, fg=CLR_DEEP_PURPLE)
                 card_chan_frame.config(highlightbackground=CLR_LIME)
             else:
                 card_status_lbl.config(text="STATUS: [ DISABLED ]", fg="#FF6B6B")
-                btn_toggle_card.config(text="✅ Enable Card Payment", bg=BTN_BG, fg=BTN_FG)
+                btn_toggle_card.config(text="✅ Enable Card Payment", bg=CLR_WHITE, fg=CLR_DEEP_PURPLE)
                 card_chan_frame.config(highlightbackground="#FF6B6B")
 
         def toggle_cash_channel():
@@ -3242,9 +3242,9 @@ class CustomerVendingApp:
             cash_chan_frame,
             text="⛔ Disable Cash Payment",
             font=("Helvetica", 11, "bold"),
-            bg=CLR_DEEP_PURPLE,
-            fg=CLR_WHITE,
-            activebackground=CLR_WHITE,
+            bg=CLR_WHITE,
+            fg=CLR_DEEP_PURPLE,
+            activebackground=CLR_LIME,
             activeforeground=CLR_DEEP_PURPLE,
             relief=tk.FLAT,
             bd=0,
@@ -3301,9 +3301,9 @@ class CustomerVendingApp:
             card_chan_frame,
             text="⛔ Disable Card Payment",
             font=("Helvetica", 11, "bold"),
-            bg=CLR_DEEP_PURPLE,
-            fg=CLR_WHITE,
-            activebackground=CLR_WHITE,
+            bg=CLR_WHITE,
+            fg=CLR_DEEP_PURPLE,
+            activebackground=CLR_LIME,
             activeforeground=CLR_DEEP_PURPLE,
             relief=tk.FLAT,
             bd=0,
@@ -3439,9 +3439,9 @@ class CustomerVendingApp:
             sec_box,
             text="👁️ Show",
             font=("Helvetica", 10, "bold"),
-            bg=CLR_DEEP_PURPLE,
-            fg=CLR_WHITE,
-            activebackground=CLR_WHITE,
+            bg=CLR_WHITE,
+            fg=CLR_DEEP_PURPLE,
+            activebackground=CLR_LIME,
             activeforeground=CLR_DEEP_PURPLE,
             relief=tk.FLAT,
             bd=0,
@@ -3590,9 +3590,9 @@ class CustomerVendingApp:
             gw_btn_row,
             text="🧪 Test Connection",
             font=("Helvetica", 11, "bold"),
-            bg=CLR_DEEP_PURPLE,
-            fg=CLR_WHITE,
-            activebackground=CLR_WHITE,
+            bg=CLR_WHITE,
+            fg=CLR_DEEP_PURPLE,
+            activebackground=CLR_LIME,
             activeforeground=CLR_DEEP_PURPLE,
             relief=tk.FLAT,
             bd=0,
@@ -3995,9 +3995,9 @@ class CustomerVendingApp:
             trans_ctrl,
             text="🗑️ Clear Transaction History",
             font=("Helvetica", 11, "bold"),
-            bg=CLR_DEEP_PURPLE,
-            fg=CLR_WHITE,
-            activebackground=CLR_WHITE,
+            bg=CLR_WHITE,
+            fg=CLR_DEEP_PURPLE,
+            activebackground=CLR_LIME,
             activeforeground=CLR_DEEP_PURPLE,
             relief=tk.FLAT,
             bd=0,
@@ -4277,9 +4277,9 @@ class CustomerVendingApp:
                 cid_row,
                 text="🎲 Auto ID",
                 font=("Helvetica", 10, "bold"),
-                bg=CLR_DEEP_PURPLE,
-                fg=CLR_WHITE,
-                activebackground=CLR_WHITE,
+                bg=CLR_WHITE,
+                fg=CLR_DEEP_PURPLE,
+                activebackground=CLR_LIME,
                 activeforeground=CLR_DEEP_PURPLE,
                 relief=tk.FLAT,
                 bd=0,
@@ -4357,8 +4357,10 @@ class CustomerVendingApp:
                 btn_box,
                 text="Cancel",
                 font=("Helvetica", 11),
-                bg=CLR_DEEP_PURPLE,
-                fg=CLR_WHITE,
+                bg=CLR_WHITE,
+                fg=CLR_DEEP_PURPLE,
+                activebackground=CLR_LIME,
+                activeforeground=CLR_DEEP_PURPLE,
                 relief=tk.FLAT,
                 bd=0,
                 padx=14,
@@ -4418,9 +4420,9 @@ class CustomerVendingApp:
             members_ctrl,
             text="🔄 Toggle Active / Inactive",
             font=("Helvetica", 11, "bold"),
-            bg=CLR_DEEP_PURPLE,
-            fg=CLR_WHITE,
-            activebackground=CLR_WHITE,
+            bg=CLR_WHITE,
+            fg=CLR_DEEP_PURPLE,
+            activebackground=CLR_LIME,
             activeforeground=CLR_DEEP_PURPLE,
             relief=tk.FLAT,
             bd=0,
@@ -4461,9 +4463,9 @@ class CustomerVendingApp:
             members_ctrl,
             text="🗑️ Delete Member",
             font=("Helvetica", 11, "bold"),
-            bg=CLR_DEEP_PURPLE,
-            fg=CLR_WHITE,
-            activebackground=CLR_WHITE,
+            bg=CLR_WHITE,
+            fg=CLR_DEEP_PURPLE,
+            activebackground=CLR_LIME,
             activeforeground=CLR_DEEP_PURPLE,
             relief=tk.FLAT,
             bd=0,
@@ -4752,9 +4754,9 @@ class CustomerVendingApp:
             action_btn_row,
             text="[ ❌ Cancel Order (Esc) ]",
             font=("Helvetica", 15, "bold"),
-            bg="#4A0E4E",
-            fg=CLR_WHITE,
-            activebackground=CLR_WHITE,
+            bg=CLR_WHITE,
+            fg="#4A0E4E",
+            activebackground=CLR_LIME,
             activeforeground=CLR_DEEP_PURPLE,
             relief=tk.FLAT,
             padx=18,
@@ -4765,10 +4767,11 @@ class CustomerVendingApp:
         self.loyalty_cancel_btn.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
         self._attach_button_animation(
             self.loyalty_cancel_btn,
-            normal_bg="#4A0E4E",
-            normal_fg=CLR_WHITE,
-            hover_bg=CLR_WHITE,
+            normal_bg=CLR_WHITE,
+            normal_fg="#4A0E4E",
+            hover_bg=CLR_LIME,
             hover_fg=CLR_DEEP_PURPLE,
+            press_bg=CLR_LIME,
         )
 
         # 2. Skip Loyalty Card / Continue to Payment Button
@@ -4875,7 +4878,7 @@ class CustomerVendingApp:
                 member_name = self.scanned_member.get("name", member_name)
 
             if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
-                self.loyalty_skip_btn.config(text="[ ✅ Continue to Payment (Enter) ]", bg=CLR_LIME, fg=BTN_FG)
+                self.loyalty_skip_btn.config(text="[ ✅ Continue to Payment (Enter) ]", bg=CLR_WHITE, fg=BTN_FG)
             if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
                 self.loyalty_cam_status_lbl.config(text=f"🎉 Card Verified: {member_name} — 10% Discount Applied!", fg=CLR_LIME)
         else:
@@ -5072,7 +5075,7 @@ class CustomerVendingApp:
             if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
                 self.loyalty_skip_btn.config(
                     text="[ ✅ Continue to Payment (Enter) ]",
-                    bg=CLR_LIME,
+                    bg=CLR_WHITE,
                     fg=BTN_FG,
                 )
 
@@ -5370,9 +5373,9 @@ class CustomerVendingApp:
             parent,
             text="[ ❌ Cancel Order / Change Drink (Esc) ]",
             font=("Helvetica", 13, "bold"),
-            bg="#4A0E4E",
-            fg=CLR_WHITE,
-            activebackground=CLR_WHITE,
+            bg=CLR_WHITE,
+            fg="#4A0E4E",
+            activebackground=CLR_LIME,
             activeforeground=CLR_DEEP_PURPLE,
             relief=tk.FLAT,
             padx=12,
@@ -5383,10 +5386,11 @@ class CustomerVendingApp:
         self.back_btn.pack(side=tk.BOTTOM, fill=tk.X)
         self._attach_button_animation(
             self.back_btn,
-            normal_bg="#4A0E4E",
-            normal_fg=CLR_WHITE,
-            hover_bg=CLR_WHITE,
+            normal_bg=CLR_WHITE,
+            normal_fg="#4A0E4E",
+            hover_bg=CLR_LIME,
             hover_fg=CLR_DEEP_PURPLE,
+            press_bg=CLR_LIME,
         )
 
         # Member Information Box (In bottom-left area, right above back button)
@@ -6385,10 +6389,10 @@ class CustomerVendingApp:
                 grid_btn,
                 text=label,
                 font=("Menlo", 10, "bold"),
-                bg=CLR_DEEP_PURPLE if is_rej else BTN_BG,
-                fg=CLR_WHITE if is_rej else BTN_FG,
-                activebackground=CLR_WHITE,
-                activeforeground=CLR_DEEP_PURPLE if is_rej else BTN_FG,
+                bg=CLR_WHITE,
+                fg="#C0392B" if is_rej else BTN_FG,
+                activebackground=CLR_LIME,
+                activeforeground=CLR_DEEP_PURPLE,
                 relief=tk.FLAT,
                 padx=6,
                 pady=6,
@@ -6442,9 +6446,8 @@ class CustomerVendingApp:
                 if idx < len(coin_buttons):
                     btn = coin_buttons[idx]
                     if btn.cget("state") != tk.DISABLED:
-                        btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
-                        orig_bg = CLR_DEEP_PURPLE if (val in (2000, 5000)) else BTN_BG
-                        dialog.after(120, lambda b=btn, ob=orig_bg: self._safe_config(b, bg=ob, relief=tk.FLAT))
+                        btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
+                        dialog.after(120, lambda b=btn: self._safe_config(b, bg=CLR_WHITE, relief=tk.FLAT))
                 insert_coin(val)
                 return "break"
 
@@ -6844,16 +6847,16 @@ class CustomerVendingApp:
                 on_cancel()
             elif k in ("Return", "KP_Enter", "KP_1", "1") or ch == "1":
                 if retry_btn.winfo_ismapped() and retry_btn.cget("state") != tk.DISABLED:
-                    retry_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    retry_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     dialog.after(120, lambda: self._safe_config(retry_btn, bg=BTN_BG, relief=tk.FLAT))
                     start_checkout_connection()
                 elif simulate_btn.cget("state") != tk.DISABLED:
-                    simulate_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    simulate_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     dialog.after(120, lambda: self._safe_config(simulate_btn, bg=BTN_BG, relief=tk.FLAT))
                     simulate_card_payment()
             elif k in ("KP_2", "2") or ch == "2":
                 if simulate_btn.cget("state") != tk.DISABLED:
-                    simulate_btn.config(bg=CLR_WHITE, relief=tk.SUNKEN)
+                    simulate_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     dialog.after(120, lambda: self._safe_config(simulate_btn, bg=BTN_BG, relief=tk.FLAT))
                     simulate_card_payment()
 
