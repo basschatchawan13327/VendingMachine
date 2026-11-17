@@ -5225,7 +5225,7 @@ class CustomerVendingApp:
 
         tk.Label(
             cash_box,
-            text="💵 CASH PAYMENT",
+            text="💵 Press 1 to pay with cash",
             font=("Helvetica", 16, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
@@ -5278,8 +5278,8 @@ class CustomerVendingApp:
 
         tk.Label(
             cash_info,
-            text="• Accepts Coins: £2, £1, 50p, 20p, 10p\n• Accepts Banknotes: £5, £10, £20\n• Automatic coin change return\n• Real-time payment counter",
-            font=("Helvetica", 13),
+            text="• Accepts Coins: £2, £1, 50p, 20p, 10p\n• Accepts Banknotes: £5, £10, £20",
+            font=("Helvetica", 14),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
             justify=tk.LEFT,
@@ -5298,7 +5298,7 @@ class CustomerVendingApp:
 
         tk.Label(
             card_box,
-            text="💳 CREDIT CARD / DIGITAL",
+            text="Press 2 to pay with credit/debit card",
             font=("Helvetica", 16, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
