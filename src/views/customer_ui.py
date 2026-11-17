@@ -1843,7 +1843,7 @@ class CustomerVendingApp:
         all_slots = [int(str(p.get("slot_num")).strip()) for p in getattr(self, "catalogue", []) if str(p.get("slot_num", "")).strip().isdigit()]
         max_slot = max(all_slots) if all_slots else (len(self.catalogue) if getattr(self, "catalogue", None) else 4)
         steps = [
-            ("1", f"Type slot (1-{max_slot}) on keyboard to select drink.", True),
+            ("1", f"Type item number (1-{max_slot}) on keyboard to select drink.", True),
             ("2", "Press [ Enter ] to confirm and proceed to payment.", False),
             ("3", "Press [ Backspace ] to clear and re-enter selection.", False),
         ]
@@ -1873,7 +1873,7 @@ class CustomerVendingApp:
                 bg=BG_SCREEN,
                 anchor="w",
                 justify=tk.LEFT,
-                wraplength=340,
+                wraplength=300,
             )
             lbl.pack(side=tk.LEFT, fill=tk.X, expand=True)
             self._instr_labels.append(lbl)
@@ -1881,7 +1881,8 @@ class CustomerVendingApp:
                 self.instr_step1_lbl = lbl
 
         def _on_instr_configure(event):
-            avail_w = max(260, event.width - 45)
+            # Reserve space for inner padding (24px), border/highlight (4px), badge (32px), plus buffer
+            avail_w = max(220, event.width - 80)
             for l in getattr(self, "_instr_labels", []):
                 try:
                     if l.winfo_exists():
