@@ -1923,7 +1923,7 @@ class CustomerVendingApp:
 
         # Keypad Control on Page 2 (Loyalty Card Scan Page)
         if active_page == "loyalty":
-            if key in ("Escape", "BackSpace", "Delete") or char in ("c", "C"):
+            if key in ("BackSpace", "Delete") or char in ("c", "C"):
                 if hasattr(self, "loyalty_cancel_btn") and self.loyalty_cancel_btn.winfo_exists():
                     self.loyalty_cancel_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.loyalty_cancel_btn, bg=CLR_WHITE, relief=tk.FLAT))
@@ -1939,7 +1939,7 @@ class CustomerVendingApp:
 
         # Keypad Control on Page 3 (Payment Page)
         if active_page == "payment":
-            if key in ("Escape", "BackSpace", "Delete", "KP_4") or char in ("4", "c", "C"):
+            if key in ("BackSpace", "Delete", "KP_4") or char in ("4", "c", "C"):
                 if hasattr(self, "back_btn") and self.back_btn.winfo_exists():
                     self.back_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.back_btn, bg=CLR_WHITE, relief=tk.FLAT))
@@ -1965,7 +1965,7 @@ class CustomerVendingApp:
 
         # Keypad Control on Page 3 (Order Success & Dispense Page)
         if active_page == "success":
-            if key in ("Return", "KP_Enter", "Escape", "space", "KP_1", "1") or char in ("1", "c", "C"):
+            if key in ("Return", "KP_Enter", "space", "BackSpace", "KP_1", "1") or char in ("1", "c", "C"):
                 if hasattr(self, "return_home_btn") and self.return_home_btn.winfo_exists():
                     self.return_home_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.return_home_btn, bg=BTN_BG, relief=tk.FLAT))
@@ -1982,7 +1982,7 @@ class CustomerVendingApp:
 
         # Keypad Control on Page 4 (Order Cancelled & Refund Page)
         if active_page == "cancelled":
-            if key in ("Return", "KP_Enter", "Escape", "space") or char in ("c", "C"):
+            if key in ("Return", "KP_Enter", "space", "BackSpace") or char in ("c", "C"):
                 if hasattr(self, "cancelled_home_btn") and self.cancelled_home_btn.winfo_exists():
                     self.cancelled_home_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
                     self.root.after(120, lambda: self._safe_config(self.cancelled_home_btn, bg=BTN_BG, relief=tk.FLAT))
@@ -1997,7 +1997,7 @@ class CustomerVendingApp:
         elif key in ("KP_0", "KP_1", "KP_2", "KP_3", "KP_4", "KP_5", "KP_6", "KP_7", "KP_8", "KP_9"):
             digit = key.replace("KP_", "")
             self._handle_digit_input(digit)
-        elif key in ("BackSpace", "Delete", "Escape"):
+        elif key in ("BackSpace", "Delete"):
             self._handle_clear()
         elif key in ("Return", "KP_Enter"):
             # Animate confirm button on Enter keypress
@@ -2048,7 +2048,7 @@ class CustomerVendingApp:
         self._handle_clear()
 
     def _handle_clear(self) -> None:
-        """Clears slot selection back to default on BackSpace or Esc key with button animation."""
+        """Clears slot selection back to default on BackSpace key with button animation."""
         self._dispense_banner_active = False
         if hasattr(self, "clear_btn") and self.clear_btn.winfo_exists():
             self.clear_btn.config(bg=CLR_LIME, relief=tk.SUNKEN)
@@ -2290,10 +2290,11 @@ class CustomerVendingApp:
 
         dialog.protocol("WM_DELETE_WINDOW", on_close)
         def on_options_key(event: tk.Event):
-            if event.keysym in ("Escape",):
+            if isinstance(event.widget, (tk.Entry, ttk.Entry)):
+                return
+            if event.keysym in ("BackSpace", "Delete"):
                 on_close()
 
-        dialog.bind("<Escape>", lambda e: on_close())
         dialog.bind("<Key>", on_options_key)
 
         # -----------------------------------------------------------------
@@ -2350,7 +2351,7 @@ class CustomerVendingApp:
 
         close_btn = tk.Button(
             hdr,
-            text="✕ Close (Esc)",
+            text="✕ Close",
             font=("Helvetica", 12, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -5932,7 +5933,7 @@ class CustomerVendingApp:
         dialog.protocol("WM_DELETE_WINDOW", on_close_dialog)
 
         def on_loyalty_dlg_key(event: tk.Event):
-            if event.keysym in ("Escape", "BackSpace") or event.char in ("4",):
+            if event.keysym in ("BackSpace", "Delete") or event.char in ("4",):
                 on_close_dialog()
 
         dialog.bind("<Key>", on_loyalty_dlg_key)
@@ -6438,7 +6439,7 @@ class CustomerVendingApp:
         def on_cash_key(event: tk.Event):
             k = event.keysym
             ch = event.char
-            if k in ("Escape", "BackSpace", "Delete") or ch in ("c", "C"):
+            if k in ("BackSpace", "Delete") or ch in ("c", "C"):
                 on_cancel()
                 return "break"
             key_map = {
@@ -6855,7 +6856,7 @@ class CustomerVendingApp:
         def on_card_key(event: tk.Event):
             k = event.keysym
             ch = event.char
-            if k in ("Escape", "BackSpace", "Delete", "KP_4") or ch in ("c", "C", "4"):
+            if k in ("BackSpace", "Delete", "KP_4") or ch in ("c", "C", "4"):
                 on_cancel()
             elif k in ("Return", "KP_Enter", "KP_1", "1") or ch == "1":
                 if retry_btn.winfo_ismapped() and retry_btn.cget("state") != tk.DISABLED:
@@ -7342,9 +7343,9 @@ class CustomerVendingApp:
         # 3. Footer (same style as Page 3)
         self._build_cancelled_footer(page)
 
-        # Keyboard binding — Enter or Esc returns to catalogue
+        # Keyboard binding — Enter or Backspace returns to catalogue
         page.bind("<Return>", lambda e: self._return_to_catalogue_from_cancelled())
-        page.bind("<Escape>", lambda e: self._return_to_catalogue_from_cancelled())
+        page.bind("<BackSpace>", lambda e: self._return_to_catalogue_from_cancelled())
         page.bind("<KP_Enter>", lambda e: self._return_to_catalogue_from_cancelled())
 
     def _build_cancelled_header(self, parent: tk.Frame) -> None:
