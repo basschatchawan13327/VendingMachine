@@ -5229,22 +5229,48 @@ class CustomerVendingApp:
             font=("Helvetica", 16, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
-        ).pack(anchor="center", pady=(0, 12))
+        ).pack(anchor="center", pady=(0, 10))
 
-        self.cash_btn = tk.Button(
-            cash_box,
-            text="[ 1 ] 💵 PAY WITH CASH",
-            font=("Helvetica", 17, "bold"),
-            bg=BTN_BG,
-            fg=BTN_FG,
-            activebackground=CLR_WHITE,
-            activeforeground=BTN_FG,
-            relief=tk.FLAT,
-            pady=16,
-            cursor="hand2",
-            command=self._on_choose_cash,
-        )
-        self.cash_btn.pack(fill=tk.X, pady=(0, 16))
+        # Load and render cash-payment image for cash button
+        self._cash_btn_image = None
+        cash_img_path = os.path.join(ASSETS_DIR, "cash-payment.jpeg")
+        if not os.path.exists(cash_img_path):
+            cash_img_path = os.path.join(ASSETS_DIR, "cash-payment.jpg")
+
+        if os.path.exists(cash_img_path) and HAS_PIL and Image is not None and ImageTk is not None:
+            try:
+                raw_img = Image.open(cash_img_path).convert("RGBA")
+                gray = raw_img.convert("L")
+                alpha = gray.point(lambda p: 255 if p < 200 else int((255 - p) * 255 / 55) if p < 255 else 0)
+                clean_icon = Image.new("RGBA", raw_img.size, (18, 55, 46, 255))
+                clean_icon.putalpha(alpha)
+                clean_icon = clean_icon.resize((120, 120), Image.Resampling.LANCZOS)
+                self._cash_btn_image = ImageTk.PhotoImage(clean_icon)
+            except Exception:
+                try:
+                    raw_fallback = Image.open(cash_img_path).resize((120, 120), Image.Resampling.LANCZOS)
+                    self._cash_btn_image = ImageTk.PhotoImage(raw_fallback)
+                except Exception:
+                    self._cash_btn_image = None
+
+        cash_btn_kwargs = {
+            "text": "[ 1 ] 💵 PAY WITH CASH",
+            "font": ("Helvetica", 16, "bold"),
+            "bg": BTN_BG,
+            "fg": BTN_FG,
+            "activebackground": CLR_WHITE,
+            "activeforeground": BTN_FG,
+            "relief": tk.FLAT,
+            "pady": 10,
+            "cursor": "hand2",
+            "command": self._on_choose_cash,
+        }
+        if self._cash_btn_image is not None:
+            cash_btn_kwargs["image"] = self._cash_btn_image
+            cash_btn_kwargs["compound"] = tk.TOP
+
+        self.cash_btn = tk.Button(cash_box, **cash_btn_kwargs)
+        self.cash_btn.pack(fill=tk.X, pady=(0, 14))
         self._attach_button_animation(self.cash_btn)
 
         cash_info = tk.Frame(cash_box, bg=BG_SCREEN)
@@ -5408,22 +5434,31 @@ class CustomerVendingApp:
 
         # 5. Update Cash & Card Channel Availability on Page 3
         if hasattr(self, "cash_btn") and self.cash_btn.winfo_exists():
+            cash_img = getattr(self, "_cash_btn_image", None)
             if getattr(self, "cash_enabled", True):
-                self.cash_btn.config(
-                    text="[ 1 ] 💵 PAY WITH CASH",
-                    state=tk.NORMAL,
-                    bg=BTN_BG,
-                    fg=BTN_FG,
-                    cursor="hand2",
-                )
+                cfg = {
+                    "text": "[ 1 ] 💵 PAY WITH CASH",
+                    "state": tk.NORMAL,
+                    "bg": BTN_BG,
+                    "fg": BTN_FG,
+                    "cursor": "hand2",
+                }
+                if cash_img is not None:
+                    cfg["image"] = cash_img
+                    cfg["compound"] = tk.TOP
+                self.cash_btn.config(**cfg)
             else:
-                self.cash_btn.config(
-                    text="[ 1 ] 💵 CASH (UNAVAILABLE)",
-                    state=tk.DISABLED,
-                    bg="#444444",
-                    fg="#888888",
-                    cursor="arrow",
-                )
+                cfg = {
+                    "text": "[ 1 ] 💵 CASH (UNAVAILABLE)",
+                    "state": tk.DISABLED,
+                    "bg": "#444444",
+                    "fg": "#888888",
+                    "cursor": "arrow",
+                }
+                if cash_img is not None:
+                    cfg["image"] = cash_img
+                    cfg["compound"] = tk.TOP
+                self.cash_btn.config(**cfg)
 
         if hasattr(self, "card_btn") and self.card_btn.winfo_exists():
             if getattr(self, "card_enabled", True):
