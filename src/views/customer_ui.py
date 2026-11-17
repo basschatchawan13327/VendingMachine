@@ -1487,7 +1487,7 @@ class CustomerVendingApp:
         tk.Label(
             self.instruction_frame,
             text="💡 HOW TO ORDER",
-            font=("Helvetica", 13, "bold"),
+            font=("Helvetica", 14, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
         ).pack(anchor="w", pady=(0, 6))
@@ -1506,7 +1506,7 @@ class CustomerVendingApp:
             badge = tk.Label(
                 step_row,
                 text=num,
-                font=("Helvetica", 12, "bold"),
+                font=("Helvetica", 14, "bold"),
                 fg=BTN_FG,
                 bg=BTN_BG,
                 width=2,
@@ -1518,12 +1518,12 @@ class CustomerVendingApp:
             lbl = tk.Label(
                 step_row,
                 text=text,
-                font=("Helvetica", 12, "bold"),
+                font=("Helvetica", 14, "bold"),
                 fg=CLR_WHITE,
                 bg=BG_SCREEN,
                 anchor="w",
                 justify=tk.LEFT,
-                wraplength=250,
+                wraplength=255,
             )
             lbl.pack(side=tk.LEFT, fill=tk.X, expand=True)
             if is_step1:
