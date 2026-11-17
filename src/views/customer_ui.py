@@ -1439,14 +1439,14 @@ class CustomerVendingApp:
         self.confirm_btn = tk.Button(
             parent,
             text="✅ CONFIRM SELECTION (Enter)",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 12, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             activebackground=CLR_WHITE,
             activeforeground=BTN_FG,
             relief=tk.FLAT,
             bd=0,
-            pady=8,
+            pady=9,
             cursor="hand2",
             command=self._on_confirm_selection,
         )
@@ -1464,7 +1464,7 @@ class CustomerVendingApp:
             activeforeground=BTN_FG,
             relief=tk.FLAT,
             bd=0,
-            pady=7,
+            pady=8,
             cursor="hand2",
             command=self._handle_clear,
         )
@@ -1476,7 +1476,7 @@ class CustomerVendingApp:
             parent,
             bg=BG_SCREEN,
             padx=12,
-            pady=8,
+            pady=10,
             relief=tk.RIDGE,
             bd=1,
             highlightthickness=1,
@@ -1487,7 +1487,7 @@ class CustomerVendingApp:
         tk.Label(
             self.instruction_frame,
             text="💡 HOW TO ORDER",
-            font=("Helvetica", 10, "bold"),
+            font=("Helvetica", 13, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
         ).pack(anchor="w", pady=(0, 6))
@@ -1501,24 +1501,24 @@ class CustomerVendingApp:
 
         for num, text, is_step1 in steps:
             step_row = tk.Frame(self.instruction_frame, bg=BG_SCREEN)
-            step_row.pack(fill=tk.X, pady=2)
+            step_row.pack(fill=tk.X, pady=4)
 
             badge = tk.Label(
                 step_row,
                 text=num,
-                font=("Helvetica", 9, "bold"),
+                font=("Helvetica", 12, "bold"),
                 fg=BTN_FG,
                 bg=BTN_BG,
                 width=2,
-                padx=1,
-                pady=1,
+                padx=2,
+                pady=2,
             )
             badge.pack(side=tk.LEFT, anchor="center", padx=(0, 8))
 
             lbl = tk.Label(
                 step_row,
                 text=text,
-                font=("Helvetica", 9),
+                font=("Helvetica", 12, "bold"),
                 fg=CLR_WHITE,
                 bg=BG_SCREEN,
                 anchor="w",
