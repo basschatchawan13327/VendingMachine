@@ -156,6 +156,8 @@ BG_CARD        = CLR_DEEP_PURPLE  # Product cards & right panel background (#3A0
 BG_SCREEN      = CLR_DARK_GREEN   # Digital display screen background (#12372E)
 BTN_BG         = CLR_WHITE        # Buttons background (#FFFFFF)
 BTN_FG         = CLR_DEEP_PURPLE  # Buttons text color (#3A0C51)
+BADGE_BG       = CLR_LIME         # Plates & badges background (#BAEF2D)
+BADGE_FG       = CLR_DEEP_PURPLE  # Plates & badges text color (#3A0C51)
 
 
 # ===========================================================================
@@ -1409,13 +1411,13 @@ class CustomerVendingApp:
             bg=BG_APP,
         ).pack(side=tk.LEFT, padx=14, pady=16)
 
-        # Step Indicator Badge (Button style: #BAEF2D)
+        # Step Indicator Badge (Plate style: #BAEF2D)
         step_badge = tk.Label(
             header,
             text="STEP 1: SELECT DRINK",
             font=("Helvetica", 10, "bold"),
-            fg=BTN_FG,
-            bg=BTN_BG,
+            fg=BADGE_FG,
+            bg=BADGE_BG,
             padx=12,
             pady=4,
         )
@@ -1544,14 +1546,14 @@ class CustomerVendingApp:
         top_row = tk.Frame(card, bg=BG_CARD)
         top_row.pack(side=tk.TOP, fill=tk.X, pady=(2, 3))
 
-        # Prominent Product Number Badge (Button color: #BAEF2D)
+        # Prominent Product Number Badge (Plate style: #BAEF2D)
         badge_num = int(prod["slot_num"]) if str(prod["slot_num"]).isdigit() else prod["slot_num"]
         slot_badge = tk.Label(
             top_row,
             text=f"No. {badge_num}",
             font=("Menlo", 13, "bold"),
-            fg=BTN_FG,
-            bg=BTN_BG,
+            fg=BADGE_FG,
+            bg=BADGE_BG,
             padx=8,
             pady=2,
         )
@@ -1677,7 +1679,16 @@ class CustomerVendingApp:
         ).pack(anchor="w", pady=(0, 6))
 
         # Digital LCD Number Box
-        self.lcd_frame = tk.Frame(parent, bg=BG_SCREEN, padx=10, pady=3, relief=tk.SUNKEN, bd=2)
+        self.lcd_frame = tk.Frame(
+            parent,
+            bg=BG_SCREEN,
+            padx=10,
+            pady=3,
+            relief=tk.RIDGE,
+            bd=1,
+            highlightthickness=1,
+            highlightbackground=CLR_LIME,
+        )
         self.lcd_frame.pack(fill=tk.X, pady=(0, 6))
 
         top_lcd = tk.Frame(self.lcd_frame, bg=BG_SCREEN)
@@ -1717,8 +1728,9 @@ class CustomerVendingApp:
             padx=10,
             pady=8,
             relief=tk.RIDGE,
-            bd=2,
-            highlightbackground=CLR_LILAC,
+            bd=1,
+            highlightthickness=1,
+            highlightbackground=CLR_LIME,
         )
         self.preview_box.pack(fill=tk.X, pady=(0, 8))
 
@@ -1815,7 +1827,7 @@ class CustomerVendingApp:
             relief=tk.RIDGE,
             bd=1,
             highlightthickness=1,
-            highlightbackground=CLR_LILAC,
+            highlightbackground=CLR_LIME,
         )
         self.instruction_frame.pack(fill=tk.X, pady=(10, 0))
 
@@ -1844,8 +1856,8 @@ class CustomerVendingApp:
                 step_row,
                 text=num,
                 font=("Helvetica", 14, "bold"),
-                fg=BTN_FG,
-                bg=BTN_BG,
+                fg=BADGE_FG,
+                bg=BADGE_BG,
                 width=2,
                 padx=2,
                 pady=2,
@@ -4697,8 +4709,8 @@ class CustomerVendingApp:
             hdr_row,
             text="10% OFF DISCOUNT",
             font=("Helvetica", 12, "bold"),
-            fg=BTN_FG,
-            bg=BTN_BG,
+            fg=BADGE_FG,
+            bg=BADGE_BG,
             padx=12,
             pady=3,
         )
@@ -4840,8 +4852,8 @@ class CustomerVendingApp:
             header,
             text="STEP 2 OF 3: SCAN LOYALTY CARD",
             font=("Helvetica", 11, "bold"),
-            fg=BTN_FG,
-            bg=BTN_BG,
+            fg=BADGE_FG,
+            bg=BADGE_BG,
             padx=12,
             pady=4,
         )
@@ -5271,8 +5283,8 @@ class CustomerVendingApp:
             header,
             text="STEP 3 OF 3: PAYMENT METHOD",
             font=("Helvetica", 11, "bold"),
-            fg=BTN_FG,
-            bg=BTN_BG,
+            fg=BADGE_FG,
+            bg=BADGE_BG,
             padx=12,
             pady=4,
         )
@@ -5495,8 +5507,8 @@ class CustomerVendingApp:
             pay_hdr,
             text="INSTANT CHECKOUT",
             font=("Helvetica", 11, "bold"),
-            fg=BTN_FG,
-            bg=BTN_BG,
+            fg=BADGE_FG,
+            bg=BADGE_BG,
             padx=10,
             pady=3,
         )
@@ -7139,8 +7151,8 @@ class CustomerVendingApp:
             header,
             text="ORDER SUCCESSFUL",
             font=("Helvetica", 9, "bold"),
-            fg=BTN_FG,
-            bg=BTN_BG,
+            fg=BADGE_FG,
+            bg=BADGE_BG,
             padx=10,
             pady=3,
         )
