@@ -713,14 +713,6 @@ class VendingController:
         return self._state
 
     @property
-    def selectedDrink(self) -> Optional[Drink]:
-        return self._selected_drink
-
-    @property
-    def listPrice(self) -> int:
-        return self._list_price
-
-    @property
     def amountDue(self) -> int:
         return self._amount_due
 

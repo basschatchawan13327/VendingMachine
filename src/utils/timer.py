@@ -76,14 +76,6 @@ class TransactionTimer:
         elapsed = time.monotonic() - self._start_time
         return max(0, int(self._timeout_seconds - elapsed))
 
-    def getElapsedTime(self) -> float:
-        """
-        Returns the elapsed seconds since timer started, or 0.0 if not running.
-        """
-        if not self._running or self._start_time is None:
-            return 0.0
-        return time.monotonic() - self._start_time
-
     @property
     def timeoutSeconds(self) -> int:
         """Return the current timeout limit in seconds."""
