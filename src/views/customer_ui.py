@@ -1665,8 +1665,7 @@ class CustomerVendingApp:
             w.bind("<Button-1>", on_card_click)
 
     # =======================================================================
-    # =======================================================================
-    # Right Column: Selection Console (Touch Keypad & Physical Keyboard Input)
+    # Right Column: Selection Console (Physical Keyboard Input)
     # =======================================================================
     def _build_selection_panel(self, parent: tk.Frame) -> None:
         """Right-hand panel featuring digital LCD display and enlarged item preview."""
@@ -1783,7 +1782,7 @@ class CustomerVendingApp:
         )
         self.preview_stock_lbl.pack(fill=tk.X)
 
-        # Big Confirm Purchase Button (Button color: #BAEF2D)
+        # Big Confirm Purchase Button (Button color: #FFFFFF)
         self.confirm_btn = tk.Button(
             parent,
             text="✅ Confirm Selection [ Enter ]",
@@ -1801,7 +1800,7 @@ class CustomerVendingApp:
         self.confirm_btn.pack(fill=tk.X, pady=(0, 4))
         self._attach_button_animation(self.confirm_btn)
 
-        # Clear Button (Button color: #BAEF2D)
+        # Clear Button (Button color: #FFFFFF)
         self.clear_btn = tk.Button(
             parent,
             text="🗑️ Clear Selection [ Backspace ]",
