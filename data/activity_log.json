@@ -1,1 +1,42 @@
-[]
+[
+  {
+    "timestamp": "2026-11-21 14:56:37",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-21 14:56:54",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-21 14:57:20",
+    "event": "PAYMENT_STARTED",
+    "details": "Method: CardReader, Amount due: 150p"
+  },
+  {
+    "timestamp": "2026-11-21 14:57:22",
+    "event": "SALE_COMPLETED",
+    "details": "Dispensed Espresso for 150p"
+  },
+  {
+    "timestamp": "2026-11-21 15:02:37",
+    "event": "SYSTEM_INIT",
+    "details": "VendingController initialized."
+  },
+  {
+    "timestamp": "2026-11-21 15:02:53",
+    "event": "DRINK_SELECTED",
+    "details": "Selected Espresso (150p)"
+  },
+  {
+    "timestamp": "2026-11-21 15:03:27",
+    "event": "USER_CANCELLED",
+    "details": "User cancelled transaction in state DRINK_SELECTED"
+  },
+  {
+    "timestamp": "2026-11-21 15:03:27",
+    "event": "SALE_ABORTED",
+    "details": "Reason: user cancelled, Drink: Espresso, Amount: 150p"
+  }
+]

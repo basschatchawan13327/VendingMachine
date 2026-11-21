@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "timestamp": "2026-11-21 14:57:22",
+    "drink_name": "Espresso",
+    "amount_paid": 150,
+    "status": "SUCCESS"
+  },
+  {
+    "timestamp": "2026-11-21 15:03:27",
+    "drink_name": "Espresso",
+    "amount_paid": 150,
+    "status": "USER CANCELLED"
+  }
+]
