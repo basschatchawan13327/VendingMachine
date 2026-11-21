@@ -1,7 +1,7 @@
 """
 Customer-Facing Vending Machine User Interface (customer_ui.py)
 --------------------------------------------------------------
-Modern, touchscreen-optimised customer interface designed for end-users.
+Modern, keyboard-driven customer interface designed for end-users.
 Styled STRICTLY using the official 5-color theme:
   1. #3A0C51 - Deep Aubergine Purple
   2. #BAEF2D - Electric Lime Green
@@ -743,14 +743,14 @@ def render_product_artwork(
 # ===========================================================================
 class CustomerVendingApp:
     """
-    User-Centric Touchscreen Vending Machine Application.
+    User-Centric Smart Drink Vending Machine Application.
     Provides a modular page architecture for seamless multi-page transitions.
     Styled strictly with the 5-color theme.
     """
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("Edge Hill University - Touchscreen Drink Vending Machine")
+        self.root.title("Edge Hill University - Smart Drink Vending Machine")
 
         # Responsive window sizing based on current display resolution
         screen_w = self.root.winfo_screenwidth()
