@@ -1665,8 +1665,7 @@ class CustomerVendingApp:
             w.bind("<Button-1>", on_card_click)
 
     # =======================================================================
-    # =======================================================================
-    # Right Column: Selection Console (Touch Keypad & Physical Keyboard Input)
+    # Right Column: Selection Console (Physical Keyboard Input)
     # =======================================================================
     def _build_selection_panel(self, parent: tk.Frame) -> None:
         """Right-hand panel featuring digital LCD display and enlarged item preview."""
@@ -1783,7 +1782,7 @@ class CustomerVendingApp:
         )
         self.preview_stock_lbl.pack(fill=tk.X)
 
-        # Big Confirm Purchase Button (Button color: #BAEF2D)
+        # Big Confirm Purchase Button (Button color: #FFFFFF)
         self.confirm_btn = tk.Button(
             parent,
             text="✅ Confirm Selection [ Enter ]",
@@ -1801,7 +1800,7 @@ class CustomerVendingApp:
         self.confirm_btn.pack(fill=tk.X, pady=(0, 4))
         self._attach_button_animation(self.confirm_btn)
 
-        # Clear Button (Button color: #BAEF2D)
+        # Clear Button (Button color: #FFFFFF)
         self.clear_btn = tk.Button(
             parent,
             text="🗑️ Clear Selection [ Backspace ]",
@@ -5013,8 +5012,14 @@ class CustomerVendingApp:
                     pass
 
             if detected_card_id:
-                self._apply_loyalty_card(detected_card_id)
-                return
+                last_failed = self._loyalty_cam_state.get("last_failed")
+                now = time.monotonic()
+                if not (last_failed and last_failed[0] == detected_card_id and (now - last_failed[1]) < 2.0):
+                    if self._apply_loyalty_card(detected_card_id):
+                        return
+                    self._loyalty_cam_state["last_failed"] = (detected_card_id, now)
+                if not self._loyalty_cam_state.get("running"):
+                    return
 
             render_w = 860
             render_h = 484
@@ -5057,6 +5062,7 @@ class CustomerVendingApp:
                 pass
             self._loyalty_cam_state["cap"] = None
         self._loyalty_cam_state["photo_ref"] = None
+        self._loyalty_cam_state["last_failed"] = None
 
         if hasattr(self, "loyalty_video_lbl") and self.loyalty_video_lbl.winfo_exists():
             self.loyalty_video_lbl.config(
@@ -5064,11 +5070,11 @@ class CustomerVendingApp:
                 text="[ 📷 Camera Preview Area ]\n\nPlease scan your loyalty card\nPosition Code 128 barcode inside the green box",
             )
 
-    def _apply_loyalty_card(self, card_id: str) -> None:
+    def _apply_loyalty_card(self, card_id: str) -> bool:
         """Validates and applies the loyalty membership discount."""
         card_id = str(card_id).strip()
         if not card_id:
-            return
+            return False
 
         success = self.controller.scanLoyalty(card_id)
         if success:
@@ -5094,12 +5100,23 @@ class CustomerVendingApp:
 
             # Auto-advance to payment page after 850ms
             self.root.after(850, self._on_skip_loyalty)
+            return True
         else:
             if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
+                scan_status = getattr(self.loyalty_scanner, "_last_scan_status", "")
+                is_inactive = scan_status == "inactive" or any(
+                    acc.card_id == card_id and not acc.isValid()
+                    for acc in getattr(self.loyalty_scanner, "accounts", [])
+                )
+                if is_inactive:
+                    msg = f"⛔ Card '{card_id}' is inactive. Try another card or press [ Enter ] to skip."
+                else:
+                    msg = f"❌ Card '{card_id}' is unrecognised. Try again or press [ Enter ] to skip."
                 self.loyalty_cam_status_lbl.config(
-                    text=f"❌ Card '{card_id}' is unrecognised. Try again or press [ Enter ] to skip.",
+                    text=msg,
                     fg="#FF6B6B",
                 )
+            return False
 
     def _on_skip_loyalty(self) -> None:
         """Proceeds to Page 3 (Payment Page) directly, stopping the camera scanner."""

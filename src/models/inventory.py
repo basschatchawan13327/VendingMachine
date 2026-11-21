@@ -522,6 +522,7 @@ class LoyaltyScanner:
         self._accounts: List[LoyaltyAccount] = accounts
         self._discount_rate: float = discount_rate
         self._last_scanned: Optional[LoyaltyAccount] = None
+        self._last_scan_status: str = ""
 
     # ------------------------------------------------------------------
     # Public methods
@@ -535,11 +536,13 @@ class LoyaltyScanner:
         :return: True if the card belongs to an active account, False otherwise.
         """
         self._last_scanned = None
+        self._last_scan_status = ""
 
         for account in self._accounts:
             if account.card_id == cardId:
                 if account.isValid():
                     self._last_scanned = account
+                    self._last_scan_status = "valid"
                     print(
                         f"[LoyaltyScanner] Card '{cardId}' accepted — "
                         f"welcome, {account.member_name}! "
@@ -547,9 +550,11 @@ class LoyaltyScanner:
                     )
                     return True
                 else:
+                    self._last_scan_status = "inactive"
                     print(f"[LoyaltyScanner] Card '{cardId}' found but account is inactive.")
                     return False
 
+        self._last_scan_status = "unrecognised"
         print(f"[LoyaltyScanner] Card '{cardId}' not recognised.")
         return False
 
