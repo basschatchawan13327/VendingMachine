@@ -332,6 +332,5 @@ VendingMachine/
 ---
 
 ## 👥 9. Project Credits & License
-* **Institution:** Edge Hill University — Department of Computer Science
-* **Module:** CIS2722 Software Engineering (Year 3) — Group Assignment (CW1)
-* **License:** See [LICENSE](LICENSE) for details.
+* **Project Manager** Chatchawan Jiamprasut 26749645
+* **Contributor 1** Tran Thi Kim Thuy 26749459
