@@ -1794,7 +1794,7 @@ class CustomerVendingApp:
         # Big Confirm Purchase Button (Button color: #FFFFFF)
         self.confirm_btn = tk.Button(
             parent,
-            text="✅ Confirm Selection [ Enter ]",
+            text="✅ Press [ Enter ] to Confirm Selection",
             font=("Helvetica", 12, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -1812,7 +1812,7 @@ class CustomerVendingApp:
         # Clear Button (Button color: #FFFFFF)
         self.clear_btn = tk.Button(
             parent,
-            text="🗑️ Clear Selection [ Backspace ]",
+            text="🗑️ Press [ Backspace ] to Clear Selection",
             font=("Helvetica", 12, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -2204,7 +2204,7 @@ class CustomerVendingApp:
         # Option button at bottom-left, on the same bar as the tip text
         self.option_btn = tk.Button(
             footer,
-            text="⚙️ Options [ O ]",
+            text="⚙️ Press [ O ] to Open Options",
             font=("Helvetica", 10, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -2974,57 +2974,29 @@ class CustomerVendingApp:
 
             cash_tot_lbl.config(text=f"💰 TOTAL CASH IN MACHINE: £{total_pence/100:.2f} ({total_pence}p)")
 
-        # Edit Denomination Quantity Panel
+        # Edit Cash Properties Panel (Text Entry Fields — click table row to load)
         cash_edit_frame = tk.Frame(tab_cash_frame, bg=BG_CARD, padx=14, pady=10)
         cash_edit_frame.pack(fill=tk.X, pady=(0, 8))
 
-        tk.Label(
-            cash_edit_frame,
-            text="Edit Cash / Coin Quantity:",
-            font=("Helvetica", 11, "bold"),
-            fg=CLR_LIME,
-            bg=BG_CARD,
-        ).pack(side=tk.LEFT, padx=(0, 8))
+        tk.Label(cash_edit_frame, text="Denom (p):", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT, padx=(0, 4))
+        cash_denom_var = tk.StringVar(value="10")
+        ent_cash_denom = tk.Entry(cash_edit_frame, textvariable=cash_denom_var, width=6, font=("Helvetica", 11))
+        ent_cash_denom.pack(side=tk.LEFT, padx=(0, 8))
 
-        cash_denom_map: Dict[str, int] = {}
-        cash_init = load_cash_inventory()
-        for c in cash_init.get("coins", []):
-            d = int(c.get("denomination", 0))
-            lbl = c.get("label", f"{d}p")
-            cash_denom_map[f"Coin: {lbl} ({d}p)"] = d
-        for n in cash_init.get("banknotes", []):
-            d = int(n.get("denomination", 0))
-            lbl = n.get("label", f"£{d // 100}")
-            cash_denom_map[f"Note: {lbl} ({d}p)"] = d
+        tk.Label(cash_edit_frame, text="Label:", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT, padx=(0, 4))
+        cash_label_var = tk.StringVar(value="10p")
+        ent_cash_label = tk.Entry(cash_edit_frame, textvariable=cash_label_var, width=10, font=("Helvetica", 11))
+        ent_cash_label.pack(side=tk.LEFT, padx=(0, 8))
 
-        denom_options = list(cash_denom_map.keys())
-        cash_denom_var = tk.StringVar(value=denom_options[0] if denom_options else "")
-        cash_denom_combo = ttk.Combobox(
-            cash_edit_frame,
-            textvariable=cash_denom_var,
-            values=denom_options,
-            state="readonly",
-            width=22,
-            font=("Helvetica", 11),
-        )
-        cash_denom_combo.pack(side=tk.LEFT, padx=(0, 10))
-
-        tk.Label(
-            cash_edit_frame,
-            text="Quantity:",
-            font=("Helvetica", 11, "bold"),
-            fg=CLR_WHITE,
-            bg=BG_CARD,
-        ).pack(side=tk.LEFT, padx=(0, 4))
-
+        tk.Label(cash_edit_frame, text="Quantity:", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT, padx=(0, 4))
         cash_qty_var = tk.StringVar(value="20")
-        cash_qty_ent = tk.Entry(
-            cash_edit_frame,
-            textvariable=cash_qty_var,
-            width=8,
-            font=("Helvetica", 11),
-        )
-        cash_qty_ent.pack(side=tk.LEFT, padx=(0, 10))
+        ent_cash_qty = tk.Entry(cash_edit_frame, textvariable=cash_qty_var, width=6, font=("Helvetica", 11))
+        ent_cash_qty.pack(side=tk.LEFT, padx=(0, 8))
+
+        tk.Label(cash_edit_frame, text="Max Cap:", font=("Helvetica", 11, "bold"), fg=CLR_WHITE, bg=BG_CARD).pack(side=tk.LEFT, padx=(0, 4))
+        cash_cap_var = tk.StringVar(value="100")
+        ent_cash_cap = tk.Entry(cash_edit_frame, textvariable=cash_cap_var, width=6, font=("Helvetica", 11))
+        ent_cash_cap.pack(side=tk.LEFT, padx=(0, 10))
 
         def on_cash_tree_select(event=None):
             sel = cash_tree.selection()
@@ -3033,67 +3005,85 @@ class CustomerVendingApp:
             vals = cash_tree.item(sel[0], "values")
             if len(vals) < 3:
                 return
-            row_label = str(vals[1])
-            row_qty = str(vals[2]).split()[0]
-            for opt in denom_options:
-                if row_label in opt:
-                    cash_denom_var.set(opt)
+            row_label = str(vals[1]).strip()
+            cash_data = load_cash_inventory()
+            for item in cash_data.get("coins", []) + cash_data.get("banknotes", []):
+                if str(item.get("label", "")).strip() == row_label:
+                    cash_denom_var.set(str(item.get("denomination", 0)))
+                    cash_label_var.set(str(item.get("label", row_label)))
+                    cash_qty_var.set(str(item.get("quantity", 0)))
+                    cash_cap_var.set(str(item.get("max_capacity", 100)))
+                    cash_val_res_lbl.config(text=f"Loaded {row_label} ({item.get('denomination')}p) into editor", fg=CLR_WHITE)
                     break
-            cash_qty_var.set(row_qty)
 
         cash_tree.bind("<<TreeviewSelect>>", on_cash_tree_select)
 
         def do_update_cash_qty():
-            selected_opt = cash_denom_var.get()
-            if selected_opt not in cash_denom_map:
-                cash_val_res_lbl.config(text="❌ Please select a valid denomination.", fg="#FF6B6B")
-                return
+            raw_denom = cash_denom_var.get().strip().lower().replace("p", "")
             try:
+                target_denom = int(raw_denom)
                 new_qty = int(cash_qty_var.get().strip())
-                if new_qty < 0:
-                    raise ValueError("negative")
+                new_cap = int(cash_cap_var.get().strip())
+                if new_qty < 0 or new_cap <= 0:
+                    raise ValueError("range")
             except ValueError:
-                cash_val_res_lbl.config(text="❌ Quantity must be a non-negative integer.", fg="#FF6B6B")
+                cash_val_res_lbl.config(text="❌ Error: Denom, Quantity (>=0), and Max Cap (>0) must be integers", fg="#FF6B6B")
                 return
 
-            target_denom = cash_denom_map[selected_opt]
+            new_label = cash_label_var.get().strip()
             cash_data = load_cash_inventory()
             dispenser = getattr(self.cash_receiver, "_dispenser", None)
-            updated_label = selected_opt
+            matched = False
+            updated_label = new_label or f"{target_denom}p"
 
             for item in cash_data.get("coins", []):
                 if int(item.get("denomination", 0)) == target_denom:
                     item["quantity"] = new_qty
+                    item["max_capacity"] = new_cap
+                    if new_label:
+                        item["label"] = new_label
                     updated_label = item.get("label", updated_label)
                     if dispenser and hasattr(dispenser, "_coin_stock"):
                         dispenser._coin_stock[target_denom] = new_qty
+                    matched = True
+                    break
 
-            for item in cash_data.get("banknotes", []):
-                if int(item.get("denomination", 0)) == target_denom:
-                    item["quantity"] = new_qty
-                    updated_label = item.get("label", updated_label)
+            if not matched:
+                for item in cash_data.get("banknotes", []):
+                    if int(item.get("denomination", 0)) == target_denom:
+                        item["quantity"] = new_qty
+                        item["max_capacity"] = new_cap
+                        if new_label:
+                            item["label"] = new_label
+                        updated_label = item.get("label", updated_label)
+                        matched = True
+                        break
+
+            if not matched:
+                cash_val_res_lbl.config(text=f"❌ Denomination {target_denom}p not found (Accepted: 10, 20, 50, 100, 200, 500, 1000)", fg="#FF6B6B")
+                return
 
             recalculate_cash_summary(cash_data)
             save_cash_inventory(cash_data)
             refresh_cash_view()
             refresh_system_summary()
-            log_activity("CASH_INVENTORY_UPDATED", f"Admin set {updated_label} ({target_denom}p) quantity to {new_qty}")
-            cash_val_res_lbl.config(text=f"✅ Updated {updated_label} quantity to {new_qty} & saved", fg=CLR_LIME)
+            log_activity("CASH_INVENTORY_UPDATED", f"Admin updated {updated_label} ({target_denom}p): qty={new_qty}, max_cap={new_cap}")
+            cash_val_res_lbl.config(text=f"✅ Saved {updated_label} ({target_denom}p): Qty={new_qty}, Max Cap={new_cap}", fg=CLR_LIME)
 
         btn_update_cash = tk.Button(
             cash_edit_frame,
-            text="💾 Update Quantity",
+            text="💾 Save Cash Item",
             font=("Helvetica", 11, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             relief=tk.FLAT,
             bd=0,
             padx=14,
-            pady=6,
+            pady=5,
             cursor="hand2",
             command=do_update_cash_qty,
         )
-        btn_update_cash.pack(side=tk.LEFT)
+        btn_update_cash.pack(side=tk.LEFT, padx=(4, 0))
         self._attach_button_animation(btn_update_cash)
 
         # Controls & Validator Test Frame
@@ -4885,7 +4875,7 @@ class CustomerVendingApp:
         # 1. Cancel Order Button (Back to Catalogue Menu)
         self.loyalty_cancel_btn = tk.Button(
             action_btn_row,
-            text=" ❌ Cancel Order [ Backspace ] ",
+            text=" ❌ Press [ Backspace ] to Cancel Order ",
             font=("Helvetica", 15, "bold"),
             bg=CLR_WHITE,
             fg="#4A0E4E",
@@ -4910,7 +4900,7 @@ class CustomerVendingApp:
         # 2. Skip Loyalty Card / Continue to Payment Button
         self.loyalty_skip_btn = tk.Button(
             action_btn_row,
-            text=" ⏭️ Skip Loyalty Card [ Enter ] ",
+            text=" ⏭️ Press [ Enter ] to Skip Loyalty Card ",
             font=("Helvetica", 16, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -5011,12 +5001,12 @@ class CustomerVendingApp:
                 member_name = self.scanned_member.get("name", member_name)
 
             if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
-                self.loyalty_skip_btn.config(text=" ✅ Continue to Payment [ Enter ] ", bg=CLR_WHITE, fg=BTN_FG)
+                self.loyalty_skip_btn.config(text=" ✅ Press [ Enter ] to Continue to Payment ", bg=CLR_WHITE, fg=BTN_FG)
             if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
                 self.loyalty_cam_status_lbl.config(text=f"🎉 Card Verified: {member_name} — 10% Discount Applied!", fg=CLR_LIME)
         else:
             if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
-                self.loyalty_skip_btn.config(text=" ⏭️ Skip Loyalty Card [ Enter ] ", bg=BTN_BG, fg=BTN_FG)
+                self.loyalty_skip_btn.config(text=" ⏭️ Press [ Enter ] to Skip Loyalty Card ", bg=BTN_BG, fg=BTN_FG)
             if hasattr(self, "loyalty_cam_status_lbl") and self.loyalty_cam_status_lbl.winfo_exists():
                 self.loyalty_cam_status_lbl.config(text="Please scan your loyalty card", fg=CLR_LIME)
 
@@ -5214,7 +5204,7 @@ class CustomerVendingApp:
                 )
             if hasattr(self, "loyalty_skip_btn") and self.loyalty_skip_btn.winfo_exists():
                 self.loyalty_skip_btn.config(
-                    text=" ✅ Continue to Payment [ Enter ] ",
+                    text=" ✅ Press [ Enter ] to Continue to Payment ",
                     bg=CLR_WHITE,
                     fg=BTN_FG,
                 )
@@ -5598,7 +5588,7 @@ class CustomerVendingApp:
         # 3. CANCEL ORDER / CHANGE DRINK BUTTON (Directly below Member Profile at bottom of sidebar)
         self.back_btn = tk.Button(
             parent,
-            text=" ❌ Cancel Order / Change Drink [ Backspace ] ",
+            text=" ❌ Press [ Backspace ] to Cancel Order ",
             font=("Helvetica", 15, "bold"),
             bg=CLR_WHITE,
             fg="#4A0E4E",
@@ -6010,7 +6000,7 @@ class CustomerVendingApp:
         dialog = tk.Toplevel(self.root)
         self._active_modal = dialog
         dialog.title("Cash Payment Terminal")
-        cw, ch = 540, 590
+        cw, ch = 660, 610
         dialog.geometry(f"{cw}x{ch}")
         dialog.resizable(False, False)
         dialog.configure(bg=BG_APP)
@@ -6049,7 +6039,7 @@ class CustomerVendingApp:
         tk.Label(
             top_bar,
             text="💵 Cash Payment Terminal",
-            font=("Helvetica", 14, "bold"),
+            font=("Helvetica", 17, "bold"),
             fg=CLR_LIME,
             bg=BG_APP,
         ).pack(side=tk.LEFT)
@@ -6058,11 +6048,11 @@ class CustomerVendingApp:
         cash_timer_badge = tk.Label(
             top_bar,
             text=f"⏱️ {initial_timeout}s",
-            font=("Menlo", 12, "bold"),
+            font=("Menlo", 14, "bold"),
             fg=CLR_WHITE,
             bg=BG_CARD,
-            padx=8,
-            pady=3,
+            padx=10,
+            pady=4,
         )
         cash_timer_badge.pack(side=tk.RIGHT)
 
@@ -6099,7 +6089,7 @@ class CustomerVendingApp:
         lbl_due = tk.Label(
             screen,
             text=f"Amount Due: £{amount_due / 100:.2f} ({amount_due}p)",
-            font=("Helvetica", 12, "bold"),
+            font=("Helvetica", 15, "bold"),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
         )
@@ -6108,31 +6098,33 @@ class CustomerVendingApp:
         lbl_inserted = tk.Label(
             screen,
             text="Total Inserted: £0.00 (0p)",
-            font=("Menlo", 16, "bold"),
+            font=("Menlo", 20, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
         )
-        lbl_inserted.pack(anchor="w", pady=(4, 2))
+        lbl_inserted.pack(anchor="w", pady=(6, 4))
 
         lbl_status = tk.Label(
             screen,
             text=f"Please insert coins or notes (£{amount_due / 100:.2f} remaining)",
-            font=("Helvetica", 11),
+            font=("Helvetica", 13, "bold"),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
+            wraplength=530,
+            justify="left",
         )
         lbl_status.pack(anchor="w")
 
         lbl_change = tk.Label(
             screen,
             text="",
-            font=("Helvetica", 10, "bold"),
+            font=("Helvetica", 12, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
-            wraplength=480,
+            wraplength=530,
             justify="left",
         )
-        lbl_change.pack(anchor="w", pady=(2, 0))
+        lbl_change.pack(anchor="w", pady=(3, 0))
 
         coins_box = tk.Frame(body, bg=BG_CARD, padx=12, pady=10)
         coins_box.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
@@ -6140,32 +6132,32 @@ class CustomerVendingApp:
         tk.Label(
             coins_box,
             text="Simulate Cash Insertion — Accepted: 10p to £10.00 (Keypad 1 - 9):",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 13, "bold"),
             fg=CLR_WHITE,
             bg=BG_CARD,
-        ).pack(anchor="w", pady=(0, 2))
+        ).pack(anchor="w", pady=(0, 4))
 
         tk.Label(
             coins_box,
             text="⚠️ Note: £20 and £50 banknotes will not be accepted and will be returned.",
-            font=("Helvetica", 9),
+            font=("Helvetica", 11, "bold"),
             fg="#FFD93D",
             bg=BG_CARD,
-        ).pack(anchor="w", pady=(0, 6))
+        ).pack(anchor="w", pady=(0, 8))
 
         grid_btn = tk.Frame(coins_box, bg=BG_CARD)
         grid_btn.pack(fill=tk.X)
 
         denominations = [
-            ("[ 1 ] 10p", 10),
-            ("[ 2 ] 20p", 20),
-            ("[ 3 ] 50p", 50),
-            ("[ 4 ] £1.00", 100),
-            ("[ 5 ] £2.00", 200),
-            ("[ 6 ] £5.00 Note", 500),
-            ("[ 7 ] £10.00 Note", 1000),
-            ("[ 8 ] £20 Note ⚠️", 2000),
-            ("[ 9 ] £50 Note ⚠️", 5000),
+            ("Press [ 1 ] to Insert 10p", 10),
+            ("Press [ 2 ] to Insert 20p", 20),
+            ("Press [ 3 ] to Insert 50p", 50),
+            ("Press [ 4 ] to Insert £1.00", 100),
+            ("Press [ 5 ] to Insert £2.00", 200),
+            ("Press [ 6 ] to Insert £5.00", 500),
+            ("Press [ 7 ] to Insert £10.00", 1000),
+            ("Press [ 8 ] to Insert £20 ⚠️", 2000),
+            ("Press [ 9 ] to Insert £50 ⚠️", 5000),
         ]
 
         coin_buttons = []
@@ -6282,18 +6274,18 @@ class CustomerVendingApp:
             btn = tk.Button(
                 grid_btn,
                 text=label,
-                font=("Menlo", 10, "bold"),
+                font=("Helvetica", 11, "bold"),
                 bg=CLR_WHITE,
                 fg="#C0392B" if is_rej else BTN_FG,
                 activebackground=CLR_LIME,
                 activeforeground=CLR_DEEP_PURPLE,
                 relief=tk.FLAT,
-                padx=6,
-                pady=6,
+                padx=8,
+                pady=10,
                 cursor="hand2",
                 command=lambda v=val: insert_coin(v),
             )
-            btn.grid(row=r, column=c, padx=3, pady=3, sticky="nsew")
+            btn.grid(row=r, column=c, padx=4, pady=4, sticky="nsew")
             self._attach_button_animation(btn)
             coin_buttons.append(btn)
 
@@ -6302,15 +6294,15 @@ class CustomerVendingApp:
 
         cancel_btn = tk.Button(
             body,
-            text=" ❌ Cancel Cash Payment [ Backspace ] ",
-            font=("Helvetica", 11, "bold"),
+            text=" ❌ Press [ Backspace ] to Cancel Cash Payment ",
+            font=("Helvetica", 14, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             activebackground=BTN_BG,
             activeforeground=BTN_FG,
             relief=tk.FLAT,
-            padx=12,
-            pady=7,
+            padx=14,
+            pady=11,
             cursor="hand2",
             command=on_cancel,
         )
@@ -6431,7 +6423,7 @@ class CustomerVendingApp:
         tk.Label(
             top_bar,
             text="📱 Card & QR Payment Terminal",
-            font=("Helvetica", 14, "bold"),
+            font=("Helvetica", 16, "bold"),
             fg=CLR_LIME,
             bg=BG_APP,
         ).pack(side=tk.LEFT)
@@ -6440,11 +6432,11 @@ class CustomerVendingApp:
         card_timer_badge = tk.Label(
             top_bar,
             text=f"⏱️ {initial_timeout}s",
-            font=("Menlo", 12, "bold"),
+            font=("Menlo", 14, "bold"),
             fg=CLR_WHITE,
             bg=BG_CARD,
-            padx=8,
-            pady=3,
+            padx=10,
+            pady=4,
         )
         card_timer_badge.pack(side=tk.RIGHT)
 
@@ -6491,7 +6483,7 @@ class CustomerVendingApp:
         tk.Label(
             screen,
             text=f"Total Charge: £{amount_due / 100:.2f} ({amount_due}p)",
-            font=("Helvetica", 14, "bold"),
+            font=("Helvetica", 15, "bold"),
             fg=CLR_WHITE,
             bg=BG_SCREEN,
         ).pack(anchor="w")
@@ -6499,7 +6491,7 @@ class CustomerVendingApp:
         status_lbl = tk.Label(
             screen,
             text="⏳ Generating Stripe QR Code...",
-            font=("Helvetica", 11, "bold"),
+            font=("Helvetica", 13, "bold"),
             fg=CLR_LIME,
             bg=BG_SCREEN,
         )
@@ -6508,15 +6500,15 @@ class CustomerVendingApp:
         # Pack Cancel button at bottom FIRST to guarantee it is never squeezed
         cancel_btn = tk.Button(
             body,
-            text=" ❌ Cancel Transaction [ Backspace ] ",
-            font=("Helvetica", 11, "bold"),
+            text=" ❌ Press [ Backspace ] to Cancel Transaction ",
+            font=("Helvetica", 14, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             activebackground=BTN_BG,
             activeforeground=BTN_FG,
             relief=tk.FLAT,
-            padx=12,
-            pady=9,
+            padx=14,
+            pady=10,
             cursor="hand2",
             command=on_cancel,
         )
@@ -6529,7 +6521,7 @@ class CustomerVendingApp:
         guide_lbl = tk.Label(
             action_box,
             text="📱 Point phone camera at the QR code to open Stripe payment.",
-            font=("Helvetica", 11),
+            font=("Helvetica", 12, "bold"),
             fg=CLR_WHITE,
             bg=BG_CARD,
             wraplength=480,
@@ -6570,12 +6562,12 @@ class CustomerVendingApp:
 
         retry_btn = tk.Button(
             action_box,
-            text="[ 1 ] 🔄 Retry Stripe Connection [ Enter ]",
-            font=("Helvetica", 11, "bold"),
+            text="🔄 Press [ 1 ] to Retry Stripe Connection",
+            font=("Helvetica", 13, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             relief=tk.FLAT,
-            pady=8,
+            pady=9,
             cursor="hand2",
             command=lambda: start_checkout_connection(),
         )
@@ -6583,8 +6575,8 @@ class CustomerVendingApp:
 
         simulate_btn = tk.Button(
             action_box,
-            text="[ 1 ] 💳 Simulate Card Payment [ 1 / Enter ]",
-            font=("Helvetica", 11, "bold"),
+            text="💳 Press [ 1 ] to Simulate Card Payment",
+            font=("Helvetica", 13, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
             relief=tk.FLAT,
@@ -6702,14 +6694,14 @@ class CustomerVendingApp:
                         retry_btn.pack_forget()
                         status_lbl.config(text="📱 Scan QR with phone • Waiting for confirmation...", fg=CLR_LIME)
                         guide_lbl.config(text="Point phone camera at QR code to open Stripe. Result updates here automatically.")
-                        simulate_btn.config(text="[ 1 ] 💳 Simulate Card Payment [ 1 / Enter ]", state=tk.NORMAL)
+                        simulate_btn.config(text="💳 Press [ 1 ] to Simulate Card Payment", state=tk.NORMAL)
                         simulate_btn.pack(fill=tk.X, pady=(4, 0))
                         checkout_state["poll_id"] = dialog.after(1500, poll_checkout_status)
                     else:
                         status_lbl.config(text="⚠️ Could not connect to Stripe (Offline/Network)", fg="#FFD93D")
                         guide_lbl.config(
                             text="Unable to reach Stripe server.\n"
-                                 "Click Retry [ 1 ] or use Simulate Test Card [ 2 ] below."
+                                 "Press [ 1 ] to Retry or Press [ 2 ] to Simulate Test Card below."
                         )
                         qr_img_lbl.config(
                             image="",
@@ -6723,7 +6715,7 @@ class CustomerVendingApp:
                             pady=30,
                         )
                         retry_btn.pack(fill=tk.X, pady=(4, 4))
-                        simulate_btn.config(text="[ 2 ] 💳 Simulate Card Payment [ Keypad 2 ]", state=tk.NORMAL)
+                        simulate_btn.config(text="💳 Press [ 2 ] to Simulate Card Payment", state=tk.NORMAL)
                         simulate_btn.pack(fill=tk.X, pady=(0, 0))
 
                 try:
@@ -6989,7 +6981,7 @@ class CustomerVendingApp:
         # Return Button
         self.return_home_btn = tk.Button(
             card,
-            text="[ Enter ] Return to Catalogue (10s)",
+            text="Press [ Enter ] to Return to Catalogue (10s)",
             font=("Helvetica", 13, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -7090,7 +7082,7 @@ class CustomerVendingApp:
         if hasattr(self, "success_countdown_lbl") and self.success_countdown_lbl.winfo_exists():
             self.success_countdown_lbl.config(text="⏱️ Auto-returning to catalogue in 10s...")
         if hasattr(self, "return_home_btn") and self.return_home_btn.winfo_exists():
-            self.return_home_btn.config(text="[ Enter ] Return to Catalogue (10s)")
+            self.return_home_btn.config(text="Press [ Enter ] to Return to Catalogue (10s)")
 
         def tick():
             if getattr(self, "current_page", None) != "success":
@@ -7103,7 +7095,7 @@ class CustomerVendingApp:
                 if hasattr(self, "success_countdown_lbl") and self.success_countdown_lbl.winfo_exists():
                     self.success_countdown_lbl.config(text=f"⏱️ Auto-returning to catalogue in {sec}s...")
                 if hasattr(self, "return_home_btn") and self.return_home_btn.winfo_exists():
-                    self.return_home_btn.config(text=f"[ Enter ] Return to Catalogue ({sec}s)")
+                    self.return_home_btn.config(text=f"Press [ Enter ] to Return to Catalogue ({sec}s)")
                 self._success_countdown_after_id = self.root.after(1000, tick)
 
         self._success_countdown_after_id = self.root.after(1000, tick)
@@ -7222,7 +7214,7 @@ class CustomerVendingApp:
         # Return Button
         self.cancelled_home_btn = tk.Button(
             card,
-            text="[ Enter ] Return to Catalogue (10s)",
+            text="Press [ Enter ] to Return to Catalogue (10s)",
             font=("Helvetica", 13, "bold"),
             bg=BTN_BG,
             fg=BTN_FG,
@@ -7373,7 +7365,7 @@ class CustomerVendingApp:
             self._cancelled_countdown_after_id = None
 
         if hasattr(self, "cancelled_home_btn") and self.cancelled_home_btn.winfo_exists():
-            self.cancelled_home_btn.config(text="[ Enter ] Return to Catalogue (10s)")
+            self.cancelled_home_btn.config(text="Press [ Enter ] to Return to Catalogue (10s)")
 
         def tick(sec: int = 9) -> None:
             if self.current_page != "cancelled":
@@ -7382,7 +7374,7 @@ class CustomerVendingApp:
                 self._return_to_catalogue_from_cancelled()
                 return
             if hasattr(self, "cancelled_home_btn") and self.cancelled_home_btn.winfo_exists():
-                self.cancelled_home_btn.config(text=f"[ Enter ] Return to Catalogue ({sec}s)")
+                self.cancelled_home_btn.config(text=f"Press [ Enter ] to Return to Catalogue ({sec}s)")
             self._cancelled_countdown_after_id = self.root.after(1000, lambda: tick(sec - 1))
 
         self._cancelled_countdown_after_id = self.root.after(1000, lambda: tick(9))
