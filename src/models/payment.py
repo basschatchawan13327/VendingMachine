@@ -353,6 +353,7 @@ class CashReceiver(PaymentMethod):
         self._total: int = 0
         self._inserted_items: List[int] = []
         self._last_rejected_item: Optional[int] = None
+        self._insufficient_change: bool = False
 
         # UML Composition: CashReceiver owns 1 CashValidator and 1 ChangeDispenser
         self._validator: CashValidator = validator if validator is not None else CashValidator()
@@ -400,7 +401,15 @@ class CashReceiver(PaymentMethod):
                 if self._dispenser.canMakeChange(overpaid):
                     self._dispenser.dispenseChange(overpaid)
                 else:
-                    print(f"[CashReceiver] Warning: Exact change for {overpaid}p not available.")
+                    print(
+                        f"[CashReceiver] Change is not sufficient for {overpaid}p — "
+                        f"cancelling order and returning {self._total}p."
+                    )
+                    self._insufficient_change = True
+                    self._state = CashReceiverState.REFUNDING
+                    self.returnInsertedMoney()
+                    self._state = CashReceiverState.IDLE
+                    return False
 
             self._state = CashReceiverState.PAYMENT_COMPLETE
             print("[CashReceiver] Payment complete.")
@@ -420,6 +429,11 @@ class CashReceiver(PaymentMethod):
         self._amount_due = amount
         self._total = 0
         self._inserted_items = []
+        self._insufficient_change = False
+        if hasattr(self._dispenser, "_last_dispensed_coins"):
+            self._dispenser._last_dispensed_coins = {}
+        if hasattr(self._dispenser, "_last_dispensed_summary"):
+            self._dispenser._last_dispensed_summary = ""
         self._state = CashReceiverState.AWAITING_CASH
 
         print(f"[CashReceiver] Ready — awaiting {amount}p in cash.")
@@ -498,6 +512,10 @@ class CashReceiver(PaymentMethod):
     @property
     def lastRejectedItem(self) -> Optional[int]:
         return getattr(self, "_last_rejected_item", None)
+
+    @property
+    def insufficientChange(self) -> bool:
+        return getattr(self, "_insufficient_change", False)
 
 
 # ---------------------------------------------------------------------------

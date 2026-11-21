@@ -10,7 +10,7 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from src.models.payment import PaymentMethod, PaymentModule
+from src.models.payment import PaymentMethod, PaymentModule, CashReceiver
 from src.models.inventory import Drink, DrinkDispenser, LoyaltyAccount, LoyaltyScanner, StockSensor
 from src.utils.logger import Logger, TransactionRecord
 from src.utils.timer import TransactionTimer
@@ -321,6 +321,28 @@ def load_cash_inventory(file_path: str = CASH_FILE) -> Dict[str, Any]:
     except Exception as e:
         print(f"[Database] Error loading cash inventory: {e}")
         return {}
+
+
+def recalculate_cash_summary(cash_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Recompute subtotals and summary totals for a cash inventory dictionary."""
+    coins = cash_data.get("coins", [])
+    notes = cash_data.get("banknotes", [])
+    for item in coins:
+        item["subtotal_pence"] = int(item.get("denomination", 0)) * int(item.get("quantity", 0))
+    for item in notes:
+        item["subtotal_pence"] = int(item.get("denomination", 0)) * int(item.get("quantity", 0))
+
+    tot_coins = sum(int(c.get("subtotal_pence", 0)) for c in coins)
+    tot_notes = sum(int(n.get("subtotal_pence", 0)) for n in notes)
+    tot_all = tot_coins + tot_notes
+    cash_data["summary"] = {
+        "total_coins_pence": tot_coins,
+        "total_banknotes_pence": tot_notes,
+        "total_cash_pence": tot_all,
+        "total_cash_formatted": f"£{tot_all / 100:.2f}",
+        "last_updated": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    return cash_data
 
 
 def save_cash_inventory(cash_data: Dict[str, Any], file_path: str = CASH_FILE) -> None:
@@ -637,6 +659,11 @@ class VendingController:
             # Auto-save updated stock levels to products database
             save_products(self._dispenser._slots)
 
+        # 1b. Update physical cash/coin inventory if paid with CashReceiver
+        active_method = getattr(self._payment_module, "_active", None) if self._payment_module else None
+        if isinstance(active_method, CashReceiver):
+            self._updateCashInventoryOnSale(active_method)
+
         # 2. Stop transaction timer
         if self._timer is not None:
             self._timer.stop()
@@ -656,6 +683,48 @@ class VendingController:
         print(f"[_completeSale] Dispensing '{drink_name}'. Sale complete.")
         self._state = MachineState.COMPLETED
         self._reset()
+
+    def _updateCashInventoryOnSale(self, cash_receiver: CashReceiver) -> None:
+        """
+        Persist inserted coins/banknotes (+qty) and dispensed change coins (-qty)
+        to data/cash_inventory.json and keep ChangeDispenser stock synchronized.
+        """
+        cash_data = load_cash_inventory()
+        if not cash_data:
+            return
+
+        inserted_items = list(getattr(cash_receiver, "_inserted_items", []))
+        dispensed_coins = dict(getattr(cash_receiver, "lastDispensedCoins", {}))
+        dispenser = getattr(cash_receiver, "_dispenser", None)
+
+        coins_by_denom = {int(c.get("denomination", 0)): c for c in cash_data.get("coins", [])}
+        notes_by_denom = {int(n.get("denomination", 0)): n for n in cash_data.get("banknotes", [])}
+
+        # Add inserted coins/banknotes
+        for pence in inserted_items:
+            if pence in coins_by_denom:
+                coins_by_denom[pence]["quantity"] = int(coins_by_denom[pence].get("quantity", 0)) + 1
+                if dispenser and hasattr(dispenser, "_coin_stock"):
+                    dispenser._coin_stock[pence] = dispenser._coin_stock.get(pence, 0) + 1
+            elif pence in notes_by_denom:
+                notes_by_denom[pence]["quantity"] = int(notes_by_denom[pence].get("quantity", 0)) + 1
+
+        # Deduct dispensed change coins from JSON (ChangeDispenser already deducted in-memory _coin_stock)
+        for denom, qty in dispensed_coins.items():
+            d_int = int(denom)
+            q_int = int(qty)
+            if q_int > 0 and d_int in coins_by_denom:
+                new_qty = max(0, int(coins_by_denom[d_int].get("quantity", 0)) - q_int)
+                coins_by_denom[d_int]["quantity"] = new_qty
+                if dispenser and hasattr(dispenser, "_coin_stock"):
+                    dispenser._coin_stock[d_int] = new_qty
+
+        recalculate_cash_summary(cash_data)
+        save_cash_inventory(cash_data)
+
+        # Clear inserted buffer so items cannot be double-counted
+        cash_receiver._inserted_items = []
+        cash_receiver._total = 0
 
     def _abortSale(self, reason: str) -> None:
         """

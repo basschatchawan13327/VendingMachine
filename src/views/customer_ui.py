@@ -119,6 +119,7 @@ from src.controllers.controller import (
     save_members,
     load_cash_inventory,
     save_cash_inventory,
+    recalculate_cash_summary,
     load_payment_config,
     save_payment_config,
     load_transactions,
@@ -131,6 +132,7 @@ from src.models.inventory import Drink, DrinkDispenser, LoyaltyScanner, LoyaltyA
 from src.models.payment import (
     PaymentModule,
     CashReceiver,
+    ChangeDispenser,
     CardReader,
     CashReceiverState,
     create_bank_service,
@@ -934,7 +936,14 @@ class CustomerVendingApp:
         self.active_bank = create_bank_service(self.active_gateway_name, gw_config)
         self.stripe_bank = self.active_bank
         self.mock_bank = MockBankService()
-        self.cash_receiver = CashReceiver()
+        cash_init_data = load_cash_inventory()
+        init_coin_stock = {
+            int(c["denomination"]): int(c.get("quantity", 0))
+            for c in cash_init_data.get("coins", [])
+            if "denomination" in c
+        }
+        change_dispenser = ChangeDispenser(coin_stock=init_coin_stock) if init_coin_stock else ChangeDispenser()
+        self.cash_receiver = CashReceiver(dispenser=change_dispenser)
         self.card_reader = CardReader(self.active_bank)
         self.payment_module = PaymentModule([self.cash_receiver, self.card_reader])
 
@@ -2965,6 +2974,128 @@ class CustomerVendingApp:
 
             cash_tot_lbl.config(text=f"💰 TOTAL CASH IN MACHINE: £{total_pence/100:.2f} ({total_pence}p)")
 
+        # Edit Denomination Quantity Panel
+        cash_edit_frame = tk.Frame(tab_cash_frame, bg=BG_CARD, padx=14, pady=10)
+        cash_edit_frame.pack(fill=tk.X, pady=(0, 8))
+
+        tk.Label(
+            cash_edit_frame,
+            text="Edit Cash / Coin Quantity:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_LIME,
+            bg=BG_CARD,
+        ).pack(side=tk.LEFT, padx=(0, 8))
+
+        cash_denom_map: Dict[str, int] = {}
+        cash_init = load_cash_inventory()
+        for c in cash_init.get("coins", []):
+            d = int(c.get("denomination", 0))
+            lbl = c.get("label", f"{d}p")
+            cash_denom_map[f"Coin: {lbl} ({d}p)"] = d
+        for n in cash_init.get("banknotes", []):
+            d = int(n.get("denomination", 0))
+            lbl = n.get("label", f"£{d // 100}")
+            cash_denom_map[f"Note: {lbl} ({d}p)"] = d
+
+        denom_options = list(cash_denom_map.keys())
+        cash_denom_var = tk.StringVar(value=denom_options[0] if denom_options else "")
+        cash_denom_combo = ttk.Combobox(
+            cash_edit_frame,
+            textvariable=cash_denom_var,
+            values=denom_options,
+            state="readonly",
+            width=22,
+            font=("Helvetica", 11),
+        )
+        cash_denom_combo.pack(side=tk.LEFT, padx=(0, 10))
+
+        tk.Label(
+            cash_edit_frame,
+            text="Quantity:",
+            font=("Helvetica", 11, "bold"),
+            fg=CLR_WHITE,
+            bg=BG_CARD,
+        ).pack(side=tk.LEFT, padx=(0, 4))
+
+        cash_qty_var = tk.StringVar(value="20")
+        cash_qty_ent = tk.Entry(
+            cash_edit_frame,
+            textvariable=cash_qty_var,
+            width=8,
+            font=("Helvetica", 11),
+        )
+        cash_qty_ent.pack(side=tk.LEFT, padx=(0, 10))
+
+        def on_cash_tree_select(event=None):
+            sel = cash_tree.selection()
+            if not sel:
+                return
+            vals = cash_tree.item(sel[0], "values")
+            if len(vals) < 3:
+                return
+            row_label = str(vals[1])
+            row_qty = str(vals[2]).split()[0]
+            for opt in denom_options:
+                if row_label in opt:
+                    cash_denom_var.set(opt)
+                    break
+            cash_qty_var.set(row_qty)
+
+        cash_tree.bind("<<TreeviewSelect>>", on_cash_tree_select)
+
+        def do_update_cash_qty():
+            selected_opt = cash_denom_var.get()
+            if selected_opt not in cash_denom_map:
+                cash_val_res_lbl.config(text="❌ Please select a valid denomination.", fg="#FF6B6B")
+                return
+            try:
+                new_qty = int(cash_qty_var.get().strip())
+                if new_qty < 0:
+                    raise ValueError("negative")
+            except ValueError:
+                cash_val_res_lbl.config(text="❌ Quantity must be a non-negative integer.", fg="#FF6B6B")
+                return
+
+            target_denom = cash_denom_map[selected_opt]
+            cash_data = load_cash_inventory()
+            dispenser = getattr(self.cash_receiver, "_dispenser", None)
+            updated_label = selected_opt
+
+            for item in cash_data.get("coins", []):
+                if int(item.get("denomination", 0)) == target_denom:
+                    item["quantity"] = new_qty
+                    updated_label = item.get("label", updated_label)
+                    if dispenser and hasattr(dispenser, "_coin_stock"):
+                        dispenser._coin_stock[target_denom] = new_qty
+
+            for item in cash_data.get("banknotes", []):
+                if int(item.get("denomination", 0)) == target_denom:
+                    item["quantity"] = new_qty
+                    updated_label = item.get("label", updated_label)
+
+            recalculate_cash_summary(cash_data)
+            save_cash_inventory(cash_data)
+            refresh_cash_view()
+            refresh_system_summary()
+            log_activity("CASH_INVENTORY_UPDATED", f"Admin set {updated_label} ({target_denom}p) quantity to {new_qty}")
+            cash_val_res_lbl.config(text=f"✅ Updated {updated_label} quantity to {new_qty} & saved", fg=CLR_LIME)
+
+        btn_update_cash = tk.Button(
+            cash_edit_frame,
+            text="💾 Update Quantity",
+            font=("Helvetica", 11, "bold"),
+            bg=BTN_BG,
+            fg=BTN_FG,
+            relief=tk.FLAT,
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=do_update_cash_qty,
+        )
+        btn_update_cash.pack(side=tk.LEFT)
+        self._attach_button_animation(btn_update_cash)
+
         # Controls & Validator Test Frame
         cash_ctrl = tk.Frame(tab_cash_frame, bg=BG_CARD, padx=14, pady=12)
         cash_ctrl.pack(fill=tk.X)
@@ -2975,21 +3106,11 @@ class CustomerVendingApp:
             dispenser = getattr(self.cash_receiver, "_dispenser", None)
             for c in coins:
                 c["quantity"] = c.get("quantity", 0) + 20
-                c["subtotal_pence"] = c["denomination"] * c["quantity"]
                 if dispenser and hasattr(dispenser, "_coin_stock"):
                     d = c["denomination"]
                     dispenser._coin_stock[d] = dispenser._coin_stock.get(d, 0) + 20
 
-            tot_coins = sum(c["subtotal_pence"] for c in coins)
-            tot_notes = sum(n.get("subtotal_pence", 0) for n in cash_data.get("banknotes", []))
-            tot_all = tot_coins + tot_notes
-            cash_data["summary"] = {
-                "total_coins_pence": tot_coins,
-                "total_banknotes_pence": tot_notes,
-                "total_cash_pence": tot_all,
-                "total_cash_formatted": f"£{tot_all/100:.2f}",
-                "last_updated": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            }
+            recalculate_cash_summary(cash_data)
             save_cash_inventory(cash_data)
             refresh_cash_view()
             refresh_system_summary()
@@ -6051,6 +6172,34 @@ class CustomerVendingApp:
 
         def insert_coin(pence: int):
             accepted = self.cash_receiver.insertItem(pence)
+            if getattr(self.cash_receiver, "insufficientChange", False):
+                cash_state["completed"] = True
+                cleanup_cash()
+                self.timer.stop()
+                refunded = getattr(self.cash_receiver, "last_refunded_total", 0)
+                items = list(getattr(self.cash_receiver, "last_refunded_items", []))
+                self.last_cancelled_order = {
+                    "refunded": refunded,
+                    "method": "cash",
+                    "reason": "insufficient_change",
+                    "items": items,
+                }
+                lbl_inserted.config(text="Total Inserted: £0.00 (0p — Refunded)")
+                lbl_status.config(
+                    text="❌ Order Cancelled: Change is not sufficient!",
+                    fg="#FF6B6B",
+                )
+                lbl_change.config(
+                    text=f"↩️ Returning all £{refunded / 100:.2f} ({refunded}p) inserted to customer.",
+                    fg="#FF6B6B",
+                )
+                screen.config(highlightbackground="#FF6B6B")
+                for b in coin_buttons:
+                    b.config(state=tk.DISABLED)
+                self.controller.onPaymentFailed("Change is not sufficient")
+                self.root.after(1400, lambda: self._on_insufficient_change_dismiss(dialog))
+                return
+
             inserted = self.cash_receiver._total
             rem = max(0, amount_due - inserted)
             lbl_inserted.config(text=f"Total Inserted: £{inserted / 100:.2f} ({inserted}p)")
@@ -6628,6 +6777,20 @@ class CustomerVendingApp:
         self.root.after(50, lambda: (self.root.focus_force(), self.root.focus_set()))
         self.transition_to_page("cancelled", direction="left")
 
+    def _on_insufficient_change_dismiss(self, dialog: tk.Toplevel) -> None:
+        """Closes cash modal after insufficient-change refund and shows cancelled page."""
+        try:
+            if dialog.winfo_exists():
+                dialog.grab_release()
+                dialog.destroy()
+        except Exception:
+            pass
+        self._active_modal = None
+        self.root.focus_force()
+        self.root.focus_set()
+        self.root.after(50, lambda: (self.root.focus_force(), self.root.focus_set()))
+        self.transition_to_page("cancelled", direction="left")
+
     def _on_timeout_cash_dialog(self, dialog: tk.Toplevel) -> None:
         """Handles timeout of active cash payment — refund all inserted coins and navigate to cancelled page."""
         # Capture inserted cash BEFORE controller aborts sale and clears receiver state
@@ -7160,6 +7323,8 @@ class CustomerVendingApp:
                 refund_txt = f"Full Refund: \u00a3{refunded / 100:.2f} ({refunded}p)"
                 if reason == "timeout":
                     refund_txt += " (Timed Out)"
+                elif reason == "insufficient_change":
+                    refund_txt += " (Change is not sufficient)"
                 self.cancelled_refund_lbl.config(
                     text=refund_txt,
                     fg=CLR_LIME,
@@ -7184,11 +7349,13 @@ class CustomerVendingApp:
                     )
             else:
                 if refunded > 0:
-                    self.cancelled_sub_lbl.config(
-                        text=f"Payment timed out. All \u00a3{refunded / 100:.2f} ({refunded}p) inserted has been returned to the coin slot."
-                        if reason == "timeout"
-                        else f"Transaction cancelled. All \u00a3{refunded / 100:.2f} ({refunded}p) inserted has been returned."
-                    )
+                    if reason == "timeout":
+                        sub_txt = f"Payment timed out. All \u00a3{refunded / 100:.2f} ({refunded}p) inserted has been returned to the coin slot."
+                    elif reason == "insufficient_change":
+                        sub_txt = f"Order cancelled because change is not sufficient. All \u00a3{refunded / 100:.2f} ({refunded}p) inserted has been returned."
+                    else:
+                        sub_txt = f"Transaction cancelled. All \u00a3{refunded / 100:.2f} ({refunded}p) inserted has been returned."
+                    self.cancelled_sub_lbl.config(text=sub_txt)
                 else:
                     self.cancelled_sub_lbl.config(
                         text="Session expired without payment."
