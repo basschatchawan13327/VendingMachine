@@ -331,6 +331,6 @@ VendingMachine/
 
 ---
 
-## 👥 9. Project Credits & License
+## 👥 9. Project Credits
 * **Project Manager** Chatchawan Jiamprasut 26749645
 * **Contributor 1** Tran Thi Kim Thuy 26749459
